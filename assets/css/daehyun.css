@@ -250,6 +250,29 @@ details[open] summary {
   letter-spacing: 0.05em;
 }
 
+/* ─── Project image gallery ──────────── */
+.dc-proj-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 3px;
+  margin: 0.9em -1.2em 0.8em;
+}
+
+.dc-proj-gallery img {
+  width: 100%;
+  height: 88px;
+  object-fit: cover;
+  display: block;
+}
+
+.dc-proj-funder-logo {
+  height: 20px;
+  vertical-align: middle;
+  margin-left: 0.5em;
+  opacity: 0.82;
+  filter: grayscale(20%);
+}
+
 /* ─── Project cards ───────────────────── */
 .dc-proj-card {
   background: #fafbfd;
