@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Gallery – Daehyun Choi's lab and research photos." />
+  <title>Gallery | Daehyun Choi</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="assets/css/daehyun2.css" />
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-dc navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-nav" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Daehyun Choi &nbsp;|&nbsp; Fluid Mechanics &amp; Physical AI</a>
+    </div>
+    <div class="collapse navbar-collapse" id="main-nav">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="publications.html">Publications</a></li>
+        <li><a href="projects.html">Projects</a></li>
+        <li><a href="opensource.html">Open Source</a></li>
+        <li class="active"><a href="gallery.html">Gallery</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Lightbox -->
+<div class="dc-lightbox" id="lightbox" onclick="closeLightbox(event)">
+  <span class="dc-lightbox-close" onclick="closeLightbox()">&times;</span>
+  <img id="lightbox-img" src="" alt="">
+  <p class="dc-lightbox-caption" id="lightbox-caption"></p>
+</div>
+
+<!-- Main Content -->
+<div class="container dc-main" role="main">
+  <div class="row">
+    <div class="col-lg-10 col-lg-offset-1 col-md-12">
+
+      <div class="dc-gallery" id="gallery">
+
+        <!-- ── 사진 추가 방법 ──────────────────────────────────────
+             아래 블록을 복사해서 사진을 추가하세요:
+
+             <div class="dc-gallery-item" onclick="openLightbox('images/gallery/파일명.jpg','캡션')">
+               <img src="images/gallery/파일명.jpg" alt="캡션" loading="lazy">
+               <div class="dc-gallery-caption">캡션</div>
+             </div>
+
+             사진 파일은 images/gallery/ 폴더에 넣으세요.
+        ─────────────────────────────────────────────────────── -->
+
+        <div class="dc-gallery-empty" id="gallery-empty">
+          <p>사진을 <code>images/gallery/</code> 폴더에 넣고 아래 형식으로 추가하세요.</p>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="dc-footer">
+  <div class="container">
+    <p>&copy; 2026 Daehyun Choi &nbsp;·&nbsp; Powered by <a href="https://pages.github.com/">GitHub Pages</a></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+<script>
+  function openLightbox(src, caption) {
+    document.getElementById('lightbox-img').src = src;
+    document.getElementById('lightbox-caption').textContent = caption || '';
+    document.getElementById('lightbox').classList.add('active');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeLightbox(e) {
+    if (e && e.target !== document.getElementById('lightbox') &&
+        !e.target.classList.contains('dc-lightbox-close')) return;
+    document.getElementById('lightbox').classList.remove('active');
+    document.body.style.overflow = '';
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeLightbox({ target: document.getElementById('lightbox') });
+  });
+
+  // Hide empty message if gallery has items
+  var items = document.querySelectorAll('.dc-gallery-item');
+  if (items.length > 0) document.getElementById('gallery-empty').style.display = 'none';
+</script>
+
+</body>
+</html>
