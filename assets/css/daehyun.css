@@ -457,39 +457,22 @@ details[open] summary {
 .dc-publist > li {
   font-size: 0.97em;
   line-height: 1.6;
-  margin-bottom: 0.8em;
-  padding: 0.75em 1em;
-  border-left: 3px solid #dde4f0;
-  background: #fafbfd;
-  transition: border-color 0.15s;
+  margin-bottom: 1.1em;
+  padding-bottom: 1.1em;
+  border-bottom: 1px solid #eef0f5;
 }
 
-.dc-publist > li:hover {
-  border-left-color: #1a2f6b;
-  background: #f3f6fb;
-}
+.dc-publist > li:last-child { border-bottom: none; }
 
 .dc-btn {
   display: inline-block;
-  margin-left: 5px;
-  padding: 1px 7px;
-  font-size: 0.8em;
-  border: 1px solid #c8d0e4;
-  border-radius: 3px;
+  margin-left: 4px;
+  font-size: 0.85em;
   color: #1a2f6b;
-  background: #fff;
   text-decoration: none;
-  white-space: nowrap;
-  vertical-align: middle;
-  transition: background 0.15s, color 0.15s;
 }
 
-.dc-btn:hover {
-  background: #1a2f6b;
-  color: #fff;
-  border-color: #1a2f6b;
-  text-decoration: none;
-}
+.dc-btn:hover { text-decoration: underline; color: #1a2f6b; }
 
 /* ─── About ────────────────────────────── */
 #about h4 {
