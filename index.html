@@ -284,14 +284,6 @@
               <li><strong>2011</strong> &nbsp; Presidential Scholarship for undergraduates</li>
             </ul>
 
-            <h4>Contact</h4>
-            <p>
-              School of Chemical &amp; Biomolecular Engineering<br>
-              Georgia Institute of Technology<br>
-              Atlanta, GA 30332, USA<br>
-              <a href="mailto:dchoi319@gatech.edu">dchoi319@gatech.edu</a>
-              &nbsp;·&nbsp; (+1) 678-788-0049
-            </p>
           </div>
         </div>
       </section>
@@ -304,6 +296,7 @@
 <!-- Footer -->
 <footer class="dc-footer">
   <div class="container">
+    <p class="dc-footer-email" id="dc-footer-email"></p>
     <p>&copy; 2025 Daehyun Choi &nbsp;·&nbsp; Powered by <a href="https://pages.github.com/">GitHub Pages</a></p>
   </div>
 </footer>
@@ -319,6 +312,15 @@
       $('html, body').animate({ scrollTop: target.offset().top - 62 }, 450);
     }
   });
+
+  // Anti-scrape footer email
+  (function() {
+    var p = ['dchoi','319'].join('');
+    var d = ['ga','tech','.','edu'].join('');
+    var addr = p + String.fromCharCode(64) + d;
+    var el = document.getElementById('dc-footer-email');
+    if (el) el.innerHTML = '<a href="m\x61ilto:' + addr + '">' + addr + '</a> &nbsp;·&nbsp; Georgia Institute of Technology';
+  })();
 
   // Toggle older news
   function toggleNews() {
