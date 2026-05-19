@@ -4,7 +4,7 @@ body {
   font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
   font-size: 17px;
   line-height: 1.75;
-  color: #2c2c2c;
+  color: #111;
   padding-top: 65px;
   background: #fff;
 }
@@ -90,13 +90,14 @@ body {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 0.55em;
   min-height: 175px;
 }
 
 .dc-identity {
-  font-size: 0.82em;
-  color: #888;
+  font-size: 0.8em;
+  color: #111;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   font-weight: 500;
@@ -111,12 +112,12 @@ body {
 
 .dc-bio-body { }
 
-.dc-bio-body p { font-size: 1em; color: #333; margin-bottom: 1em; }
+.dc-bio-body p { font-size: 1em; color: #111; margin-bottom: 1em; }
 
 @media (max-width: 480px) {
   .dc-bio-header { flex-direction: column !important; align-items: center; }
   .dc-bio-photo { width: 130px; height: 130px; flex: 0 0 130px; }
-  .dc-bio-header-text { min-height: auto; align-items: center; text-align: center; }
+  .dc-bio-header-text { min-height: auto; align-items: center; text-align: center; gap: 0.4em; }
   .dc-identity { text-align: center; }
 }
 
@@ -124,14 +125,14 @@ body {
   font-size: 2.4em;
   font-weight: 700;
   color: #111;
-  margin: 0 0 0.15em 0;
+  margin: 0 0 0.1em 0;
   letter-spacing: -0.5px;
 }
 
 .dc-position {
   font-size: 1.05em;
-  color: #555;
-  margin-bottom: 1.3em;
+  color: #111;
+  margin: 0;
 }
 
 #bio .dc-bio-body p { font-size: 1em; color: #333; margin-bottom: 1em; }
