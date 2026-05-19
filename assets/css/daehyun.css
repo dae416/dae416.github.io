@@ -82,7 +82,7 @@ body {
 }
 
 .dc-bio-photo {
-  width: 155px;
+  width: 115px;
   border-radius: 8px;
   flex-shrink: 0;
   box-shadow: 0 2px 8px rgba(0,0,0,0.12);
@@ -92,7 +92,7 @@ body {
 
 @media (max-width: 600px) {
   .dc-bio-wrap { flex-direction: column; align-items: center; }
-  .dc-bio-photo { width: 120px; }
+  .dc-bio-photo { width: 95px; }
 }
 
 .dc-name {
