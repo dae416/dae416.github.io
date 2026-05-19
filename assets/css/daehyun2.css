@@ -1,0 +1,630 @@
+/* Daehyun Choi — Personal website */
+
+body {
+  font-family: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 17px;
+  line-height: 1.75;
+  color: #111;
+  padding-top: 65px;
+  background: #fff;
+}
+
+/* ─── Navbar ─────────────────────────── */
+.navbar-dc {
+  background-color: #1a2f6b;
+  border: none;
+  box-shadow: 0 1px 5px rgba(0,0,0,0.28);
+}
+
+.navbar-dc .navbar-brand {
+  color: #e8eeff;
+  font-weight: 600;
+  font-size: 14px;
+  padding: 16px 15px;
+}
+
+.navbar-dc .navbar-brand:hover { color: #fff; }
+
+.navbar-dc .nav > li > a {
+  color: rgba(232,238,255,0.88);
+  font-size: 13.5px;
+  padding: 20px 14px;
+}
+
+.navbar-dc .nav > li > a:hover,
+.navbar-dc .nav > li > a:focus {
+  color: #fff;
+  background: rgba(255,255,255,0.1);
+}
+
+.navbar-dc .navbar-toggle { border-color: rgba(255,255,255,0.3); margin-top: 11px; }
+.navbar-dc .navbar-toggle .icon-bar { background-color: rgba(255,255,255,0.8); }
+
+.dc-avatar-wrap {
+  display: none;
+}
+
+.dc-avatar-wrap a { display: block; width: 100%; height: 100%; }
+
+.dc-avatar {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+  display: block;
+}
+
+@media (max-width: 767px) {
+  .dc-avatar-wrap { display: none; }
+  .navbar-dc .navbar-brand { font-size: 12.5px; }
+}
+
+/* ─── Layout ──────────────────────────── */
+.dc-main {
+  padding-top: 2.5em;
+  padding-bottom: 2em;
+}
+
+/* ─── Bio ─────────────────────────────── */
+.dc-bio-header {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 2.2em;
+  align-items: flex-start;
+  margin-bottom: 1.8em;
+}
+
+.dc-bio-photo {
+  width: 175px;
+  height: 175px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center 18%;
+  flex: 0 0 175px;
+  background-color: #fff;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+}
+
+.dc-bio-header-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.55em;
+  min-height: 175px;
+}
+
+.dc-identity {
+  font-size: 0.8em;
+  color: #111;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.dc-badges {
+  margin: 0;
+  line-height: 2;
+}
+
+.dc-bio-body { }
+
+.dc-bio-body p { font-size: 1em; color: #111; margin-bottom: 1em; }
+
+@media (max-width: 480px) {
+  .dc-bio-header { flex-direction: column !important; align-items: center; }
+  .dc-bio-photo { width: 130px; height: 130px; flex: 0 0 130px; }
+  .dc-bio-header-text { min-height: auto; align-items: center; text-align: center; gap: 0.4em; }
+  .dc-identity { text-align: center; }
+}
+
+.dc-name {
+  font-size: 2.4em;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 0.1em 0;
+  letter-spacing: -0.5px;
+}
+
+.dc-position {
+  font-size: 1.05em;
+  color: #111;
+  margin: 0;
+}
+
+#bio .dc-bio-body p { font-size: 1em; color: #333; margin-bottom: 1em; }
+
+details {
+  background: #f7f9fc;
+  border: 1px solid #dde4f0;
+  border-radius: 5px;
+  padding: 1em 1.3em;
+  margin-top: 1.3em;
+}
+
+details summary {
+  cursor: pointer;
+  color: #1a2f6b;
+  font-size: 1em;
+  outline: none;
+}
+
+details summary:hover { color: #2a4fa0; }
+
+details[open] summary {
+  margin-bottom: 0.8em;
+}
+
+.dc-ri-heading {
+  font-size: 0.88em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #111;
+  margin: 1.2em 0 0.5em 0;
+}
+
+.dc-interests {
+  margin: 0;
+  padding-left: 1.4em;
+  font-size: 0.95em;
+  color: #333;
+}
+
+.dc-interests li { margin-bottom: 0.35em; }
+
+/* ─── Divider ─────────────────────────── */
+.dc-hr { margin: 2.2em 0; border-color: #e8ecf3; }
+
+/* ─── Section titles ──────────────────── */
+.dc-section-title {
+  font-size: 1.55em;
+  font-weight: 700;
+  color: #1a2f6b;
+  margin: 0 0 1.4em 0;
+  padding-bottom: 0.4em;
+  border-bottom: 2px solid #e4e9f5;
+}
+
+/* ─── News ────────────────────────────── */
+.dc-news .list-group-item {
+  font-size: 0.95em;
+  padding: 8px 15px;
+  border-left: 3px solid #1a2f6b;
+  border-top: 1px solid #edf0f7;
+  border-right: 1px solid #edf0f7;
+  border-bottom: 1px solid #edf0f7;
+  border-radius: 0 !important;
+  background: #fafbfd;
+  margin-bottom: 3px;
+}
+
+.dc-news-date {
+  font-weight: 600;
+  color: #1a2f6b;
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+.dc-news-toggle {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #555;
+  border-color: #ccc;
+  background: #f7f9fc;
+}
+
+.dc-news-toggle:hover {
+  background: #edf0f7;
+  color: #1a2f6b;
+  border-color: #b0bcd8;
+}
+
+/* ─── Page header ────────────────────── */
+.dc-page-header {
+  background: linear-gradient(135deg, #1a2f6b 0%, #0d1c4a 100%);
+  color: #fff;
+  padding: 3em 0 2.2em;
+  margin-bottom: 0;
+}
+
+.dc-page-header h1 {
+  font-size: 2.2em;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 0.2em 0;
+  letter-spacing: -0.5px;
+}
+
+.dc-page-subtitle {
+  font-size: 1em;
+  color: rgba(255,255,255,0.75);
+  margin: 0;
+}
+
+.dc-page-subtitle a { color: rgba(255,255,255,0.85); text-decoration: underline; }
+.dc-page-subtitle a:hover { color: #fff; }
+
+/* ─── Subsection headings ─────────────── */
+.dc-subsection {
+  font-size: 1.15em;
+  font-weight: 700;
+  color: #444;
+  margin: 2.2em 0 1.3em 0;
+  padding-bottom: 0.35em;
+  border-bottom: 1px solid #e8ecf3;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* ─── Project wrap (images left of blue border) ─ */
+.dc-proj-wrap {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 1.1em;
+}
+
+.dc-proj-images {
+  flex-shrink: 0;
+  width: 220px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-right: 1em;
+}
+
+.dc-proj-images img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+  border-radius: 2px;
+}
+
+.dc-proj-wrap .dc-proj-card {
+  margin-bottom: 0;
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .dc-proj-wrap { flex-direction: column; }
+  .dc-proj-images { width: 100%; margin-right: 0; margin-bottom: 0.6em;
+                    grid-auto-rows: 100px; }
+}
+
+.dc-proj-funder-logo {
+  height: 18px;
+  vertical-align: middle;
+  margin-left: 0.5em;
+  opacity: 0.8;
+  filter: grayscale(20%);
+}
+
+/* ─── Project cards ───────────────────── */
+.dc-proj-card {
+  background: #fafbfd;
+  border: 1px solid #dde4f0;
+  border-left: 4px solid #1a2f6b;
+  border-radius: 0 5px 5px 0;
+  padding: 1.1em 1.2em;
+  margin-bottom: 1.1em;
+  transition: box-shadow 0.2s;
+}
+
+.dc-proj-card:hover {
+  box-shadow: 0 2px 10px rgba(26,47,107,0.1);
+}
+
+.dc-proj-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.4em;
+  margin-bottom: 0.6em;
+}
+
+.dc-proj-title {
+  font-size: 1em;
+  font-weight: 700;
+  color: #1a2f6b;
+  margin: 0 0 0.2em 0;
+}
+
+.dc-proj-support {
+  font-size: 1em;
+  color: #555;
+  margin: 0;
+}
+
+.dc-proj-date {
+  font-size: 1em;
+  color: #888;
+  white-space: nowrap;
+  margin-top: 0.1em;
+}
+
+.dc-proj-desc {
+  font-size: 1em;
+  color: #333;
+  margin-bottom: 0.5em;
+  line-height: 1.6;
+}
+
+.dc-proj-kw {
+  font-size: 1em;
+  color: #555;
+  margin-bottom: 0.4em;
+}
+
+/* ─── Open Source cards ───────────────── */
+.dc-os-card {
+  background: #fff;
+  border: 1px solid #dde4f0;
+  border-radius: 6px;
+  padding: 1.3em 1.4em;
+  margin-bottom: 1.5em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s;
+}
+
+.dc-os-card:hover {
+  box-shadow: 0 3px 12px rgba(26,47,107,0.1);
+}
+
+.dc-os-card-wip {
+  border-style: dashed;
+  background: #fafbfd;
+  opacity: 0.85;
+}
+
+.dc-os-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  margin-bottom: 0.75em;
+}
+
+.dc-os-title {
+  font-size: 1.1em;
+  font-weight: 700;
+  color: #1a2f6b;
+  margin: 0 0 0.3em 0;
+}
+
+.dc-os-title a { color: #1a2f6b; text-decoration: none; }
+.dc-os-title a:hover { text-decoration: underline; }
+
+.dc-os-meta { margin: 0; }
+
+.dc-os-tag {
+  display: inline-block;
+  font-size: 0.75em;
+  background: #edf0f9;
+  color: #1a2f6b;
+  border: 1px solid #c8d0e8;
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin-right: 3px;
+  margin-bottom: 2px;
+}
+
+.dc-os-btn {
+  margin-top: 0.2em;
+  white-space: nowrap;
+}
+
+.dc-os-wip-badge {
+  display: inline-block;
+  font-size: 0.72em;
+  font-weight: 600;
+  background: #e8a020;
+  color: #fff;
+  border-radius: 3px;
+  padding: 1px 6px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.dc-os-desc {
+  font-size: 0.97em;
+  color: #444;
+  line-height: 1.6;
+  margin-bottom: 0.6em;
+}
+
+.dc-os-pub {
+  font-size: 0.86em;
+  color: #555;
+  margin-bottom: 0.8em;
+}
+
+.dc-os-pub a { color: #1a2f6b; }
+
+.dc-os-posts {
+  background: #f5f7fc;
+  border: 1px dashed #c8d0e8;
+  border-radius: 4px;
+  padding: 0.6em 0.9em;
+  margin-top: 0.8em;
+}
+
+.dc-os-posts-title {
+  font-size: 0.82em;
+  font-weight: 700;
+  color: #1a2f6b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 0 0 0.3em 0;
+}
+
+.dc-os-posts-placeholder {
+  font-size: 0.85em;
+  color: #888;
+  margin: 0;
+}
+
+/* ─── Research cards ─────────────────── */
+.dc-research-card {
+  display: block;
+  border: 1px solid #dde4f0;
+  border-radius: 5px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.dc-research-card:hover {
+  box-shadow: 0 3px 12px rgba(26,47,107,0.15);
+  border-color: #1a2f6b;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dc-research-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.dc-research-caption {
+  padding: 0.75em 0.9em 0.85em;
+  background: #fafbfd;
+}
+
+.dc-research-caption strong {
+  font-size: 0.95em;
+  color: #1a2f6b;
+  display: block;
+  margin-bottom: 0.3em;
+}
+
+.dc-research-caption p {
+  font-size: 0.85em;
+  color: #555;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ─── Publications ────────────────────── */
+.dc-pub-note { font-size: 0.94em; color: #666; margin-bottom: 1.2em; }
+
+.dc-pub-cat {
+  font-size: 1.05em;
+  font-weight: 700;
+  color: #111;
+  margin: 1.8em 0 0.8em 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 2px solid #e4e9f5;
+  padding-bottom: 0.3em;
+}
+
+.dc-publist { list-style: none; padding: 0; margin: 0; }
+
+.dc-publist > li {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 1.1em;
+  align-items: flex-start;
+  font-size: 0.97em;
+  line-height: 1.6;
+  margin-bottom: 1.1em;
+  padding-bottom: 1.1em;
+  border-bottom: 1px solid #eef0f5;
+}
+
+.dc-publist > li:last-child { border-bottom: none; }
+
+.dc-pub-img {
+  width: 240px;
+  height: 180px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border-radius: 3px;
+  display: block;
+  background: #f0f2f7;
+}
+
+.dc-pub-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.dc-award-badge {
+  display: inline-block;
+  font-size: 0.82em;
+  font-weight: 600;
+  color: #b8860b;
+  background: #fffbe6;
+  border: 1px solid #f0d060;
+  border-radius: 3px;
+  padding: 1px 7px;
+  margin: 3px 0 3px 0;
+}
+
+@media (max-width: 600px) {
+  .dc-publist > li { flex-direction: column !important; }
+  .dc-pub-img { width: 100%; height: 180px; }
+}
+
+.dc-btn {
+  display: inline-block;
+  margin-left: 4px;
+  font-size: 1em;
+  color: #1a2f6b;
+  text-decoration: none;
+}
+
+.dc-btn:hover { text-decoration: underline; color: #1a2f6b; }
+
+/* ─── About ────────────────────────────── */
+#about h4 {
+  font-size: 0.95em;
+  font-weight: 700;
+  color: #444;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin: 1.6em 0 0.8em 0;
+}
+
+.dc-about-list { list-style: none; padding: 0; margin: 0; }
+
+.dc-about-list > li {
+  font-size: 0.97em;
+  padding: 0.55em 0;
+  border-bottom: 1px solid #f0f2f7;
+  line-height: 1.6;
+}
+
+#about p { font-size: 0.97em; color: #444; line-height: 1.65; }
+
+/* ─── Footer ──────────────────────────── */
+.dc-footer {
+  background: #f5f7fc;
+  border-top: 1px solid #dde4f0;
+  padding: 1.5em 0;
+  text-align: center;
+  font-size: 0.85em;
+  color: #888;
+}
+
+.dc-footer a { color: #1a2f6b; }
+
+.dc-footer-email {
+  font-size: 0.95em;
+  color: #555;
+  margin-bottom: 0.3em;
+}
+
+.dc-footer-email a {
+  color: #1a2f6b;
+  font-weight: 500;
+}
