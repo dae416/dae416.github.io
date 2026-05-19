@@ -269,24 +269,19 @@ details[open] summary {
 
 .dc-proj-images {
   flex-shrink: 0;
-  width: 250px;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  grid-auto-rows: 150px;  /* fixed tile height → uniform tiles */
+  width: 220px;
+  display: flex;
+  flex-direction: column;
   gap: 3px;
   margin-right: 1em;
 }
 
 .dc-proj-images img {
   width: 100%;
-  height: 150px;
+  height: 160px;
   object-fit: cover;
   display: block;
   border-radius: 2px;
-}
-
-.dc-proj-images img:last-child:nth-child(odd) {
-  grid-column: span 2;
 }
 
 .dc-proj-wrap .dc-proj-card {
