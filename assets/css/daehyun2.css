@@ -269,7 +269,7 @@ details[open] summary {
 
 .dc-proj-images {
   flex-shrink: 0;
-  width: 220px;
+  width: 440px;
   display: flex;
   flex-direction: column;
   gap: 3px;
