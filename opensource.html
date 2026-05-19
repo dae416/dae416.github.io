@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Open source tools by Daehyun Choi — deep learning flow diagnostics, bubble velocimetry, FSI simulation." />
+  <title>Open Source | Daehyun Choi</title>
+
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
+  <link rel="stylesheet" href="assets/css/daehyun.css" />
+</head>
+
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-dc navbar-fixed-top">
+  <div class="container-fluid">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#main-nav" aria-expanded="false">
+        <span class="sr-only">Toggle navigation</span>
+        <span class="icon-bar"></span><span class="icon-bar"></span><span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">Daehyun Choi &nbsp;|&nbsp; Fluid Mechanics &amp; Physical AI</a>
+    </div>
+    <div class="collapse navbar-collapse" id="main-nav">
+      <ul class="nav navbar-nav navbar-right">
+        <li><a href="publications.html">Publications</a></li>
+        <li><a href="projects.html">Projects</a></li>
+        <li class="active"><a href="opensource.html">Open Source</a></li>
+      </ul>
+    </div>
+    <div class="dc-avatar-wrap">
+      <a href="index.html"><img src="images/headshot.png" class="dc-avatar" alt="Daehyun Choi" /></a>
+    </div>
+  </div>
+</nav>
+
+<!-- Page Header -->
+<section class="dc-page-header">
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+        <h1>Open Source</h1>
+        <p class="dc-page-subtitle">
+          Tools, datasets, and simulation frameworks from my research &nbsp;·&nbsp;
+          <a href="https://github.com/dae416" target="_blank" rel="noopener">github.com/dae416</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Main Content -->
+<div class="container dc-main" role="main">
+  <div class="row">
+    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+
+      <p style="font-size:0.97em; color:#444; margin-bottom:2em;">
+        I believe open, reproducible research accelerates discovery.
+        Below are the tools and frameworks I have developed and released publicly.
+        Each project page will grow into a technical blog with tutorials, notes, and updates.
+      </p>
+
+      <!-- ── DeepBubbleVelocimetry ── -->
+      <div class="dc-os-card">
+        <div class="dc-os-header">
+          <div>
+            <h3 class="dc-os-title">
+              <i class="fab fa-github"></i>
+              <a href="https://github.com/dae416/DeepBubbleVelocimetry" target="_blank" rel="noopener">DeepBubbleVelocimetry</a>
+            </h3>
+            <p class="dc-os-meta">
+              <a href="https://img.shields.io/github/stars/dae416/DeepBubbleVelocimetry?style=flat-square" target="_blank">
+                <img src="https://img.shields.io/github/stars/dae416/DeepBubbleVelocimetry?style=flat-square" alt="Stars" />
+              </a>
+              &nbsp;
+              <span class="dc-os-tag">Deep Learning</span>
+              <span class="dc-os-tag">Optical Flow</span>
+              <span class="dc-os-tag">Multiphase Flow</span>
+            </p>
+          </div>
+          <a href="https://github.com/dae416/DeepBubbleVelocimetry" class="dc-btn dc-os-btn" target="_blank" rel="noopener">
+            <i class="fab fa-github"></i> GitHub
+          </a>
+        </div>
+
+        <p class="dc-os-desc">
+          CNN-based (PWC-Net optical flow) velocity measurement tool purpose-built for <strong>bubbly two-phase flows</strong>.
+          The first deep-learning flow-diagnostic tool capable of handling extreme bubble densities (up to 58% void fraction)
+          — far beyond the 11% limit of conventional PTV methods.
+          Includes pre-trained model weights and a synthetic bubble image generator for fine-tuning.
+        </p>
+
+        <p class="dc-os-pub">
+          📄 Related paper:
+          <a href="https://doi.org/10.1038/s41598-022-16145-y" target="_blank" rel="noopener">
+            Choi*, Kim* &amp; Park, <em>Sci. Rep.</em>, 12, 11879 (2022)
+          </a>
+        </p>
+
+        <!-- Blog posts placeholder -->
+        <div class="dc-os-posts">
+          <p class="dc-os-posts-title">Posts &amp; Notes</p>
+          <p class="dc-os-posts-placeholder">
+            <em>Coming soon — tutorials, usage notes, and technical deep-dives will appear here.</em>
+          </p>
+        </div>
+      </div>
+
+      <!-- ── BubMask ── -->
+      <div class="dc-os-card">
+        <div class="dc-os-header">
+          <div>
+            <h3 class="dc-os-title">
+              <i class="fab fa-github"></i>
+              <a href="https://github.com/dae416/BubMask" target="_blank" rel="noopener">BubMask</a>
+            </h3>
+            <p class="dc-os-meta">
+              <span class="dc-os-tag">Instance Segmentation</span>
+              <span class="dc-os-tag">Mask R-CNN</span>
+              <span class="dc-os-tag">Bubble Detection</span>
+            </p>
+          </div>
+          <a href="https://github.com/dae416/BubMask" class="dc-btn dc-os-btn" target="_blank" rel="noopener">
+            <i class="fab fa-github"></i> GitHub
+          </a>
+        </div>
+
+        <p class="dc-os-desc">
+          Mask R-CNN adaptation for <strong>bubble instance segmentation and detection</strong> in experimental fluid mechanics images.
+          Designed to handle polydisperse bubble populations with overlapping boundaries,
+          enabling accurate size and shape measurement in bubbly flow visualizations.
+        </p>
+
+        <!-- Blog posts placeholder -->
+        <div class="dc-os-posts">
+          <p class="dc-os-posts-title">Posts &amp; Notes</p>
+          <p class="dc-os-posts-placeholder">
+            <em>Coming soon.</em>
+          </p>
+        </div>
+      </div>
+
+      <!-- ── FSI Solver ── -->
+      <div class="dc-os-card">
+        <div class="dc-os-header">
+          <div>
+            <h3 class="dc-os-title">
+              <i class="fas fa-cubes"></i>
+              Open-source FSI Solver
+            </h3>
+            <p class="dc-os-meta">
+              <span class="dc-os-tag">OpenFOAM</span>
+              <span class="dc-os-tag">CalculiX</span>
+              <span class="dc-os-tag">preCICE</span>
+              <span class="dc-os-tag">Fluid-Structure Interaction</span>
+            </p>
+          </div>
+          <a href="https://arxiv.org/abs/2605.17319" class="dc-btn dc-os-btn" target="_blank" rel="noopener">
+            arXiv
+          </a>
+        </div>
+
+        <p class="dc-os-desc">
+          Fully reproducible 3D FSI simulation framework coupling
+          <strong>OpenFOAM</strong> (CFD), <strong>CalculiX</strong> (FEA), and <strong>preCICE</strong> (coupling library)
+          for compliant nozzle dynamics. Deployed in Singh &amp; Choi et al. (2026) to study
+          elastic wave propagation in flexible nozzles and its role in impulse enhancement.
+          Full solver and case files will be publicly released with the paper.
+        </p>
+
+        <p class="dc-os-pub">
+          📄 Related paper:
+          <a href="https://arxiv.org/abs/2605.17319" target="_blank" rel="noopener">
+            Singh, Choi, Bhamla &amp; Bose, <em>arXiv</em>:2605.17319 (2026). <em>Under review.</em>
+          </a>
+        </p>
+
+        <!-- Blog posts placeholder -->
+        <div class="dc-os-posts">
+          <p class="dc-os-posts-title">Posts &amp; Notes</p>
+          <p class="dc-os-posts-placeholder">
+            <em>Coming soon — preCICE setup guide, case configuration, and validation notes.</em>
+          </p>
+        </div>
+      </div>
+
+      <!-- ── Deep-learning Bayesian surrogate ── -->
+      <div class="dc-os-card dc-os-card-wip">
+        <div class="dc-os-header">
+          <div>
+            <h3 class="dc-os-title">
+              <i class="fas fa-brain"></i>
+              Deep-learning Bayesian Surrogate for Nozzle Optimization
+              <span class="dc-os-wip-badge">In preparation</span>
+            </h3>
+            <p class="dc-os-meta">
+              <span class="dc-os-tag">Bayesian Optimization</span>
+              <span class="dc-os-tag">Surrogate Modeling</span>
+              <span class="dc-os-tag">PyTorch</span>
+              <span class="dc-os-tag">Propulsion</span>
+            </p>
+          </div>
+        </div>
+
+        <p class="dc-os-desc">
+          A deep-learning Bayesian surrogate model for <strong>soft nozzle thrust optimization</strong>.
+          Combines PIV/dynamometry experimental data with Gaussian process regression and neural network surrogate models
+          to efficiently explore the nozzle geometry design space without exhaustive experiments.
+          To be released alongside the manuscript (targeting <em>J. Fluid Mech.</em>).
+        </p>
+
+        <!-- Blog posts placeholder -->
+        <div class="dc-os-posts">
+          <p class="dc-os-posts-title">Posts &amp; Notes</p>
+          <p class="dc-os-posts-placeholder">
+            <em>Coming soon.</em>
+          </p>
+        </div>
+      </div>
+
+      <div style="height:2em;"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<footer class="dc-footer">
+  <div class="container">
+    <p>&copy; 2025 Daehyun Choi &nbsp;·&nbsp; Powered by <a href="https://pages.github.com/">GitHub Pages</a></p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+
+</body>
+</html>
