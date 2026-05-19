@@ -75,6 +75,26 @@ body {
 }
 
 /* ─── Bio ─────────────────────────────── */
+.dc-bio-wrap {
+  display: flex;
+  gap: 1.8em;
+  align-items: flex-start;
+}
+
+.dc-bio-photo {
+  width: 155px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+}
+
+.dc-bio-text { flex: 1; min-width: 0; }
+
+@media (max-width: 600px) {
+  .dc-bio-wrap { flex-direction: column; align-items: center; }
+  .dc-bio-photo { width: 120px; }
+}
+
 .dc-name {
   font-size: 2.4em;
   font-weight: 700;
