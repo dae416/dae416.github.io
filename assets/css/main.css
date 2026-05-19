@@ -3009,6 +3009,8 @@ input, select, textarea {
 				display: block;
 				border-radius: 100%;
 				width: 16em;
+				height: 16em;
+				object-fit: cover;
 			}
 
 		@media screen and (max-width: 980px) {
@@ -3061,6 +3063,7 @@ input, select, textarea {
 
 				.spotlight .image img {
 					width: 12em;
+					height: 12em;
 				}
 
 		}
