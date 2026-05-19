@@ -75,10 +75,11 @@ body {
 }
 
 /* ─── Bio ─────────────────────────────── */
-.dc-bio-wrap {
+.dc-bio-header {
   display: flex;
-  gap: 1.8em;
-  align-items: flex-start;
+  gap: 2em;
+  align-items: stretch;
+  margin-bottom: 1.6em;
 }
 
 .dc-bio-photo {
@@ -90,13 +91,42 @@ body {
   flex-shrink: 0;
   background-color: #fff;
   box-shadow: 0 1px 6px rgba(0,0,0,0.08);
+  align-self: center;
 }
 
-.dc-bio-text { flex: 1; min-width: 0; }
+.dc-bio-header-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 0.2em 0;
+}
+
+.dc-identity {
+  font-size: 0.82em;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 500;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.dc-badges {
+  margin: 0;
+  line-height: 2;
+}
+
+.dc-bio-body { }
+
+.dc-bio-body p { font-size: 1em; color: #333; margin-bottom: 1em; }
 
 @media (max-width: 600px) {
-  .dc-bio-wrap { flex-direction: column; align-items: center; }
+  .dc-bio-header { flex-direction: column; align-items: center; }
   .dc-bio-photo { width: 140px; height: 140px; }
+  .dc-bio-header-text { align-items: center; text-align: center; }
+  .dc-identity { text-align: center; }
 }
 
 .dc-name {
@@ -113,7 +143,7 @@ body {
   margin-bottom: 1.3em;
 }
 
-#bio p { font-size: 1em; color: #333; margin-bottom: 1em; }
+#bio .dc-bio-body p { font-size: 1em; color: #333; margin-bottom: 1em; }
 
 details {
   background: #f7f9fc;
