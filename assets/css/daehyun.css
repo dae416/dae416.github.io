@@ -164,6 +164,50 @@ details summary:hover { color: #2a4fa0; }
   border-color: #b0bcd8;
 }
 
+/* ─── Research cards ─────────────────── */
+.dc-research-card {
+  display: block;
+  border: 1px solid #dde4f0;
+  border-radius: 5px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+
+.dc-research-card:hover {
+  box-shadow: 0 3px 12px rgba(26,47,107,0.15);
+  border-color: #1a2f6b;
+  text-decoration: none;
+  color: inherit;
+}
+
+.dc-research-card img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+}
+
+.dc-research-caption {
+  padding: 0.75em 0.9em 0.85em;
+  background: #fafbfd;
+}
+
+.dc-research-caption strong {
+  font-size: 0.95em;
+  color: #1a2f6b;
+  display: block;
+  margin-bottom: 0.3em;
+}
+
+.dc-research-caption p {
+  font-size: 0.85em;
+  color: #555;
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* ─── Publications ────────────────────── */
 .dc-pub-note { font-size: 0.88em; color: #666; margin-bottom: 1em; }
 
