@@ -82,17 +82,21 @@ body {
 }
 
 .dc-bio-photo {
-  width: 115px;
-  border-radius: 8px;
+  width: 155px;
+  height: 155px;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center top;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
 }
 
 .dc-bio-text { flex: 1; min-width: 0; }
 
 @media (max-width: 600px) {
   .dc-bio-wrap { flex-direction: column; align-items: center; }
-  .dc-bio-photo { width: 95px; }
+  .dc-bio-photo { width: 120px; height: 120px; }
 }
 
 .dc-name {
