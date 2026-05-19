@@ -251,26 +251,44 @@ details[open] summary {
   letter-spacing: 0.05em;
 }
 
-/* ─── Project image gallery ──────────── */
-.dc-proj-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 3px;
-  margin: 0.9em -1.2em 0.8em;
+/* ─── Project two-column layout ─────── */
+.dc-proj-body {
+  display: flex;
+  gap: 1.2em;
+  align-items: flex-start;
 }
 
-.dc-proj-gallery img {
+.dc-proj-images {
+  flex-shrink: 0;
+  width: 155px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.dc-proj-images img {
   width: 100%;
-  height: 88px;
-  object-fit: cover;
+  height: auto;
   display: block;
+  border-radius: 2px;
+}
+
+.dc-proj-text {
+  flex: 1;
+  min-width: 0;
+}
+
+@media (max-width: 600px) {
+  .dc-proj-body { flex-direction: column; }
+  .dc-proj-images { width: 100%; flex-direction: row; flex-wrap: wrap; gap: 3px; }
+  .dc-proj-images img { flex: 1 1 90px; height: 75px; object-fit: cover; }
 }
 
 .dc-proj-funder-logo {
-  height: 20px;
+  height: 18px;
   vertical-align: middle;
   margin-left: 0.5em;
-  opacity: 0.82;
+  opacity: 0.8;
   filter: grayscale(20%);
 }
 
