@@ -254,34 +254,42 @@ details[open] summary {
 /* ─── Project wrap (images left of blue border) ─ */
 .dc-proj-wrap {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;   /* image col stretches to text col height */
   margin-bottom: 1.1em;
 }
 
 .dc-proj-images {
   flex-shrink: 0;
-  width: 150px;
-  display: flex;
-  flex-direction: column;
+  width: 220px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-auto-rows: 1fr;    /* rows fill height equally */
   gap: 3px;
-  margin-right: 0.9em;
+  margin-right: 1em;
 }
 
 .dc-proj-images img {
   width: 100%;
-  height: auto;
+  height: 100%;           /* fill grid cell */
+  object-fit: cover;
   display: block;
   border-radius: 2px;
+  min-height: 90px;       /* floor so single images aren't tiny */
+}
+
+.dc-proj-images img:last-child:nth-child(odd) {
+  grid-column: span 2;
 }
 
 .dc-proj-wrap .dc-proj-card {
   margin-bottom: 0;
+  flex: 1;
 }
 
 @media (max-width: 600px) {
-  .dc-proj-wrap { flex-direction: column; }
-  .dc-proj-images { width: 100%; flex-direction: row; flex-wrap: wrap; margin-right: 0; margin-bottom: 0.6em; }
-  .dc-proj-images img { flex: 1 1 90px; height: 75px; object-fit: cover; }
+  .dc-proj-wrap { flex-direction: column; align-items: stretch; }
+  .dc-proj-images { width: 100%; margin-right: 0; margin-bottom: 0.6em;
+                    grid-auto-rows: 90px; }
 }
 
 .dc-proj-funder-logo {
