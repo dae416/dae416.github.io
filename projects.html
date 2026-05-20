@@ -133,12 +133,12 @@
       <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
-            <div class="dc-gallery-slide active">
+            <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
                 <video muted loop playsinline>
                   <source src="videos/squid/2_SI_movie_v15_highres_freesquid_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">Free-swimming squid (<em>Doryteuthis opalescens</em>)</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
@@ -147,22 +147,22 @@
                 <video muted loop playsinline>
                   <source src="videos/squid/2_SI_movie_v15_highres_squidimoob_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">Passive funnel mechanics after nerve severing</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
             <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
                 <img src="videos/squid/2_SI_movie_v15_highres_mechanism.png" alt="Superpropulsion mechanism">
-              </div>
+                <div class="dc-slide-caption">Elastic funnel store-release: superpropulsion</div>
               </div>
             </div>
           </div>
         </div>
-        <div class="dc-gallery-nav">
-          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid',-1)" style="display:none">&#8249;</button>
-          <div class="dc-gallery-dots" id="dots-gallery-squid" style="display:none"></div>
-          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid',1)" style="display:none">&#8250;</button>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-squid"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid',1)">&#8250;</button>
         </div>
       </div>
 
