@@ -757,3 +757,20 @@ details[open] summary {
 
 @media (max-width: 768px) { .dc-gallery { columns: 2; } }
 @media (max-width: 480px) { .dc-gallery { columns: 1; } }
+
+/* ── Compact conference list ── */
+ol.dc-conflist {
+  list-style: decimal;
+  padding-left: 1.6em;
+  margin: 0;
+}
+ol.dc-conflist li {
+  font-size: 0.84em;
+  color: #444;
+  line-height: 1.55;
+  padding: 0.18em 0;
+  border: none;
+}
+ol.dc-conflist li em {
+  color: #666;
+}
