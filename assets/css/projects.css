@@ -166,6 +166,8 @@
   object-fit: contain;
   display: block;
   background: #111;
+  pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 .dc-gallery-btn {
