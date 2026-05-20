@@ -177,6 +177,7 @@
   display: block;
   cursor: pointer;
   line-height: 0;
+  background: #fff;
 }
 
 .dc-slide-caption {
@@ -190,13 +191,11 @@
 }
 
 .dc-slide-progress {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: static;
   height: 4px;
   background: rgba(0,0,0,0.15);
   cursor: pointer;
+  line-height: 0;
   transition: height 0.15s;
 }
 
