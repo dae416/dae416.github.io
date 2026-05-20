@@ -113,14 +113,18 @@
       </video>
 
       <div class="dc-gallery-slider" id="gallery-squid">
-        <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid',-1)">&#8249;</button>
-        <div class="dc-gallery-track">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
           <div class="dc-gallery-slide active"><img src="images/P_squid.png" alt="Squid-inspired propulsion"></div>
           <div class="dc-gallery-slide"><img src="images/P_pulsed.png" alt="Pulsed jet dynamics"></div>
           <div class="dc-gallery-slide"><img src="images/P_flexible_nozzle_r.png" alt="Flexible nozzle results"></div>
         </div>
-        <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid',1)">&#8250;</button>
-        <div class="dc-gallery-dots" id="dots-gallery-squid"></div>
+        </div>
+        <div class="dc-gallery-nav">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide(\'gallery-squid\',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-squid"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide(\'gallery-squid\',1)">&#8250;</button>
+        </div>
       </div>
 
       <div class="dc-full-proj-text">
@@ -166,15 +170,19 @@
       </p>
 
       <div class="dc-gallery-slider" id="gallery-mudskipper">
-        <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-mudskipper',-1)">&#8249;</button>
-        <div class="dc-gallery-track">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
           <div class="dc-gallery-slide active"><img src="images/P_mudskipper.png" alt="Mudskipper locomotion"></div>
           <div class="dc-gallery-slide"><img src="images/MeInBrunei.jpeg" alt="Fieldwork in Borneo"></div>
           <div class="dc-gallery-slide"><img src="images/P_microvelia1.png" alt="Water-walking insect"></div>
           <div class="dc-gallery-slide"><img src="images/P_manu_rr.png" alt="Manu splash dynamics"></div>
         </div>
-        <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-mudskipper',1)">&#8250;</button>
-        <div class="dc-gallery-dots" id="dots-gallery-mudskipper"></div>
+        </div>
+        <div class="dc-gallery-nav">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide(\'gallery-mudskipper\',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-mudskipper"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide(\'gallery-mudskipper\',1)">&#8250;</button>
+        </div>
       </div>
 
       <div class="dc-full-proj-text">
@@ -217,8 +225,8 @@
       </p>
 
       <div class="dc-gallery-slider" id="gallery-interface">
-        <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-interface',-1)">&#8249;</button>
-        <div class="dc-gallery-track">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
           <div class="dc-gallery-slide active"><img src="images/B_bubbleplume.png" alt="Bubble plume"></div>
           <div class="dc-gallery-slide"><img src="images/P_bubblevelocimetry_r.png" alt="Bubble velocimetry"></div>
           <div class="dc-gallery-slide"><img src="images/P_liquid_atom_r.png" alt="Liquid atomization"></div>
@@ -226,8 +234,12 @@
           <div class="dc-gallery-slide"><img src="images/P_SPHoCyl.png" alt="Superhydrophobic cylinder"></div>
           <div class="dc-gallery-slide"><img src="images/P_SPHoSphere.png" alt="SHPo sphere"></div>
         </div>
-        <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-interface',1)">&#8250;</button>
-        <div class="dc-gallery-dots" id="dots-gallery-interface"></div>
+        </div>
+        <div class="dc-gallery-nav">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide(\'gallery-interface\',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-interface"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide(\'gallery-interface\',1)">&#8250;</button>
+        </div>
       </div>
 
       <div class="dc-full-proj-text">
@@ -276,16 +288,20 @@
       </p>
 
       <div class="dc-gallery-slider" id="gallery-fsi">
-        <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-fsi',-1)">&#8249;</button>
-        <div class="dc-gallery-track">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
           <div class="dc-gallery-slide active"><img src="images/B_Spherearray.png" alt="Sphere array flow"></div>
           <div class="dc-gallery-slide"><img src="images/P_sphere_array_r.png" alt="Sphere array PIV results"></div>
           <div class="dc-gallery-slide"><img src="images/P_electroconvec_r.png" alt="Electroconvective membrane"></div>
           <div class="dc-gallery-slide"><img src="images/P_ureter_r.png" alt="Medical device (ureter)"></div>
           <div class="dc-gallery-slide"><img src="images/P_flexible_nozzle.png" alt="Flexible nozzle"></div>
         </div>
-        <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-fsi',1)">&#8250;</button>
-        <div class="dc-gallery-dots" id="dots-gallery-fsi"></div>
+        </div>
+        <div class="dc-gallery-nav">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide(\'gallery-fsi\',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-fsi"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide(\'gallery-fsi\',1)">&#8250;</button>
+        </div>
       </div>
 
       <div class="dc-full-proj-text">
@@ -342,67 +358,68 @@
 <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
 <script>
-// ── Gallery peek carousel ──
+// ── Gallery multi-item carousel ──
 var sliderState = {};
-var SLIDE_RATIO = 0.80; // active slide = 80% of container
-var SLIDE_GAP   = 10;   // px gap between slides
+var VISIBLE = 3;   // full images shown; 4th partially visible as hint
+var GAP     = 8;   // px, must match CSS gap
+
+function getSlideWidth(id) {
+  var vp = document.querySelector('#' + id + ' .dc-gallery-viewport');
+  return vp ? (vp.offsetWidth - GAP * (VISIBLE - 1)) / VISIBLE : 0;
+}
 
 function setTrackPos(id) {
-  var slider  = document.getElementById(id);
-  var track   = slider.querySelector('.dc-gallery-track');
-  var W       = slider.offsetWidth;
-  var slideW  = W * SLIDE_RATIO;
-  var i       = sliderState[id] || 0;
-  // center slide i: offset = (W - slideW)/2 - i*(slideW + GAP)
-  var offset  = (W - slideW) / 2 - i * (slideW + SLIDE_GAP);
-  track.style.transform = 'translateX(' + offset + 'px)';
+  var track = document.querySelector('#' + id + ' .dc-gallery-track');
+  if (!track) return;
+  var sw = getSlideWidth(id);
+  track.style.transform = 'translateX(' + (-(sliderState[id] || 0) * (sw + GAP)) + 'px)';
 }
 
 function moveSlide(id, dir) {
   var slider = document.getElementById(id);
-  var slides = slider.querySelectorAll('.dc-gallery-slide');
-  var n      = slides.length;
+  var n = slider.querySelectorAll('.dc-gallery-slide').length;
   if (sliderState[id] === undefined) sliderState[id] = 0;
-  slides[sliderState[id]].classList.remove('active');
-  sliderState[id] = (sliderState[id] + dir + n) % n;
-  slides[sliderState[id]].classList.add('active');
+  sliderState[id] = Math.max(0, Math.min(n - 1, sliderState[id] + dir));
   setTrackPos(id);
-  // update dots
-  slider.querySelectorAll('.dc-gallery-dot').forEach(function(d, i) {
-    d.classList.toggle('active', i === sliderState[id]);
+  updateGalleryNav(id, n);
+}
+
+function updateGalleryNav(id, n) {
+  var slider = document.getElementById(id);
+  var i = sliderState[id] || 0;
+  var prev = slider.querySelector('.dc-gallery-prev');
+  var next = slider.querySelector('.dc-gallery-next');
+  if (prev) prev.disabled = (i === 0);
+  if (next) next.disabled = (i >= n - 1);
+  slider.querySelectorAll('.dc-gallery-dot').forEach(function(d, idx) {
+    d.classList.toggle('active', idx === i);
   });
 }
 
 function initSliders() {
   document.querySelectorAll('.dc-gallery-slider').forEach(function(slider) {
-    var id     = slider.id;
+    var id = slider.id;
     var slides = slider.querySelectorAll('.dc-gallery-slide');
+    var n = slides.length;
     var dotsEl = document.getElementById('dots-' + id);
     sliderState[id] = 0;
     setTrackPos(id);
-
     if (dotsEl && dotsEl.children.length === 0) {
       slides.forEach(function(_, i) {
         var dot = document.createElement('span');
         dot.className = 'dc-gallery-dot' + (i === 0 ? ' active' : '');
-        dot.onclick   = function() {
-          var diff = i - sliderState[id];
-          if (diff !== 0) moveSlide(id, diff);
-        };
+        dot.onclick = function() { sliderState[id] = i; setTrackPos(id); updateGalleryNav(id, n); };
         dotsEl.appendChild(dot);
       });
     }
+    updateGalleryNav(id, n);
   });
 }
 
-// Defer init until layout is computed
 window.addEventListener('load', function() {
-  requestAnimationFrame(function() {
-    initSliders();
-  });
+  requestAnimationFrame(function() { initSliders(); });
 });
 
-// Recalculate on resize
 window.addEventListener('resize', function() {
   Object.keys(sliderState).forEach(function(id) { setTrackPos(id); });
 });
