@@ -291,7 +291,7 @@
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide active">
               <div class="dc-slide-wrap">
-                <video muted loop playsinline>
+                <video muted loop playsinline data-rate="2">
                   <source src="videos/squid/pulsed_jet_optimization_web.mp4" type="video/mp4">
                 </video>
                 <div class="dc-slide-caption">Bayesian optimization of pulsed jet nozzle geometry</div>
@@ -657,6 +657,13 @@ function initCarouselVideos() {
       var video = wrap.querySelector('video');
       var bar = wrap.querySelector('.dc-slide-bar');
       if (!video) return;
+
+      // Custom playback rate
+      if (video.dataset.rate) {
+        var rate = parseFloat(video.dataset.rate);
+        video.playbackRate = rate;
+        video.addEventListener('play', function() { video.playbackRate = rate; });
+      }
 
       // Progress bar
       video.addEventListener('timeupdate', function() {
