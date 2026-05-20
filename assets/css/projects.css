@@ -127,52 +127,54 @@
   margin: 0 0 1.3em 0;
 }
 
-/* ── Gallery slider ── */
+/* ── Gallery peek carousel ── */
 .dc-gallery-slider {
   position: relative;
   width: 100%;
   margin-bottom: 1.6em;
   border-radius: 5px;
   overflow: hidden;
-  background: #f0f2f7;
+  background: #111;
   user-select: none;
 }
 
 .dc-gallery-track {
-  position: relative;
-  width: 100%;
-  height: 380px;
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  transition: transform 0.44s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  will-change: transform;
 }
 
 .dc-gallery-slide {
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  pointer-events: none;
+  flex: 0 0 80%;
+  filter: brightness(0.28);
+  transition: filter 0.44s ease;
+  border-radius: 3px;
+  overflow: hidden;
 }
 
 .dc-gallery-slide.active {
-  opacity: 1;
-  pointer-events: auto;
+  filter: brightness(1);
 }
 
 .dc-gallery-slide img {
   width: 100%;
-  height: 100%;
+  height: 390px;
   object-fit: contain;
   display: block;
+  background: #111;
 }
 
 .dc-gallery-btn {
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  background: rgba(0,0,0,0.38);
+  background: rgba(255,255,255,0.15);
   color: #fff;
   border: none;
-  width: 40px;
-  height: 64px;
+  width: 38px;
+  height: 60px;
   font-size: 2em;
   line-height: 1;
   cursor: pointer;
@@ -183,9 +185,10 @@
   align-items: center;
   justify-content: center;
   padding: 0;
+  backdrop-filter: blur(4px);
 }
 
-.dc-gallery-btn:hover { background: rgba(0,0,0,0.65); }
+.dc-gallery-btn:hover { background: rgba(255,255,255,0.32); }
 .dc-gallery-prev { left: 0; border-radius: 0 3px 3px 0; }
 .dc-gallery-next { right: 0; border-radius: 3px 0 0 3px; }
 
@@ -203,7 +206,7 @@
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.35);
   cursor: pointer;
   transition: background 0.2s, transform 0.2s;
 }

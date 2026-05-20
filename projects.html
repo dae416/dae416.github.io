@@ -341,41 +341,62 @@
 <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
 <script>
-// ── Gallery slider with fade transition ──
+// ── Gallery peek carousel ──
 var sliderState = {};
+var SLIDE_RATIO = 0.80; // active slide = 80% of container
+var SLIDE_GAP   = 10;   // px gap between slides
+
+function setTrackPos(id) {
+  var slider  = document.getElementById(id);
+  var track   = slider.querySelector('.dc-gallery-track');
+  var W       = slider.offsetWidth;
+  var slideW  = W * SLIDE_RATIO;
+  var i       = sliderState[id] || 0;
+  // center slide i: offset = (W - slideW)/2 - i*(slideW + GAP)
+  var offset  = (W - slideW) / 2 - i * (slideW + SLIDE_GAP);
+  track.style.transform = 'translateX(' + offset + 'px)';
+}
 
 function moveSlide(id, dir) {
   var slider = document.getElementById(id);
   var slides = slider.querySelectorAll('.dc-gallery-slide');
-  var n = slides.length;
-  if (!sliderState[id]) sliderState[id] = 0;
+  var n      = slides.length;
+  if (sliderState[id] === undefined) sliderState[id] = 0;
   slides[sliderState[id]].classList.remove('active');
   sliderState[id] = (sliderState[id] + dir + n) % n;
   slides[sliderState[id]].classList.add('active');
-  updateDots(id, n);
-}
-
-function updateDots(id, n) {
-  var dotsEl = document.getElementById('dots-' + id);
-  if (!dotsEl) return;
-  dotsEl.querySelectorAll('.dc-gallery-dot').forEach(function(d, i) {
+  setTrackPos(id);
+  // update dots
+  slider.querySelectorAll('.dc-gallery-dot').forEach(function(d, i) {
     d.classList.toggle('active', i === sliderState[id]);
   });
 }
 
-// Init dots for each slider
+// Init each slider
 document.querySelectorAll('.dc-gallery-slider').forEach(function(slider) {
-  var id = slider.id;
+  var id     = slider.id;
   var slides = slider.querySelectorAll('.dc-gallery-slide');
   var dotsEl = document.getElementById('dots-' + id);
-  if (!dotsEl) return;
   sliderState[id] = 0;
-  slides.forEach(function(_, i) {
-    var dot = document.createElement('span');
-    dot.className = 'dc-gallery-dot' + (i === 0 ? ' active' : '');
-    dot.onclick = function() { moveSlide(id, i - sliderState[id]); };
-    dotsEl.appendChild(dot);
-  });
+  setTrackPos(id);
+
+  // build dots
+  if (dotsEl) {
+    slides.forEach(function(_, i) {
+      var dot = document.createElement('span');
+      dot.className = 'dc-gallery-dot' + (i === 0 ? ' active' : '');
+      dot.onclick   = function() {
+        var diff = i - sliderState[id];
+        if (diff !== 0) moveSlide(id, diff);
+      };
+      dotsEl.appendChild(dot);
+    });
+  }
+});
+
+// Recalculate on resize
+window.addEventListener('resize', function() {
+  Object.keys(sliderState).forEach(function(id) { setTrackPos(id); });
 });
 
 // ── Video: muted autoplay when scrolled into view ──
