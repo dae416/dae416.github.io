@@ -108,7 +108,7 @@
       <ul class="dc-publist">
         <li>
           <div class="dc-pub-img" style="overflow:hidden;">
-            <video class="dc-autoplay-video" muted loop playsinline preload="metadata"
+            <video id="icb-video" class="dc-autoplay-video" muted loop playsinline preload="metadata"
                    style="width:100%;height:100%;object-fit:cover;transform:scale(1.95);transform-origin:100% 50%;display:block;">
               <source src="videos/mudskipper/ICB_combined.mp4" type="video/mp4">
             </video>
@@ -132,6 +132,7 @@
             "Mastering the Manu – How humans create large splashes,"
             <em>J. R. Soc. Interface</em>, 15, 2 (2025).
             <a href="papers/rohilla2025_jrsi.pdf" class="dc-btn" target="_blank" rel="noopener">PDF</a>
+            <br><small>Press: <a href="https://www.gatech.edu/news/2025/05/16/rule-pool-summer-and-make-biggest-splash" target="_blank" rel="noopener">Georgia Tech News</a> · <a href="https://www.pbs.org/newshour/science/the-physics-behind-making-humongous-splashes-in-the-pool" target="_blank" rel="noopener">PBS NewsHour</a> · <a href="https://www.sciencenews.org/article/biggest-splash-pool-manu-science" target="_blank" rel="noopener">Science News</a></small>
           </div>
         </li>
         <li>
@@ -265,6 +266,14 @@ const videoObs = new IntersectionObserver(function(entries) {
   entries.forEach(function(e) { e.isIntersecting ? e.target.play() : e.target.pause(); });
 }, { threshold: 0.25 });
 document.querySelectorAll('.dc-autoplay-video').forEach(function(v) { videoObs.observe(v); });
+
+(function() {
+  var v = document.getElementById('icb-video');
+  if (!v) return;
+  v.addEventListener('timeupdate', function() {
+    v.style.transformOrigin = v.currentTime <= 7.84 ? '100% 50%' : '50% 50%';
+  });
+})();
 </script>
 
 </body>
