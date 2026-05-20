@@ -153,14 +153,22 @@
   flex-direction: column;
 }
 
-.dc-gallery-slide img,
-.dc-gallery-slide video {
+.dc-gallery-slide img {
   width: 100%;
   aspect-ratio: 16 / 9;
   object-fit: cover;
   display: block;
   pointer-events: none;
   -webkit-user-drag: none;
+}
+
+.dc-gallery-slide video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  background: #000;
+  display: block;
+  pointer-events: none;
 }
 
 .dc-slide-wrap {
