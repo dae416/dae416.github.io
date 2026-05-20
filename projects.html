@@ -401,6 +401,14 @@ function initSliders() {
     var id = slider.id;
     var slides = slider.querySelectorAll('.dc-gallery-slide');
     var n = slides.length;
+
+    if (n <= 3) {
+      // Static grid: just show images, no nav
+      slider.classList.add('dc-gallery-static');
+      return;
+    }
+
+    // 4+ images: full carousel
     var dotsEl = document.getElementById('dots-' + id);
     sliderState[id] = 0;
     setTrackPos(id);

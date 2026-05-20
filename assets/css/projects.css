@@ -162,6 +162,23 @@
   -webkit-user-drag: none;
 }
 
+/* ── Static mode (≤3 images): no sliding ── */
+.dc-gallery-slider.dc-gallery-static .dc-gallery-viewport {
+  overflow: visible;
+}
+
+.dc-gallery-slider.dc-gallery-static .dc-gallery-track {
+  transition: none;
+}
+
+.dc-gallery-slider.dc-gallery-static .dc-gallery-slide {
+  flex: 1; /* distribute evenly */
+}
+
+.dc-gallery-slider.dc-gallery-static .dc-gallery-nav {
+  display: none;
+}
+
 /* ── Navigation row below images ── */
 .dc-gallery-nav {
   display: flex;
