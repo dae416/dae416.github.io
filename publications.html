@@ -280,9 +280,14 @@ document.querySelectorAll('.dc-autoplay-video').forEach(function(v) { videoObs.o
 (function() {
   var v = document.getElementById('icb-video');
   if (!v) return;
-  v.addEventListener('timeupdate', function() {
+  var rafId;
+  function update() {
     v.style.transformOrigin = v.currentTime <= 7.84 ? '100% 50%' : '50% 50%';
-  });
+    if (!v.paused && !v.ended) rafId = requestAnimationFrame(update);
+  }
+  v.addEventListener('play', function() { rafId = requestAnimationFrame(update); });
+  v.addEventListener('pause', function() { cancelAnimationFrame(rafId); });
+  v.addEventListener('seeked', update);
 })();
 </script>
 
