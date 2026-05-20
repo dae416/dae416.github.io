@@ -607,7 +607,7 @@ details[open] summary {
 
 @media (max-width: 600px) {
   .dc-publist > li { flex-direction: column !important; }
-  .dc-pub-img { width: 100%; height: 180px; }
+  .dc-pub-img { width: 100%; height: auto; aspect-ratio: 4 / 3; }
 }
 
 .dc-btn {
