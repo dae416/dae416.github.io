@@ -131,6 +131,7 @@
 .dc-gallery-slider {
   position: relative;
   width: 100%;
+  height: 390px;        /* explicit height ensures visibility before images load */
   margin-bottom: 1.6em;
   border-radius: 5px;
   overflow: hidden;
@@ -142,6 +143,7 @@
   display: flex;
   align-items: stretch;
   gap: 10px;
+  height: 100%;
   transition: transform 0.44s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   will-change: transform;
 }
@@ -160,7 +162,7 @@
 
 .dc-gallery-slide img {
   width: 100%;
-  height: 390px;
+  height: 100%;
   object-fit: contain;
   display: block;
   background: #111;
