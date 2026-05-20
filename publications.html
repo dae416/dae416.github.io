@@ -168,6 +168,7 @@
             <em>Sci. Rep.</em>, 12, 11879 (2022).
             <a href="https://doi.org/10.1038/s41598-022-16145-y" class="dc-btn" target="_blank" rel="noopener">DOI</a>
             <a href="papers/choi2022_srep.pdf" class="dc-btn" target="_blank" rel="noopener">PDF</a>
+            <a href="https://github.com/dae416/DeepBubbleVelocimetry" class="dc-btn" target="_blank" rel="noopener">GitHub</a>
           </div>
         </li>
         <li>
@@ -310,7 +311,7 @@ document.querySelectorAll('.dc-autoplay-video').forEach(function(v) { videoObs.o
   if (!v) return;
   var rafId;
   function update() {
-    v.style.transformOrigin = v.currentTime <= 7.84 ? '100% 50%' : '50% 50%';
+    v.style.transformOrigin = v.currentTime <= 3.92 ? '100% 50%' : '50% 50%';
     if (!v.paused && !v.ended) rafId = requestAnimationFrame(update);
   }
   v.addEventListener('play', function() { rafId = requestAnimationFrame(update); });
