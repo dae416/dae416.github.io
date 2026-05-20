@@ -154,9 +154,9 @@
           </div>
         </div>
         <div class="dc-gallery-nav">
-          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid',-1)">&#8249;</button>
-          <div class="dc-gallery-dots" id="dots-gallery-squid"></div>
-          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid',1)">&#8250;</button>
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid',-1)" style="display:none">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-squid" style="display:none"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid',1)" style="display:none">&#8250;</button>
         </div>
       </div>
 
@@ -253,9 +253,9 @@
           </div>
         </div>
         <div class="dc-gallery-nav">
-          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid-3',-1)">&#8249;</button>
-          <div class="dc-gallery-dots" id="dots-gallery-squid-3"></div>
-          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-3',1)">&#8250;</button>
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid-3',-1)" style="display:none">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-squid-3" style="display:none"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-3',1)" style="display:none">&#8250;</button>
         </div>
       </div>
 
@@ -578,6 +578,12 @@ function initCarouselVideos() {
         if (bar && video.duration) {
           bar.style.width = (video.currentTime / video.duration * 100) + '%';
         }
+      });
+
+      // Reset to beginning when paused
+      video.addEventListener('pause', function() {
+        video.currentTime = 0;
+        if (bar) bar.style.width = '0%';
       });
 
       // Click: play this, pause others
