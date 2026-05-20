@@ -193,15 +193,21 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 3px;
-  background: rgba(255,255,255,0.25);
-  pointer-events: none;
+  height: 4px;
+  background: rgba(0,0,0,0.15);
+  cursor: pointer;
+  transition: height 0.15s;
+}
+
+.dc-slide-wrap:hover .dc-slide-progress {
+  height: 6px;
 }
 
 .dc-slide-bar {
   height: 100%;
   width: 0%;
-  background: #fff;
+  background: #1a2f6b;
+  pointer-events: none;
 }
 
 /* ── Full-width single-slide mode ── */

@@ -678,7 +678,29 @@ function initCarouselVideos() {
         if (bar) bar.style.width = '0%';
       });
 
-      // Click: play this, pause others
+      // Progress bar: seek on click/drag
+      if (bar && bar.parentElement) {
+        var prog = bar.parentElement;
+        var seeking = false;
+        function seek(e) {
+          var rect = prog.getBoundingClientRect();
+          var x = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+          var ratio = Math.max(0, Math.min(1, x / rect.width));
+          if (video.duration) video.currentTime = ratio * video.duration;
+        }
+        prog.addEventListener('mousedown', function(e) {
+          e.stopPropagation(); seeking = true; seek(e);
+        });
+        prog.addEventListener('touchstart', function(e) {
+          e.stopPropagation(); seeking = true; seek(e);
+        }, { passive: true });
+        document.addEventListener('mousemove', function(e) { if (seeking) seek(e); });
+        document.addEventListener('touchmove', function(e) { if (seeking) seek(e); }, { passive: true });
+        document.addEventListener('mouseup',  function() { seeking = false; });
+        document.addEventListener('touchend', function() { seeking = false; });
+      }
+
+      // Click on video: play this, pause others
       wrap.addEventListener('click', function() {
         allVideos.forEach(function(v) { if (v !== video) v.pause(); });
         if (video.paused) video.play();
