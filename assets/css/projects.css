@@ -192,15 +192,17 @@
 
 .dc-slide-progress {
   position: static;
-  height: 4px;
-  background: rgba(0,0,0,0.15);
+  height: 3px;
+  background: rgba(0,0,0,0.12);
   cursor: pointer;
   line-height: 0;
-  transition: height 0.15s;
+  opacity: 0;
+  transition: opacity 0.2s, height 0.15s;
 }
 
 .dc-slide-wrap:hover .dc-slide-progress {
-  height: 6px;
+  opacity: 1;
+  height: 5px;
 }
 
 .dc-slide-bar {
@@ -339,6 +341,41 @@
   .dc-proj-main-panel { padding: 1.5em 1em; }
   .dc-full-proj-gallery { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
 }
+
+/* ── Click-to-play overlay for main project videos ── */
+.dc-play-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.22);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s;
+  z-index: 2;
+}
+
+.dc-play-overlay:hover { background: rgba(0,0,0,0.32); }
+
+.dc-play-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.6em;
+  color: #1a2f6b;
+  padding-left: 5px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.25);
+  transition: transform 0.15s;
+}
+
+.dc-play-overlay:hover .dc-play-icon { transform: scale(1.08); }
+
+.dc-play-overlay.hidden { display: none; }
 
 /* ── Custom video controls (no volume) ── */
 .dc-video-wrap {

@@ -109,9 +109,10 @@
       </p>
 
       <div class="dc-video-wrap">
-        <video class="dc-full-proj-video dc-autoplay-video" muted loop playsinline preload="metadata">
+        <video class="dc-full-proj-video" muted loop playsinline preload="metadata">
           <source src="videos/squid_main.mp4" type="video/mp4">
         </video>
+        <div class="dc-play-overlay" aria-label="재생"><div class="dc-play-icon">&#9654;</div></div>
         <div class="dc-video-controls">
           <button class="dc-video-btn" aria-label="Play/Pause">&#9654;</button>
           <input class="dc-video-seek" type="range" min="0" max="100" value="0" step="0.1">
@@ -337,9 +338,10 @@
       </p>
 
       <div class="dc-video-wrap">
-        <video class="dc-full-proj-video dc-autoplay-video" muted loop playsinline preload="metadata">
+        <video class="dc-full-proj-video" muted loop playsinline preload="metadata">
           <source src="videos/mudskipper_main.mp4" type="video/mp4">
         </video>
+        <div class="dc-play-overlay" aria-label="재생"><div class="dc-play-icon">&#9654;</div></div>
         <div class="dc-video-controls">
           <button class="dc-video-btn" aria-label="Play/Pause">&#9654;</button>
           <input class="dc-video-seek" type="range" min="0" max="100" value="0" step="0.1">
@@ -813,9 +815,18 @@ document.querySelectorAll('.dc-sidebar-item').forEach(function(item) {
 
 <script>
 document.querySelectorAll('.dc-video-wrap').forEach(function(wrap) {
-  var video = wrap.querySelector('video');
-  var btn   = wrap.querySelector('.dc-video-btn');
-  var seek  = wrap.querySelector('.dc-video-seek');
+  var video   = wrap.querySelector('video');
+  var btn     = wrap.querySelector('.dc-video-btn');
+  var seek    = wrap.querySelector('.dc-video-seek');
+  var overlay = wrap.querySelector('.dc-play-overlay');
+
+  if (overlay) {
+    overlay.addEventListener('click', function() {
+      overlay.classList.add('hidden');
+      video.play();
+    });
+  }
+
   btn.addEventListener('click', function() {
     video.paused ? video.play() : video.pause();
   });
