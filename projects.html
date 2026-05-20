@@ -354,11 +354,14 @@ const sectionObs = new IntersectionObserver(function(entries) {
 
 sections.forEach(function(s) { sectionObs.observe(s); });
 
-// ── Sidebar links: smooth scroll ──
-document.querySelectorAll('.dc-sidebar-title').forEach(function(a) {
-  a.addEventListener('click', function(e) {
+// ── Sidebar: click anywhere on item (except pub links) → smooth scroll ──
+document.querySelectorAll('.dc-sidebar-item').forEach(function(item) {
+  item.addEventListener('click', function(e) {
+    if (e.target.closest('.dc-sidebar-pubs')) return; // let pub links open normally
     e.preventDefault();
-    var target = document.querySelector(this.getAttribute('href'));
+    var anchor = item.querySelector('.dc-sidebar-title');
+    if (!anchor) return;
+    var target = document.querySelector(anchor.getAttribute('href'));
     if (target) {
       window.scrollTo({ top: target.offsetTop - 75, behavior: 'smooth' });
     }
