@@ -346,6 +346,29 @@
         </div>
       </div>
 
+      <div class="dc-gallery-slider dc-gallery-fullwidth" id="gallery-mudskipper-field">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide">
+              <video muted loop playsinline preload="metadata" autoplay>
+                <source src="videos/mudskipper/hanging_out_mudskippers.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="dc-gallery-slide">
+              <video muted loop playsinline preload="metadata">
+                <source src="videos/mudskipper/sunny_field.mp4" type="video/mp4">
+              </video>
+              <p class="dc-gallery-caption">Credit: Dr. Jung, Cornell University</p>
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-mudskipper-field',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-mudskipper-field"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-mudskipper-field',1)">&#8250;</button>
+        </div>
+      </div>
+
       <div class="dc-gallery-slider" id="gallery-mudskipper">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
@@ -555,23 +578,34 @@ function setTrackPos(id) {
   track.style.transform = 'translateX(' + (-(sliderState[id] || 0) * (sw + GAP)) + 'px)';
 }
 
+function visibleCount(slider) {
+  return (slider && slider.classList.contains('dc-gallery-fullwidth')) ? 1 : VISIBLE;
+}
+
 function moveSlide(id, dir) {
   var slider = document.getElementById(id);
   var n = slider.querySelectorAll('.dc-gallery-slide').length;
+  var vis = visibleCount(slider);
   if (sliderState[id] === undefined) sliderState[id] = 0;
-  sliderState[id] = Math.max(0, Math.min(n - VISIBLE, sliderState[id] + dir));
+  sliderState[id] = Math.max(0, Math.min(n - vis, sliderState[id] + dir));
   setTrackPos(id);
   updateGalleryNav(id, n);
+  if (slider.classList.contains('dc-gallery-fullwidth')) {
+    var idx = sliderState[id];
+    slider.querySelectorAll('.dc-gallery-slide video').forEach(function(v, i) {
+      if (i === idx) { v.currentTime = 0; v.play(); } else { v.pause(); }
+    });
+  }
 }
 
 function updateGalleryNav(id, n) {
   var slider = document.getElementById(id);
+  var vis = visibleCount(slider);
   var i = sliderState[id] || 0;
   var prev = slider.querySelector('.dc-gallery-prev');
   var next = slider.querySelector('.dc-gallery-next');
-  // disable prev at first slide, next at last slide
   if (prev) prev.disabled = (i === 0);
-  if (next) next.disabled = (i >= n - VISIBLE);
+  if (next) next.disabled = (i >= n - vis);
   slider.querySelectorAll('.dc-gallery-dot').forEach(function(d, idx) {
     d.classList.toggle('active', idx === i);
   });
@@ -582,16 +616,15 @@ function initSliders() {
     var id = slider.id;
     var slides = slider.querySelectorAll('.dc-gallery-slide');
     var n = slides.length;
+    var isFullwidth = slider.classList.contains('dc-gallery-fullwidth');
 
-    if (n <= 3) {
-      // Static grid: just show all, hide nav immediately (not via JS timeout)
+    if (n <= 3 && !isFullwidth) {
       slider.classList.add('dc-gallery-static');
       var nav = slider.querySelector('.dc-gallery-nav');
       if (nav) nav.style.display = 'none';
       return;
     }
 
-    // 4+ slides: full carousel
     var dotsEl = document.getElementById('dots-' + id);
     sliderState[id] = 0;
     setTrackPos(id);
@@ -599,7 +632,14 @@ function initSliders() {
       slides.forEach(function(_, i) {
         var dot = document.createElement('span');
         dot.className = 'dc-gallery-dot' + (i === 0 ? ' active' : '');
-        dot.onclick = function() { sliderState[id] = i; setTrackPos(id); updateGalleryNav(id, n); };
+        dot.onclick = function() {
+          sliderState[id] = i; setTrackPos(id); updateGalleryNav(id, n);
+          if (isFullwidth) {
+            slider.querySelectorAll('.dc-gallery-slide video').forEach(function(v, j) {
+              if (j === i) { v.currentTime = 0; v.play(); } else { v.pause(); }
+            });
+          }
+        };
         dotsEl.appendChild(dot);
       });
     }
