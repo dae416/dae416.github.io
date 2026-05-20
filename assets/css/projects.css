@@ -413,3 +413,14 @@
   text-align: right;
   margin: 5px 0 0 0;
 }
+
+/* ── Full-width single image block ── */
+.dc-full-proj-img-single {
+  width: 100%;
+  margin-bottom: 0.5em;
+}
+.dc-full-proj-img-single img {
+  width: 100%;
+  display: block;
+  border-radius: 5px;
+}
