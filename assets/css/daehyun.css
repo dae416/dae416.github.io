@@ -360,6 +360,15 @@ details[open] summary {
   margin-bottom: 0.4em;
 }
 
+.dc-proj-video {
+  width: 100%;
+  max-width: 100%;
+  border-radius: 4px;
+  margin: 0.8em 0;
+  display: block;
+  background: #000;
+}
+
 /* ─── Open Source cards ───────────────── */
 .dc-os-card {
   background: #fff;
