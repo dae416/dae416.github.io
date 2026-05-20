@@ -279,15 +279,24 @@
 }
 .dc-video-wrap .dc-full-proj-video {
   margin: 0;
-  border-radius: 5px 5px 0 0;
+  border-radius: 5px;
 }
 .dc-video-controls {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(0,0,0,0.72);
-  padding: 7px 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.65));
+  padding: 28px 12px 10px;
   border-radius: 0 0 5px 5px;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+.dc-video-wrap:hover .dc-video-controls {
+  opacity: 1;
 }
 .dc-video-btn {
   background: none;
