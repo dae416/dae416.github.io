@@ -172,8 +172,8 @@
 
 .dc-slide-caption {
   padding: 0.3em 0.5em;
-  background: #1c1c1c;
-  color: #ddd;
+  background: transparent;
+  color: #111;
   font-size: 0.72em;
   line-height: 1.3;
   text-align: center;
