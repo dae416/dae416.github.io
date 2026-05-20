@@ -9,7 +9,8 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
-  <link rel="stylesheet" href="assets/css/daehyun2.css" />
+  <link rel="stylesheet" href="assets/css/daehyun.css" />
+  <link rel="stylesheet" href="assets/css/projects.css" />
 </head>
 
 <body>
@@ -29,227 +30,341 @@
         <li><a href="publications.html">Publications</a></li>
         <li class="active"><a href="projects.html">Projects</a></li>
         <li><a href="opensource.html">Open Source</a></li>
-        <li><a href="gallery.html">Gallery</a></li>
       </ul>
-    </div>
-    <div class="dc-avatar-wrap">
-      <a href="index.html"><img src="images/headshot.png" class="dc-avatar" alt="Daehyun Choi" /></a>
     </div>
   </div>
 </nav>
 
-<!-- Main Content -->
-<div class="container dc-main" role="main">
-  <div class="row">
-    <div class="col-lg-8 col-lg-offset-2 col-md-10 col-md-offset-1">
+<!-- Two-panel layout -->
+<div class="dc-proj-page">
 
-      <!-- ══ 1. BIOINSPIRED PROPULSION ══════════════════════ -->
-      <h3 class="dc-subsection">Bioinspired Propulsion</h3>
+  <!-- ══ LEFT: sticky sidebar (30%) ══ -->
+  <aside class="dc-proj-sidebar-panel">
+    <div class="dc-sidebar-inner">
 
-      <div class="dc-proj-wrap">
-        <!-- images: outside the card, left of blue border -->
-        <div class="dc-proj-images">
-          <img src="images/P_squid.png"             alt="Squid-inspired propulsion">
-          <img src="images/P_pulsed.png"            alt="Pulsed jet dynamics">
-          <img src="images/P_flexible_nozzle_r.png" alt="Flexible nozzle results">
-        </div>
+      <p class="dc-sidebar-heading">Research Projects</p>
 
-        <div class="dc-proj-card">
-          <div class="dc-proj-header">
-            <div>
-              <h4 class="dc-proj-title">
-                Squid-Inspired Nozzles for Enhanced Efficiency and Thrust
-                <img src="images/darpa-logo.png" alt="DARPA" class="dc-proj-funder-logo">
-              </h4>
-              <p class="dc-proj-support">
-                <strong>Support:</strong> DARPA (Young Faculty Award) &nbsp;·&nbsp; NRF Korea (Domestic Postdoctoral Fellowship)<br>
-                <strong>With:</strong> Prof. M. Saad Bhamla (Georgia Tech) &nbsp;·&nbsp; Prof. Daeshik Kang (Ajou University)
-              </p>
-            </div>
-            
-          </div>
-          <p class="dc-proj-desc">
-            Squid achieve extraordinary thrust through compliant funnels that passively shape jet vortex formation.
-            We design and characterize squid-inspired flexible nozzles for rotary propulsion systems, conducting
-            PIV and dynamometry experiments to quantify thrust amplification arising from elastic wave-mediated
-            vortex dynamics. Deep-learning Bayesian surrogate models accelerate nozzle geometry optimization
-            across high-dimensional parameter spaces. Earlier work at Ajou University established the fundamental
-            characterization of cephalopod-inspired soft nozzle systems — measuring thrust generation, elastic
-            energy storage, and impulse-release dynamics in compliant structures replicating squid funnel mechanics.
-          </p>
-          <video class="dc-proj-video" controls preload="metadata">
-            <source src="videos/darpa_thrust_demo.mp4" type="video/mp4">
-          </video>
-          <p class="dc-proj-kw"><strong>Keywords:</strong> bioinspired propulsion, FSI, elastic waves, deep learning, Bayesian optimization, DARPA, soft robotics</p>
-          <p class="dc-proj-kw">
-            <strong>Publications:</strong>
-            <a href="https://arxiv.org/abs/2605.03239" class="dc-btn" target="_blank" rel="noopener">arXiv:2605.03239</a>
-            <a href="https://arxiv.org/abs/2605.17319" class="dc-btn" target="_blank" rel="noopener">arXiv:2605.17319</a>
-            <a href="https://doi.org/10.1017/jfm.2024.720" class="dc-btn" target="_blank" rel="noopener">J. Fluid Mech. 2024</a>
-            <a href="https://doi.org/10.1017/jfm.2022.781" class="dc-btn" target="_blank" rel="noopener">J. Fluid Mech. 2022</a>
-          </p>
+      <div class="dc-sidebar-item" id="nav-squid">
+        <a href="#proj-squid" class="dc-sidebar-title">Squid-Inspired Nozzles &amp; Bioinspired Propulsion</a>
+        <p class="dc-sidebar-desc">
+          DARPA-funded study of squid-inspired flexible nozzles for rotary propulsion — elastic wave dynamics, Bayesian surrogate optimization, PIV and dynamometry.
+        </p>
+        <div class="dc-sidebar-pubs">
+          <a href="https://arxiv.org/abs/2605.03239" target="_blank" rel="noopener">arXiv:2605.03239</a>
+          <a href="https://arxiv.org/abs/2605.17319" target="_blank" rel="noopener">arXiv:2605.17319</a>
+          <a href="https://doi.org/10.1017/jfm.2024.720" target="_blank" rel="noopener">JFM 2024</a>
+          <a href="https://doi.org/10.1017/jfm.2022.781" target="_blank" rel="noopener">JFM 2022</a>
         </div>
       </div>
 
-
-      <!-- ══ 2. BIOINSPIRED LOCOMOTION ══════════════════════ -->
-      <h3 class="dc-subsection">Bioinspired Locomotion</h3>
-
-      <div class="dc-proj-wrap">
-        <div class="dc-proj-images">
-          <img src="images/P_mudskipper.png"  alt="Mudskipper locomotion">
-          <img src="images/MeInBrunei.jpeg"   alt="Fieldwork in Borneo">
-          <img src="images/P_microvelia1.png" alt="Water-walking insect">
-          <img src="images/P_manu_r.png"      alt="Manu splash">
-        </div>
-
-        <div class="dc-proj-card">
-          <div class="dc-proj-header">
-            <div>
-              <h4 class="dc-proj-title">Hydrodynamics of Water-Hopping Mudskipper &amp; Biomimetic Robots</h4>
-              <p class="dc-proj-support">
-                <strong>Support:</strong> NRF Korea (Sejong International Postdoctoral Fellowship)<br>
-                <strong>With:</strong> Prof. M. Saad Bhamla (Georgia Tech)
-              </p>
-            </div>
-            
-          </div>
-          <p class="dc-proj-desc">
-            Mudskippers leap across water surfaces using a unique fin-assisted strategy that exploits
-            surface tension, inertia, and fin thrust in concert. We investigate the interfacial hydrodynamics
-            and 3D kinematics of mudskipper water-hopping through high-speed laboratory experiments and
-            biological fieldwork in Borneo. A stereo-camera 3D tracking system enables non-invasive pose
-            estimation of freely-moving animals in natural habitats. Physical and robotic models validate
-            the discovered locomotion principles.
-            Related work covers the <strong>Manu jump</strong> (how humans create large water-entry splashes
-            through body posture and timing) and <strong>Epineuston vortex recapture</strong> in tiny
-            water-walking insects, where vortex interactions enhance thrust efficiency.
-          </p>
-          <p class="dc-proj-kw"><strong>Keywords:</strong> bioinspired robotics, interfacial dynamics, 3D tracking, high-speed imaging, surface tension, water entry, fieldwork (Borneo)</p>
-          <p class="dc-proj-kw">
-            <strong>Publications:</strong>
-            <a href="https://doi.org/10.1093/icb/icaf139" class="dc-btn" target="_blank" rel="noopener">Integr. Comp. Biol. 2025</a>
-            <a href="https://doi.org/10.1098/rsfs.2024.0056" class="dc-btn" target="_blank" rel="noopener">J. R. Soc. Interface 2025</a>
-            <a href="papers/rohilla2024_biorxiv.pdf" class="dc-btn" target="_blank" rel="noopener">bioRxiv (water skaters)</a>
-          </p>
+      <div class="dc-sidebar-item" id="nav-mudskipper">
+        <a href="#proj-mudskipper" class="dc-sidebar-title">Aquatic Locomotion &amp; Biomimetic Robots</a>
+        <p class="dc-sidebar-desc">
+          NRF-Sejong Fellowship — mudskipper water-hopping hydrodynamics, 3D stereo tracking in Borneo, Manu splash dynamics, water-walking insect vortex recapture.
+        </p>
+        <div class="dc-sidebar-pubs">
+          <a href="https://doi.org/10.1093/icb/icaf139" target="_blank" rel="noopener">ICB 2025</a>
+          <a href="https://doi.org/10.1098/rsfs.2024.0056" target="_blank" rel="noopener">JRSI 2025</a>
+          <a href="papers/rohilla2024_biorxiv.pdf" target="_blank" rel="noopener">bioRxiv</a>
         </div>
       </div>
 
-
-      <!-- ══ 3. INTERFACE & MULTIPHASE DYNAMICS ═══════════ -->
-      <h3 class="dc-subsection">Interface &amp; Multiphase Dynamics</h3>
-
-      <div class="dc-proj-wrap">
-        <div class="dc-proj-images">
-          <img src="images/B_bubbleplume.png"         alt="Bubble plume">
-          <img src="images/P_bubblevelocimetry_r.png" alt="Bubble velocimetry">
-          <img src="images/P_liquid_atom_r.png"       alt="Liquid atomization">
-          <img src="images/P_spray_r.png"             alt="Spray coating">
-          <img src="images/P_SPHoCyl.png"             alt="Superhydrophobic cylinder">
-          <img src="images/P_bubbleburst.png"         alt="Bubble burst">
-          <img src="images/P_SPHoSphere.png"          alt="SHPo sphere">
-        </div>
-
-        <div class="dc-proj-card">
-          <div class="dc-proj-header">
-            <div>
-              <h4 class="dc-proj-title">Interface &amp; Multiphase Flow Diagnostics</h4>
-              <p class="dc-proj-support">
-                <strong>Support:</strong> Samsung Electro-Mechanics, Daewoo Shipbuilding &amp; Marine Engineering, Samsung Advanced Institute of Technology, NRF Korea<br>
-                <strong>With:</strong> Prof. Hyungmin Park (Seoul National University)
-              </p>
-            </div>
-            
-          </div>
-          <p class="dc-proj-desc">
-            We developed the first CNN-based optical flow algorithm for bubble velocimetry
-            (DeepBubbleVelocimetry), enabling non-invasive diagnostics at bubble densities up to 58% void
-            fraction — far beyond the ~11% limit of conventional PTV methods.
-            Liquid atomization studies revealed Rayleigh–Taylor instability as the primary atomization
-            mechanism and derived theoretically validated flow regime boundaries.
-            Industrial collaborations addressed spray coating film formation for marine applications (DSME)
-            and superhydrophobic surface effects on bluff-body wakes (SAIT).
-          </p>
-          <p class="dc-proj-kw"><strong>Keywords:</strong> bubble velocimetry, CNN optical flow, liquid atomization, Rayleigh–Taylor instability, spray coating, superhydrophobicity, PIV</p>
-          <p class="dc-proj-kw">
-            <strong>Publications:</strong>
-            <a href="https://doi.org/10.1038/s41598-022-16145-y" class="dc-btn" target="_blank" rel="noopener">Sci. Rep. 2022</a>
-            <a href="https://doi.org/10.1017/jfm.2022.435" class="dc-btn" target="_blank" rel="noopener">J. Fluid Mech. 2022 (atomization)</a>
-            <a href="https://github.com/dae416/DeepBubbleVelocimetry" class="dc-btn" target="_blank" rel="noopener">GitHub: DeepBubbleVelocimetry</a>
-          </p>
-          <p class="dc-proj-kw" style="color:#666;">
-            <strong>Undergraduate theses supervised —</strong>
-            Junwon Seo (SNU, 2020): flow visualization of air jets from bubble rupture &nbsp;·&nbsp;
-            Suhwan Shim (SNU, 2017): superhydrophobic surface effects on sphere wake
-          </p>
+      <div class="dc-sidebar-item" id="nav-interface">
+        <a href="#proj-interface" class="dc-sidebar-title">Interface &amp; Multiphase Flow Diagnostics</a>
+        <p class="dc-sidebar-desc">
+          CNN-based bubble velocimetry (DeepBubbleVelocimetry), liquid atomization, spray coating, superhydrophobic wake modification.
+        </p>
+        <div class="dc-sidebar-pubs">
+          <a href="https://doi.org/10.1038/s41598-022-16145-y" target="_blank" rel="noopener">Sci. Rep. 2022</a>
+          <a href="https://doi.org/10.1017/jfm.2022.435" target="_blank" rel="noopener">JFM 2022</a>
+          <a href="https://github.com/dae416/DeepBubbleVelocimetry" target="_blank" rel="noopener">GitHub</a>
         </div>
       </div>
 
-
-      <!-- ══ 4. FLUID-STRUCTURE INTERACTION ════════════════ -->
-      <h3 class="dc-subsection">Fluid–Structure Interaction &amp; Multi-body Flows</h3>
-
-      <div class="dc-proj-wrap">
-        <div class="dc-proj-images">
-          <img src="images/B_Spherearray.png"      alt="Sphere array">
-          <img src="images/P_sphere_array_r.png"   alt="Sphere array results">
-          <img src="images/P_electroconvec_r.png"  alt="Electroconvective membrane">
-          <img src="images/P_ureter_r.png"         alt="Medical device (ureter)">
-          <img src="images/P_ship.png"             alt="Rowing boat analysis">
-        </div>
-
-        <div class="dc-proj-card">
-          <div class="dc-proj-header">
-            <div>
-              <h4 class="dc-proj-title">Starting Jets, Sphere Arrays, Membrane Flows &amp; Medical Devices</h4>
-              <p class="dc-proj-support">
-                <strong>Support:</strong> NRF Korea, Samsung Electronics, Yonsei Severance Hospital<br>
-                <strong>With:</strong> Prof. Hyungmin Park (Seoul National University)
-              </p>
-            </div>
-            
-          </div>
-          <p class="dc-proj-desc">
-            A flexible nozzle modifies the vortical structure of a starting jet and augments thrust.
-            Combining hydrodynamic conservation equations with linearized shell theory, we derived and
-            validated the optimal nozzle stiffness for maximum thrust — the foundational result for the
-            squid-inspired propulsion program.
-            Multi-body wake interactions in in-line sphere arrays reveal how downstream spheres reshape
-            upstream wakes, reducing form drag.
-            Electroconvective circulating flows in asymmetric porous membranes were characterized,
-            identifying coulombic force asymmetry as the driver of enhanced ion transport.
-            In collaboration with Yonsei Severance Hospital, we developed medical devices for urinary surgery
-            resulting in <strong>three granted patents</strong> (2022).
-            <a href="https://youtu.be/ShgfOYrBKuQ" target="_blank" rel="noopener">Demo video</a>
-          </p>
-          <p class="dc-proj-kw"><strong>Keywords:</strong> FSI, starting jet, flexible nozzle, sphere array, multi-body wake, electroconvective flow, ion-selective membrane, medical device, patents, PIV</p>
-          <p class="dc-proj-kw">
-            <strong>Publications:</strong>
-            <a href="https://doi.org/10.1017/jfm.2022.781" class="dc-btn" target="_blank" rel="noopener">J. Fluid Mech. 2022 (FSI)</a>
-            <a href="https://doi.org/10.1016/j.memsci.2021.119286" class="dc-btn" target="_blank" rel="noopener">J. Membr. Sci. 2021</a>
-            <a href="https://doi.org/10.1063/1.5049734" class="dc-btn" target="_blank" rel="noopener">Phys. Fluids 2018</a>
-          </p>
-          <p class="dc-proj-kw" style="color:#666;">
-            <strong>Undergraduate thesis supervised —</strong>
-            Taechang Kim (SNU, 2016): analysis of optimal rowing boat shape using flow visualization
-          </p>
+      <div class="dc-sidebar-item" id="nav-fsi">
+        <a href="#proj-fsi" class="dc-sidebar-title">FSI, Multi-body Flows &amp; Medical Devices</a>
+        <p class="dc-sidebar-desc">
+          Starting jet thrust optimization via flexible nozzles, in-line sphere array wakes, electroconvective membrane flows, and urinary surgery devices (3 patents).
+        </p>
+        <div class="dc-sidebar-pubs">
+          <a href="https://doi.org/10.1017/jfm.2022.781" target="_blank" rel="noopener">JFM 2022 (FSI)</a>
+          <a href="https://doi.org/10.1016/j.memsci.2021.119286" target="_blank" rel="noopener">JMS 2021</a>
+          <a href="https://doi.org/10.1063/1.5049734" target="_blank" rel="noopener">PoF 2018</a>
         </div>
       </div>
 
-      <div style="height:3em;"></div>
-    </div>
-  </div>
-</div>
+    </div><!-- /.dc-sidebar-inner -->
+  </aside>
+
+  <!-- ══ RIGHT: scrollable full content (70%) ══ -->
+  <main class="dc-proj-main-panel">
+
+    <!-- ── 1. SQUID / DARPA ── -->
+    <section class="dc-full-proj" id="proj-squid">
+      <h2 class="dc-full-proj-title">Squid-Inspired Nozzles for Enhanced Efficiency and Thrust</h2>
+      <p class="dc-full-proj-meta">
+        <strong>Support:</strong> DARPA (Young Faculty Award) · NRF Korea (Domestic Postdoctoral Fellowship)<br>
+        <strong>Collaborators:</strong> Prof. M. Saad Bhamla (Georgia Tech) · Prof. Daeshik Kang (Ajou University) · Prof. Chandan Bose (Glasgow) · Prof. Hyungmin Park (SNU)
+      </p>
+
+      <video class="dc-full-proj-video dc-autoplay-video" muted loop playsinline preload="metadata">
+        <source src="videos/darpa_thrust_demo.mp4" type="video/mp4">
+      </video>
+
+      <div class="dc-full-proj-gallery">
+        <img src="images/P_squid.png"             alt="Squid-inspired propulsion">
+        <img src="images/P_pulsed.png"            alt="Pulsed jet dynamics">
+        <img src="images/P_flexible_nozzle_r.png" alt="Flexible nozzle results">
+      </div>
+
+      <div class="dc-full-proj-text">
+        <p>
+          Squid achieve extraordinary thrust by jetting water through a compliant funnel (the siphon) that
+          passively reshapes jet vortex formation during each mantle contraction. The key mechanism — elastic
+          wave propagation in the compliant nozzle wall — modulates the jet impulse beyond what a rigid nozzle
+          can achieve. We design and characterize squid-inspired flexible nozzles for rotary underwater
+          propulsion systems, combining PIV flow field measurements and dynamometry to quantify thrust
+          amplification arising from this elastic wave-mediated vortex dynamics.
+        </p>
+        <p>
+          Deep-learning Bayesian surrogate models are developed to accelerate nozzle geometry optimization
+          across high-dimensional parameter spaces, significantly reducing the number of expensive physical
+          experiments required. The open-source FSI simulation framework (OpenFOAM + CalculiX + preCICE)
+          developed in this project enables fully reproducible 3D fluid–structure interaction simulations
+          of compliant nozzle dynamics.
+        </p>
+        <p>
+          Earlier foundational work at Ajou University characterized the fundamental mechanics of
+          cephalopod-inspired soft nozzle systems — measuring thrust generation, elastic energy storage,
+          and impulse-release dynamics in compliant structures that replicate squid funnel mechanics.
+        </p>
+      </div>
+      <p class="dc-full-proj-kw"><strong>Keywords:</strong> bioinspired propulsion, FSI, elastic waves, deep learning, Bayesian optimization, DARPA, soft robotics, PIV, dynamometry</p>
+      <p class="dc-full-proj-pubs">
+        <strong>Publications:</strong>
+        <a href="https://arxiv.org/abs/2605.03239" class="dc-btn" target="_blank" rel="noopener">arXiv:2605.03239</a>
+        <a href="https://arxiv.org/abs/2605.17319" class="dc-btn" target="_blank" rel="noopener">arXiv:2605.17319</a>
+        <a href="https://doi.org/10.1017/jfm.2024.720" class="dc-btn" target="_blank" rel="noopener">J. Fluid Mech. 2024</a>
+        <a href="https://doi.org/10.1017/jfm.2022.781" class="dc-btn" target="_blank" rel="noopener">J. Fluid Mech. 2022</a>
+      </p>
+    </section>
+
+    <hr class="dc-full-proj-hr">
+
+    <!-- ── 2. MUDSKIPPER / LOCOMOTION ── -->
+    <section class="dc-full-proj" id="proj-mudskipper">
+      <h2 class="dc-full-proj-title">Aquatic Locomotion &amp; Biomimetic Robots</h2>
+      <p class="dc-full-proj-meta">
+        <strong>Support:</strong> NRF Korea (Sejong International Postdoctoral Fellowship)<br>
+        <strong>Collaborators:</strong> Prof. M. Saad Bhamla (Georgia Tech) · Prof. Ulmar Grafe (Universiti Malaysia Sarawak)
+      </p>
+
+      <div class="dc-full-proj-gallery">
+        <img src="images/P_mudskipper.png"  alt="Mudskipper locomotion">
+        <img src="images/MeInBrunei.jpeg"   alt="Fieldwork in Borneo">
+        <img src="images/P_microvelia1.png" alt="Water-walking insect">
+        <img src="images/P_manu_rr.png"     alt="Manu splash dynamics">
+      </div>
+
+      <div class="dc-full-proj-text">
+        <p>
+          Mudskippers are among the few fish that can move across water surfaces, using a distinctive
+          fin-assisted "galumphing" gait that exploits surface tension, inertia, and fin thrust in concert.
+          We investigate the interfacial hydrodynamics and 3D kinematics of mudskipper water-hopping through
+          high-speed laboratory experiments and biological fieldwork conducted in Borneo.
+        </p>
+        <p>
+          A custom stereo-camera 3D tracking system enables non-invasive pose estimation of freely-moving
+          animals in natural mangrove habitats — the first such system deployed for mudskippers in the wild.
+          Physical and robotic models are built to validate the discovered locomotion principles and bridge
+          biological observation to engineering implementation.
+        </p>
+        <p>
+          Related work covers the <strong>Manu jump</strong> — how humans create large water-entry splashes
+          through body posture control and timing — and <strong>Epineuston vortex recapture</strong> in
+          tiny water-walking insects, where leg-generated vortices are recaptured by subsequent strokes to
+          enhance thrust efficiency.
+        </p>
+      </div>
+      <p class="dc-full-proj-kw"><strong>Keywords:</strong> bioinspired robotics, interfacial dynamics, 3D tracking, high-speed imaging, surface tension, water entry, fieldwork (Borneo)</p>
+      <p class="dc-full-proj-pubs">
+        <strong>Publications:</strong>
+        <a href="https://doi.org/10.1093/icb/icaf139" class="dc-btn" target="_blank" rel="noopener">Integr. Comp. Biol. 2025</a>
+        <a href="https://doi.org/10.1098/rsfs.2024.0056" class="dc-btn" target="_blank" rel="noopener">J. R. Soc. Interface 2025</a>
+        <a href="papers/rohilla2024_biorxiv.pdf" class="dc-btn" target="_blank" rel="noopener">bioRxiv (water skaters)</a>
+      </p>
+    </section>
+
+    <hr class="dc-full-proj-hr">
+
+    <!-- ── 3. INTERFACE & MULTIPHASE ── -->
+    <section class="dc-full-proj" id="proj-interface">
+      <h2 class="dc-full-proj-title">Interface &amp; Multiphase Flow Diagnostics</h2>
+      <p class="dc-full-proj-meta">
+        <strong>Support:</strong> Samsung Electro-Mechanics · Daewoo Shipbuilding &amp; Marine Engineering · Samsung Advanced Institute of Technology · NRF Korea<br>
+        <strong>Collaborators:</strong> Prof. Hyungmin Park (Seoul National University)
+      </p>
+
+      <div class="dc-full-proj-gallery">
+        <img src="images/B_bubbleplume.png"         alt="Bubble plume">
+        <img src="images/P_bubblevelocimetry_r.png" alt="Bubble velocimetry">
+        <img src="images/P_liquid_atom_r.png"        alt="Liquid atomization">
+        <img src="images/P_spray_r.png"              alt="Spray coating">
+        <img src="images/P_SPHoCyl.png"              alt="Superhydrophobic cylinder">
+        <img src="images/P_SPHoSphere.png"           alt="SHPo sphere">
+      </div>
+
+      <div class="dc-full-proj-text">
+        <p>
+          We developed <strong>DeepBubbleVelocimetry</strong> — the first CNN-based optical flow algorithm
+          purpose-built for bubble velocimetry — enabling non-invasive velocity diagnostics at bubble void
+          fractions up to 58%, far beyond the ~11% limit of conventional particle tracking velocimetry (PTV).
+          The algorithm fine-tunes the PWC-Net optical flow network on synthetically generated bubble image
+          datasets, achieving superior accuracy and speed across all bubble density regimes.
+        </p>
+        <p>
+          Liquid atomization studies of water columns broken by annular dual-nozzle gas jets revealed
+          Rayleigh–Taylor instability as the primary atomization mechanism. Flow regime boundaries were
+          theoretically derived using control volume analysis and validated experimentally. The resulting
+          droplet diameter predictions match Rayleigh–Taylor cell wavelengths.
+        </p>
+        <p>
+          Industrial collaborations addressed spray coating film formation for marine paint applications
+          (Daewoo Shipbuilding), and the effects of superhydrophobic surface coatings on bluff-body wakes
+          (Samsung SAIT), where the optimal SHPo condition was found to reduce recirculation length by
+          augmenting near-separation flow fluctuations.
+        </p>
+      </div>
+      <p class="dc-full-proj-kw"><strong>Keywords:</strong> bubble velocimetry, CNN optical flow, liquid atomization, Rayleigh–Taylor instability, spray coating, superhydrophobicity, PIV</p>
+      <p class="dc-full-proj-pubs">
+        <strong>Publications:</strong>
+        <a href="https://doi.org/10.1038/s41598-022-16145-y" class="dc-btn" target="_blank" rel="noopener">Sci. Rep. 2022</a>
+        <a href="https://doi.org/10.1017/jfm.2022.435" class="dc-btn" target="_blank" rel="noopener">J. Fluid Mech. 2022 (atomization)</a>
+        <a href="https://github.com/dae416/DeepBubbleVelocimetry" class="dc-btn" target="_blank" rel="noopener">GitHub: DeepBubbleVelocimetry</a>
+      </p>
+      <p class="dc-full-proj-note">
+        <strong>Undergraduate theses supervised —</strong>
+        Junwon Seo (SNU, 2020): flow visualization of air jets from bubble rupture ·
+        Suhwan Shim (SNU, 2017): superhydrophobic surface effects on sphere wake
+      </p>
+    </section>
+
+    <hr class="dc-full-proj-hr">
+
+    <!-- ── 4. FSI & MULTI-BODY ── -->
+    <section class="dc-full-proj" id="proj-fsi">
+      <h2 class="dc-full-proj-title">FSI, Multi-body Flows &amp; Medical Devices</h2>
+      <p class="dc-full-proj-meta">
+        <strong>Support:</strong> NRF Korea · Samsung Electronics · Yonsei Severance Hospital<br>
+        <strong>Collaborators:</strong> Prof. Hyungmin Park (Seoul National University) · Prof. Kwangsuk Lee (Yonsei University College of Medicine)
+      </p>
+
+      <div class="dc-full-proj-gallery">
+        <img src="images/B_Spherearray.png"      alt="Sphere array flow">
+        <img src="images/P_sphere_array_r.png"   alt="Sphere array PIV results">
+        <img src="images/P_electroconvec_r.png"  alt="Electroconvective membrane">
+        <img src="images/P_ureter_r.png"          alt="Medical device (ureter)">
+        <img src="images/P_flexible_nozzle.png"  alt="Flexible nozzle">
+      </div>
+
+      <div class="dc-full-proj-text">
+        <p>
+          A flexible nozzle modifies the vortical structure of a starting jet and amplifies thrust.
+          By combining hydrodynamic conservation equations with linearized shell theory, we derived and
+          validated the optimal nozzle stiffness for maximum impulse — establishing the theoretical
+          foundation that underpins the entire squid-inspired propulsion program. This work introduced
+          the concept of elastic wave-mediated vortex formation number control in compliant nozzles.
+        </p>
+        <p>
+          Multi-body wake interactions in in-line sphere arrays (Re = 1000) were systematically characterized
+          using 2D PIV and dye visualization. Downstream spheres were found to weaken upstream wakes,
+          reducing form drag through pressure reconstruction analysis.
+        </p>
+        <p>
+          Electroconvective circulating flows in asymmetric multiscale porous membranes were identified
+          and characterized. Asymmetric coulombic force distribution among micropores drives circulating
+          flows that enhance ion transport and lower the effective membrane resistance.
+        </p>
+        <p>
+          In collaboration with Yonsei Severance Hospital, we developed medical devices for urinary
+          surgery — including a Foley catheter removal assessment apparatus and hydronephrosis-induction
+          systems for ureteral access. These resulted in <strong>three granted patents</strong> and
+          one PCT patent.
+          <a href="https://youtu.be/ShgfOYrBKuQ" target="_blank" rel="noopener">Product demo video →</a>
+        </p>
+      </div>
+      <p class="dc-full-proj-kw"><strong>Keywords:</strong> FSI, starting jet, flexible nozzle, sphere array, multi-body wake, electroconvective flow, ion-selective membrane, medical device, patents, PIV</p>
+      <p class="dc-full-proj-pubs">
+        <strong>Publications:</strong>
+        <a href="https://doi.org/10.1017/jfm.2022.781" class="dc-btn" target="_blank" rel="noopener">J. Fluid Mech. 2022 (FSI)</a>
+        <a href="https://doi.org/10.1016/j.memsci.2021.119286" class="dc-btn" target="_blank" rel="noopener">J. Membr. Sci. 2021</a>
+        <a href="https://doi.org/10.1063/1.5049734" class="dc-btn" target="_blank" rel="noopener">Phys. Fluids 2018</a>
+      </p>
+      <p class="dc-full-proj-note">
+        <strong>Undergraduate thesis supervised —</strong>
+        Taechang Kim (SNU, 2016): analysis of optimal rowing boat shape using flow visualization
+      </p>
+    </section>
+
+    <div style="height:4em;"></div>
+  </main>
+
+</div><!-- /.dc-proj-page -->
 
 <!-- Footer -->
 <footer class="dc-footer">
   <div class="container">
-    <p>&copy; <script>document.write(new Date().getFullYear())</script> Daehyun Choi &nbsp;·&nbsp; Powered by <a href="https://pages.github.com/">GitHub Pages</a></p>
+    <p>&copy; 2025 Daehyun Choi &nbsp;·&nbsp; Powered by <a href="https://pages.github.com/">GitHub Pages</a></p>
   </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+<script>
+// ── Video: muted autoplay when scrolled into view ──
+const videoObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      e.target.play().catch(function(){});
+    } else {
+      e.target.pause();
+    }
+  });
+}, { threshold: 0.3 });
+
+document.querySelectorAll('.dc-autoplay-video').forEach(function(v) {
+  videoObs.observe(v);
+});
+
+// ── Sidebar: highlight active project as user scrolls ──
+const sections = document.querySelectorAll('.dc-full-proj');
+const navItems = {
+  'proj-squid':      document.getElementById('nav-squid'),
+  'proj-mudskipper': document.getElementById('nav-mudskipper'),
+  'proj-interface':  document.getElementById('nav-interface'),
+  'proj-fsi':        document.getElementById('nav-fsi')
+};
+
+const sectionObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) {
+    var nav = navItems[e.target.id];
+    if (nav) nav.classList.toggle('active', e.isIntersecting);
+  });
+}, { threshold: 0.15, rootMargin: '-65px 0px -30% 0px' });
+
+sections.forEach(function(s) { sectionObs.observe(s); });
+
+// ── Sidebar links: smooth scroll ──
+document.querySelectorAll('.dc-sidebar-title').forEach(function(a) {
+  a.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) {
+      window.scrollTo({ top: target.offsetTop - 75, behavior: 'smooth' });
+    }
+  });
+});
+</script>
 
 </body>
 </html>

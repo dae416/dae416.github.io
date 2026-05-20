@@ -1,0 +1,189 @@
+/* ── Projects two-panel layout ───────────────────── */
+
+.dc-proj-page {
+  display: flex;
+  align-items: flex-start;
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0;
+  min-height: calc(100vh - 65px);
+}
+
+/* ── LEFT sidebar (30%) ── */
+.dc-proj-sidebar-panel {
+  flex: 0 0 30%;
+  width: 30%;
+  position: sticky;
+  top: 65px;
+  height: calc(100vh - 65px);
+  overflow-y: auto;
+  border-right: 1px solid #e4e9f5;
+  padding: 2em 1.4em 2em 1.6em;
+  background: #fafbfd;
+  scrollbar-width: thin;
+  scrollbar-color: #c8d0e8 transparent;
+}
+
+.dc-proj-sidebar-panel::-webkit-scrollbar { width: 4px; }
+.dc-proj-sidebar-panel::-webkit-scrollbar-thumb { background: #c8d0e8; border-radius: 2px; }
+
+.dc-sidebar-heading {
+  font-size: 0.78em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #999;
+  margin: 0 0 1.2em 0;
+}
+
+.dc-sidebar-item {
+  padding: 0.9em 0.8em;
+  border-left: 3px solid transparent;
+  border-radius: 0 4px 4px 0;
+  margin-bottom: 0.3em;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: pointer;
+}
+
+.dc-sidebar-item:hover,
+.dc-sidebar-item.active {
+  border-left-color: #1a2f6b;
+  background: #eef1f9;
+}
+
+.dc-sidebar-title {
+  display: block;
+  font-size: 0.88em;
+  font-weight: 700;
+  color: #1a2f6b;
+  text-decoration: none;
+  margin-bottom: 0.4em;
+  line-height: 1.4;
+}
+
+.dc-sidebar-title:hover { text-decoration: underline; color: #1a2f6b; }
+
+.dc-sidebar-desc {
+  font-size: 0.78em;
+  color: #555;
+  margin: 0 0 0.5em 0;
+  line-height: 1.55;
+}
+
+.dc-sidebar-pubs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.dc-sidebar-pubs a {
+  font-size: 0.72em;
+  color: #1a2f6b;
+  background: #e4eaf7;
+  border: 1px solid #c0cce8;
+  border-radius: 3px;
+  padding: 1px 6px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.dc-sidebar-pubs a:hover { background: #1a2f6b; color: #fff; }
+
+/* ── RIGHT main panel (70%) ── */
+.dc-proj-main-panel {
+  flex: 1;
+  min-width: 0;
+  padding: 2.5em 3em 2em 2.5em;
+}
+
+/* ── Full project section ── */
+.dc-full-proj {
+  margin-bottom: 0.5em;
+}
+
+.dc-full-proj-title {
+  font-size: 1.45em;
+  font-weight: 700;
+  color: #111;
+  margin: 0 0 0.5em 0;
+  line-height: 1.3;
+}
+
+.dc-full-proj-meta {
+  font-size: 0.88em;
+  color: #555;
+  margin-bottom: 1.3em;
+  line-height: 1.7;
+}
+
+/* video */
+.dc-full-proj-video {
+  width: 100%;
+  max-height: 420px;
+  object-fit: contain;
+  border-radius: 5px;
+  background: #000;
+  display: block;
+  margin: 0 0 1.3em 0;
+}
+
+/* photo gallery */
+.dc-full-proj-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 4px;
+  margin-bottom: 1.5em;
+}
+
+.dc-full-proj-gallery img {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  border-radius: 3px;
+  display: block;
+}
+
+/* text */
+.dc-full-proj-text p {
+  font-size: 0.97em;
+  color: #222;
+  line-height: 1.75;
+  margin-bottom: 1em;
+}
+
+.dc-full-proj-kw {
+  font-size: 0.85em;
+  color: #666;
+  margin: 0.8em 0 0.5em 0;
+}
+
+.dc-full-proj-pubs {
+  font-size: 0.9em;
+  margin: 0.5em 0 0.5em 0;
+}
+
+.dc-full-proj-note {
+  font-size: 0.82em;
+  color: #888;
+  margin-top: 0.6em;
+}
+
+.dc-full-proj-hr {
+  border: none;
+  border-top: 1px solid #e4e9f5;
+  margin: 2.5em 0;
+}
+
+/* ── Responsive: stack on narrow screens ── */
+@media (max-width: 768px) {
+  .dc-proj-page { flex-direction: column; }
+  .dc-proj-sidebar-panel {
+    position: static;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #e4e9f5;
+  }
+  .dc-proj-main-panel { padding: 1.5em 1em; }
+  .dc-full-proj-gallery { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+}
