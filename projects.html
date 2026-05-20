@@ -129,7 +129,7 @@
         </p>
       </div>
 
-      <div class="dc-gallery-slider" id="gallery-squid">
+      <div class="dc-gallery-slider dc-gallery-fullwidth" id="gallery-squid">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide active">
@@ -167,7 +167,7 @@
         </p>
       </div>
 
-      <div class="dc-gallery-slider" id="gallery-squid-2">
+      <div class="dc-gallery-slider dc-gallery-fullwidth" id="gallery-squid-2">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide active">
@@ -442,8 +442,11 @@ var VISIBLE = 3;   // full images shown; 4th partially visible as hint
 var GAP     = 8;   // px, must match CSS gap
 
 function getSlideWidth(id) {
+  var slider = document.getElementById(id);
   var vp = document.querySelector('#' + id + ' .dc-gallery-viewport');
-  return vp ? (vp.offsetWidth - GAP * (VISIBLE - 1)) / VISIBLE : 0;
+  if (!vp) return 0;
+  if (slider && slider.classList.contains('dc-gallery-fullwidth')) return vp.offsetWidth;
+  return (vp.offsetWidth - GAP * (VISIBLE - 1)) / VISIBLE;
 }
 
 function setTrackPos(id) {
@@ -480,7 +483,7 @@ function initSliders() {
     var slides = slider.querySelectorAll('.dc-gallery-slide');
     var n = slides.length;
 
-    if (n <= 3) {
+    if (n <= 3 && !slider.classList.contains('dc-gallery-fullwidth')) {
       // Static grid: just show images, no nav
       slider.classList.add('dc-gallery-static');
       return;
