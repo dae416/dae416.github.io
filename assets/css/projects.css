@@ -151,7 +151,8 @@
   overflow: hidden;
 }
 
-.dc-gallery-slide img {
+.dc-gallery-slide img,
+.dc-gallery-slide video {
   width: 100%;
   aspect-ratio: 4 / 3;
   object-fit: cover;
