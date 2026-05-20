@@ -108,9 +108,15 @@
         <strong>Collaborators:</strong> Prof. M. Saad Bhamla (Georgia Tech) · Prof. Daeshik Kang (Ajou University) · Prof. Chandan Bose (University of Birmingham) · Prof. Hyungmin Park (SNU)
       </p>
 
-      <video class="dc-full-proj-video dc-autoplay-video" muted loop playsinline preload="metadata" controls>
-        <source src="videos/squid_main.mp4" type="video/mp4">
-      </video>
+      <div class="dc-video-wrap">
+        <video class="dc-full-proj-video dc-autoplay-video" muted loop playsinline preload="metadata">
+          <source src="videos/squid_main.mp4" type="video/mp4">
+        </video>
+        <div class="dc-video-controls">
+          <button class="dc-video-btn" aria-label="Play/Pause">&#9654;</button>
+          <input class="dc-video-seek" type="range" min="0" max="100" value="0" step="0.1">
+        </div>
+      </div>
 
       <div class="dc-gallery-slider" id="gallery-squid">
         <div class="dc-gallery-viewport">
@@ -175,9 +181,15 @@
         <strong>Collaborators:</strong> Prof. M. Saad Bhamla (Georgia Tech) · Prof. Ulmar Grafe (Universiti Malaysia Sarawak)
       </p>
 
-      <video class="dc-full-proj-video dc-autoplay-video" muted loop playsinline preload="metadata" controls>
-        <source src="videos/mudskipper_main.mp4" type="video/mp4">
-      </video>
+      <div class="dc-video-wrap">
+        <video class="dc-full-proj-video dc-autoplay-video" muted loop playsinline preload="metadata">
+          <source src="videos/mudskipper_main.mp4" type="video/mp4">
+        </video>
+        <div class="dc-video-controls">
+          <button class="dc-video-btn" aria-label="Play/Pause">&#9654;</button>
+          <input class="dc-video-seek" type="range" min="0" max="100" value="0" step="0.1">
+        </div>
+      </div>
 
       <div class="dc-gallery-slider" id="gallery-mudskipper">
         <div class="dc-gallery-viewport">
@@ -486,6 +498,25 @@ document.querySelectorAll('.dc-sidebar-item').forEach(function(item) {
     if (target) {
       window.scrollTo({ top: target.offsetTop - 75, behavior: 'smooth' });
     }
+  });
+});
+</script>
+
+<script>
+document.querySelectorAll('.dc-video-wrap').forEach(function(wrap) {
+  var video = wrap.querySelector('video');
+  var btn   = wrap.querySelector('.dc-video-btn');
+  var seek  = wrap.querySelector('.dc-video-seek');
+  btn.addEventListener('click', function() {
+    video.paused ? video.play() : video.pause();
+  });
+  video.addEventListener('play',  function() { btn.innerHTML = '&#9646;&#9646;'; });
+  video.addEventListener('pause', function() { btn.innerHTML = '&#9654;'; });
+  video.addEventListener('timeupdate', function() {
+    if (video.duration) seek.value = (video.currentTime / video.duration) * 100;
+  });
+  seek.addEventListener('input', function() {
+    if (video.duration) video.currentTime = (seek.value / 100) * video.duration;
   });
 });
 </script>
