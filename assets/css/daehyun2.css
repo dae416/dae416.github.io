@@ -759,18 +759,22 @@ details[open] summary {
 @media (max-width: 480px) { .dc-gallery { columns: 1; } }
 
 /* ── Compact conference list ── */
-ol.dc-conflist {
-  list-style: decimal;
-  padding-left: 1.6em;
+ul.dc-conflist {
+  list-style: none;
+  padding-left: 0.8em;
   margin: 0;
 }
-ol.dc-conflist li {
+ul.dc-conflist li {
   font-size: 0.84em;
   color: #444;
   line-height: 1.55;
   padding: 0.18em 0;
   border: none;
 }
-ol.dc-conflist li em {
+ul.dc-conflist li::before {
+  content: "– ";
+  color: #999;
+}
+ul.dc-conflist li em {
   color: #666;
 }
