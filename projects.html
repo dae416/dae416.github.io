@@ -118,21 +118,6 @@
         </div>
       </div>
 
-      <div class="dc-gallery-slider" id="gallery-squid">
-        <div class="dc-gallery-viewport">
-          <div class="dc-gallery-track">
-          <div class="dc-gallery-slide active"><img src="images/P_squid.png" alt="Squid-inspired propulsion"></div>
-          <div class="dc-gallery-slide"><img src="images/P_pulsed.png" alt="Pulsed jet dynamics"></div>
-          <div class="dc-gallery-slide"><img src="images/P_flexible_nozzle_r.png" alt="Flexible nozzle results"></div>
-        </div>
-        </div>
-        <div class="dc-gallery-nav">
-          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide(\'gallery-squid\',-1)">&#8249;</button>
-          <div class="dc-gallery-dots" id="dots-gallery-squid"></div>
-          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide(\'gallery-squid\',1)">&#8250;</button>
-        </div>
-      </div>
-
       <div class="dc-full-proj-text">
         <p>
           Soft robotic propulsors are constrained by onboard power and the cost of active sensing and
@@ -142,6 +127,34 @@
           two-way 3D fluid–structure interaction simulations. We term this within-pulse elastic
           store-release mechanism <em>superpropulsion</em>.
         </p>
+      </div>
+
+      <div class="dc-gallery-slider" id="gallery-squid">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide active">
+              <video muted loop playsinline autoplay style="width:100%;height:100%;object-fit:cover;">
+                <source src="videos/squid/2_SI_movie_v15_highres_freesquid.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="dc-gallery-slide">
+              <video muted loop playsinline style="width:100%;height:100%;object-fit:cover;">
+                <source src="videos/squid/2_SI_movie_v15_highres_squidimoob.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="dc-gallery-slide">
+              <img src="videos/squid/2_SI_movie_v15_highres_mechanism.png" alt="Superpropulsion mechanism — elastic funnel leads to power amplification">
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-squid"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <div class="dc-full-proj-text">
         <p>
           Squid use vortex-ring pulses across nearly four orders of magnitude in body size, from pygmy
           bobtail to colossal squid approaching 10 m. We show the squid funnel (siphon) dilates and
@@ -152,13 +165,56 @@
           matches jet-acceleration time (τ/T = 0.2–0.4), and in vivo squid timing falls in the same
           window.
         </p>
+      </div>
+
+      <div class="dc-gallery-slider" id="gallery-squid-2">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide active">
+              <video muted loop playsinline autoplay style="width:100%;height:100%;object-fit:cover;">
+                <source src="videos/squid/2_2_optimal2.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="dc-gallery-slide">
+              <video muted loop playsinline style="width:100%;height:100%;object-fit:cover;">
+                <source src="videos/squid/2_2_optmialconidtion.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="dc-gallery-slide">
+              <video muted loop playsinline style="width:100%;height:100%;object-fit:cover;">
+                <source src="videos/squid/2_2_wave.mp4" type="video/mp4">
+              </video>
+            </div>
+            <div class="dc-gallery-slide">
+              <img src="videos/squid/2_2_C_FSI.png" alt="FSI simulation results">
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid-2',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-squid-2"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-2',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <div class="dc-full-proj-text">
         <p>
           Tuned nozzles increase peak aerial jet height by 110%, enhance inking-inspired plume
           dispersion by 40%, and boost jet-propelled boat speed by 41% while reducing cost of
           transport by 28%, at similar electrical power draw. These gains persist after 40×
-          miniaturization and across more than 135 nozzle and application trials — a 5-year,
-          multi-institution effort integrating comparative biomechanics, histology, fluid mechanics,
-          mathematical theory, soft materials, and robotics.
+          miniaturization and across more than 135 nozzle and application trials — a multi-institution
+          effort integrating comparative biomechanics, histology, fluid mechanics, mathematical
+          theory, soft materials, and robotics.
+        </p>
+        <p>
+          Beyond passive compliance, nozzle contour geometry critically shapes both inlet energy and
+          outlet impulse. As a continuation, we employ multi-objective Bayesian optimization (MOBO)
+          with Gaussian Process surrogate models to efficiently navigate the nozzle design space —
+          parametrized by control-point splines — evaluated through high-fidelity OpenFOAM FSI
+          simulations. This sample-efficient framework iteratively identifies Pareto-optimal
+          geometries that maximize outlet impulse while minimizing inlet energy, without exhaustive
+          brute-force simulation. The approach is currently being extended from pulsed jet systems
+          to rotary propellers, targeting enhanced thrust efficiency for underwater vehicles.
         </p>
       </div>
       <p class="dc-full-proj-kw"><strong>Keywords:</strong> bioinspired propulsion, FSI, elastic waves, deep learning, Bayesian optimization, DARPA, soft robotics, PIV, dynamometry</p>
