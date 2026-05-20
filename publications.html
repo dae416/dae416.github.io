@@ -172,7 +172,9 @@
           </div>
         </li>
         <li>
-          <img src="images/P_sphere_array.png" class="dc-pub-img" alt="">
+          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
+            <source src="videos/wake/sphere_array_4_1D_side.mp4" type="video/mp4">
+          </video>
           <div class="dc-pub-text">
             <strong>D. Choi</strong> &amp; H. Park,
             "Flow around in-line sphere array at moderate Reynolds number,"
@@ -235,6 +237,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
+<script>
+const videoObs = new IntersectionObserver(function(entries) {
+  entries.forEach(function(e) { e.isIntersecting ? e.target.play() : e.target.pause(); });
+}, { threshold: 0.25 });
+document.querySelectorAll('.dc-autoplay-video').forEach(function(v) { videoObs.observe(v); });
+</script>
 
 </body>
 </html>
