@@ -129,7 +129,7 @@
         </p>
       </div>
 
-      <div class="dc-gallery-slider" id="gallery-squid">
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide active">
@@ -234,7 +234,7 @@
         </p>
       </div>
 
-      <div class="dc-gallery-slider" id="gallery-squid-3">
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid-3">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide active">
@@ -286,7 +286,7 @@
         </p>
       </div>
 
-      <div class="dc-gallery-slider" id="gallery-squid-4">
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid-4">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide active">
@@ -628,11 +628,9 @@ function initSliders() {
     var n = slides.length;
     var isFullwidth = slider.classList.contains('dc-gallery-fullwidth');
 
-    if (n <= 3 && !isFullwidth) {
+    if (slider.classList.contains('dc-gallery-static') || (n <= 3 && !isFullwidth)) {
       slider.classList.add('dc-gallery-static');
-      var nav = slider.querySelector('.dc-gallery-nav');
-      if (nav) nav.style.display = 'none';
-      return;
+      return; // nav already hidden via HTML style="display:none"
     }
 
     var dotsEl = document.getElementById('dots-' + id);
