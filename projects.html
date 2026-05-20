@@ -182,12 +182,12 @@
       <div class="dc-gallery-slider" id="gallery-squid-2">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
-            <div class="dc-gallery-slide active">
+            <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
                 <video muted loop playsinline>
                   <source src="videos/squid/2_2_optimal2_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">Pareto-optimal nozzle geometry (FSI simulation)</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
@@ -196,14 +196,14 @@
                 <video muted loop playsinline>
                   <source src="videos/squid/2_2_optmialconidtion_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">Optimal nozzle compliance condition</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
             <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
                 <img src="videos/squid/2_2_C_FSI.png" alt="FSI simulation results">
-              </div>
+                <div class="dc-slide-caption">FSI simulation results</div>
               </div>
             </div>
             <div class="dc-gallery-slide">
@@ -211,7 +211,7 @@
                 <video muted loop playsinline>
                   <source src="videos/squid/CFD_Q_ani_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">CFD Q-criterion vortex visualization</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
@@ -238,12 +238,12 @@
       <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid-3">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
-            <div class="dc-gallery-slide active">
+            <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
                 <video muted loop playsinline>
                   <source src="videos/squid/2_3_aerialjet_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">Aerial jet enhancement</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
@@ -252,7 +252,7 @@
                 <video muted loop playsinline>
                   <source src="videos/squid/2_3_boat_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">Flexible nozzle boat (41% speed increase)</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
@@ -261,16 +261,16 @@
                 <video muted loop playsinline>
                   <source src="videos/squid/2_3_inking_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">Inking plume dispersion (40% enhancement)</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
           </div>
         </div>
-        <div class="dc-gallery-nav">
-          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid-3',-1)" style="display:none">&#8249;</button>
-          <div class="dc-gallery-dots" id="dots-gallery-squid-3" style="display:none"></div>
-          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-3',1)" style="display:none">&#8250;</button>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid-3',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-squid-3"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-3',1)">&#8250;</button>
         </div>
       </div>
 
@@ -290,12 +290,12 @@
       <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid-4">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
-            <div class="dc-gallery-slide active">
+            <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
                 <video muted loop playsinline data-rate="2">
                   <source src="videos/squid/pulsed_jet_optimization_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">Bayesian optimization of nozzle geometry</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
@@ -304,16 +304,16 @@
                 <video muted loop playsinline>
                   <source src="videos/squid/darpa_thrust_thumb_web.mp4" type="video/mp4">
                 </video>
-              </div>
+                <div class="dc-slide-caption">DARPA thrust demonstration</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
           </div>
         </div>
-        <div class="dc-gallery-nav">
-          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid-4',-1)" style="display:none">&#8249;</button>
-          <div class="dc-gallery-dots" id="dots-gallery-squid-4" style="display:none"></div>
-          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-4',1)" style="display:none">&#8250;</button>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid-4',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-squid-4"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-4',1)">&#8250;</button>
         </div>
       </div>
 
@@ -819,6 +819,9 @@ document.querySelectorAll('.dc-video-wrap').forEach(function(wrap) {
   var btn     = wrap.querySelector('.dc-video-btn');
   var seek    = wrap.querySelector('.dc-video-seek');
   var overlay = wrap.querySelector('.dc-play-overlay');
+
+  // Show first frame while paused
+  video.addEventListener('loadedmetadata', function() { video.currentTime = 0.001; });
 
   if (overlay) {
     overlay.addEventListener('click', function() {
