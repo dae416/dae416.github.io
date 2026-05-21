@@ -157,19 +157,11 @@
 .dc-gallery-slide video {
   width: 100%;
   aspect-ratio: 16 / 9;
-  object-fit: cover;
-  display: block;
-  pointer-events: none;
-  -webkit-user-drag: none;
-}
-
-.dc-gallery-slide video {
-  width: 100%;
-  aspect-ratio: 16 / 9;
   object-fit: contain;
   background: transparent;
   display: block;
   pointer-events: none;
+  -webkit-user-drag: none;
 }
 
 .dc-slide-wrap {

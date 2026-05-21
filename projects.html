@@ -411,9 +411,12 @@
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
-                <video muted loop playsinline preload="metadata" autoplay>
-                  <source src="videos/mudskipper/3D_Animation_Trajectory_Progressive_transparent.mp4" type="video/mp4">
-                </video>
+                <div style="overflow:hidden;aspect-ratio:16/9;">
+                  <video muted loop playsinline preload="metadata" autoplay
+                         style="width:100%;height:100%;object-fit:contain;transform:scale(1.5);display:block;">
+                    <source src="videos/mudskipper/3D_Animation_Trajectory_Progressive_transparent.mp4" type="video/mp4">
+                  </video>
+                </div>
                 <div class="dc-slide-caption">3D trajectory reconstruction from stereo tracking</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
@@ -493,12 +496,6 @@
 
       <div class="dc-full-proj-text">
         <p>
-          Related work covers the <strong>Manu jump</strong> — how humans create large water-entry
-          splashes through body posture control and timing — and <strong>Epineuston vortex
-          recapture</strong> in tiny water-walking insects, where leg-generated vortices are
-          recaptured by subsequent strokes to enhance thrust efficiency.
-        </p>
-        <p>
           Guided by these biological principles, we are developing a miniaturized amphibious robotic
           platform capable of seamlessly switching between underwater swimming and surface hopping —
           replicating the mudskipper's multimodal locomotion strategy. The 60 mm prototype
@@ -536,7 +533,46 @@
         </div>
       </div>
 
-            <p class="dc-full-proj-kw"><strong>Keywords:</strong> bioinspired robotics, interfacial dynamics, 3D tracking, high-speed imaging, surface tension, water entry, fieldwork (Borneo)</p>
+      <div class="dc-full-proj-text">
+        <p>
+          Related work covers the <strong>Manu jump</strong> — how humans create large water-entry
+          splashes through body posture control and timing — and <strong>Epineuston vortex
+          recapture</strong> in tiny water-walking insects, where leg-generated vortices are
+          recaptured by subsequent strokes to enhance thrust efficiency.
+        </p>
+      </div>
+
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-mudskipper-manu">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <video muted loop playsinline preload="metadata" autoplay>
+                  <source src="videos/splash/manu_intro.mp4" type="video/mp4">
+                </video>
+                <div class="dc-slide-caption">Manu jump setup (portrait view)</div>
+                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
+              </div>
+            </div>
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <video muted loop playsinline preload="metadata" autoplay>
+                  <source src="videos/splash/manu_demo.mp4" type="video/mp4">
+                </video>
+                <div class="dc-slide-caption">Manu jump: large water-entry splash</div>
+                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-mudskipper-manu',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-mudskipper-manu"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-mudskipper-manu',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <p class="dc-full-proj-kw"><strong>Keywords:</strong> bioinspired robotics, interfacial dynamics, 3D tracking, high-speed imaging, surface tension, water entry, fieldwork (Borneo)</p>
       <p class="dc-full-proj-pubs">
         <strong>Publications:</strong>
         <a href="https://doi.org/10.1093/icb/icaf139" class="dc-btn" target="_blank" rel="noopener">Integr. Comp. Biol. 2025</a>
