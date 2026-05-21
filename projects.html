@@ -398,12 +398,11 @@
 
       <div class="dc-full-proj-img-single">
         <img src="images/P_3d_ray_intersection.png" alt="Stereo camera 3D tracking setup in Borneo">
-        <p class="dc-slide-caption" style="text-align:center;padding:0.3em 0 0.8em;">Stereo camera setup and 3D reconstruction from field deployment in Borneo</p>
       </div>
 
       <div class="dc-full-proj-img-single">
         <img src="images/P_3d_trajectories_compile.png" alt="Compiled 3D mudskipper trajectories">
-        <p class="dc-slide-caption" style="text-align:center;padding:0.3em 0 0.8em;">Multiple 3D trajectories of mudskippers tracked in natural habitat</p>
+        <p class="dc-slide-caption" style="text-align:center;padding:0.3em 0 0.8em;">Stereo-camera field deployment in Borneo enables 3D reconstruction of multiple mudskipper trajectories in natural habitat</p>
       </div>
 
       <div class="dc-gallery-slider dc-gallery-static" id="gallery-mudskipper-tracking">
@@ -413,7 +412,7 @@
               <div class="dc-slide-wrap">
                 <div style="overflow:hidden;aspect-ratio:16/9;">
                   <video muted loop playsinline preload="metadata" autoplay
-                         style="width:100%;height:100%;object-fit:contain;transform:scale(2.5);display:block;">
+                         style="width:100%;height:100%;object-fit:contain;transform:scale(3.125);display:block;">
                     <source src="videos/mudskipper/3D_Animation_Trajectory_Progressive_transparent.mp4" type="video/mp4">
                   </video>
                 </div>
@@ -463,17 +462,17 @@
             </div>
             <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
-                <img src="images/P_time_scale.png" alt="Timescale scaling law">
-                <div class="dc-slide-caption">Timescale scaling law for water entry</div>
-              </div>
-            </div>
-            <div class="dc-gallery-slide">
-              <div class="dc-slide-wrap">
                 <video muted loop playsinline preload="metadata" autoplay>
                   <source src="videos/mudskipper/physical_model_hflip.mp4" type="video/mp4">
                 </video>
                 <div class="dc-slide-caption">Physical model of mudskipper dynamics (mirrored)</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
+              </div>
+            </div>
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <img src="images/P_time_scale.png" alt="Timescale scaling law">
+                <div class="dc-slide-caption">Timescale scaling law for water entry</div>
               </div>
             </div>
           </div>
@@ -530,7 +529,7 @@
         </p>
       </div>
 
-      <div class="dc-gallery-slider" id="gallery-mudskipper-manu">
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-mudskipper-manu">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide">
@@ -560,6 +559,18 @@
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-mudskipper-manu',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-mudskipper-manu"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-mudskipper-manu',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-mudskipper-microvelia">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
             <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
                 <img src="images/P_microvelia_vortex.png" alt="Epineuston vortex recapture in Microvelia">
@@ -574,10 +585,10 @@
             </div>
           </div>
         </div>
-        <div class="dc-gallery-nav">
-          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-mudskipper-manu',-1)">&#8249;</button>
-          <div class="dc-gallery-dots" id="dots-gallery-mudskipper-manu"></div>
-          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-mudskipper-manu',1)">&#8250;</button>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-mudskipper-microvelia',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-mudskipper-microvelia"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-mudskipper-microvelia',1)">&#8250;</button>
         </div>
       </div>
 
