@@ -435,14 +435,18 @@
 
       <div class="dc-full-proj-text">
         <p>
-          Related work covers the <strong>Manu jump</strong> — how humans create large water-entry splashes
-          through body posture control and timing — and <strong>Epineuston vortex recapture</strong> in
-          tiny water-walking insects, where leg-generated vortices are recaptured by subsequent strokes to
-          enhance thrust efficiency.
+          In-depth hydrodynamic analysis reveals that mudskipper water-hopping operates in the high
+          Weber–Bond (We-Bo) regime, where inertial forces dominate over surface tension and gravity.
+          A key finding is the timescale matching between tail-fin thrust and pectoral-fin cavity
+          collapse: the duration of tail-fin propulsion coincides with the collapse time of the air
+          cavity formed by the pectoral fins upon water entry, enabling efficient coupling between the
+          two propulsive elements. Flap-displacement experiments with a physical mudskipper model
+          directly demonstrate that cavity collapse generates measurable thrust — revealing a passive
+          thrust mechanism that operates in concert with active fin actuation.
         </p>
       </div>
 
-      <div class="dc-gallery-slider" id="gallery-mudskipper-behavior">
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-mudskipper-behavior">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide">
@@ -451,15 +455,6 @@
                   <source src="videos/mudskipper/regime_map.mp4" type="video/mp4">
                 </video>
                 <div class="dc-slide-caption">Water-entry regime map (Fr vs normalized time)</div>
-                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
-              </div>
-            </div>
-            <div class="dc-gallery-slide">
-              <div class="dc-slide-wrap">
-                <video muted loop playsinline preload="metadata" autoplay>
-                  <source src="videos/mudskipper/hs_hopping.mp4" type="video/mp4">
-                </video>
-                <div class="dc-slide-caption">High-speed imaging of mudskipper hopping</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
@@ -480,14 +475,59 @@
             </div>
           </div>
         </div>
-        <div class="dc-gallery-nav">
+        <div class="dc-gallery-nav" style="display:none">
           <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-mudskipper-behavior',-1)">&#8249;</button>
           <div class="dc-gallery-dots" id="dots-gallery-mudskipper-behavior"></div>
           <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-mudskipper-behavior',1)">&#8250;</button>
         </div>
       </div>
 
-      <p class="dc-full-proj-kw"><strong>Keywords:</strong> bioinspired robotics, interfacial dynamics, 3D tracking, high-speed imaging, surface tension, water entry, fieldwork (Borneo)</p>
+      <div class="dc-full-proj-text">
+        <p>
+          Related work covers the <strong>Manu jump</strong> — how humans create large water-entry
+          splashes through body posture control and timing — and <strong>Epineuston vortex
+          recapture</strong> in tiny water-walking insects, where leg-generated vortices are
+          recaptured by subsequent strokes to enhance thrust efficiency.
+        </p>
+        <p>
+          Guided by these biological principles, we are developing a miniaturized amphibious robotic
+          platform capable of seamlessly switching between underwater swimming and surface hopping —
+          replicating the mudskipper's multimodal locomotion strategy. The 60 mm prototype
+          integrates dual propeller motors for aquatic propulsion and a fin motor for impulse-driven
+          hopping, all coordinated by a custom 30 mm PCB embedding dual motor drivers, a gyroscope,
+          and Bluetooth. This platform serves as a physical testbed for validating hydrodynamic
+          principles uncovered through biological observation and physical-model experiments.
+        </p>
+      </div>
+
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-mudskipper-robot">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <video muted loop playsinline>
+                  <source src="videos/mudskipper/robot_proto_web.mp4" type="video/mp4">
+                </video>
+                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
+                <div class="dc-slide-caption">Prototype robot: swimming and hopping demonstration</div>
+              </div>
+            </div>
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <img src="videos/mudskipper/robot_design_web.jpg" alt="Robot PCB and design">
+                <div class="dc-slide-caption">Custom 30 mm PCB with dual motor drivers, gyroscope &amp; 60 mm robot body</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-mudskipper-robot',-1)" style="display:none">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-mudskipper-robot" style="display:none"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-mudskipper-robot',1)" style="display:none">&#8250;</button>
+        </div>
+      </div>
+
+            <p class="dc-full-proj-kw"><strong>Keywords:</strong> bioinspired robotics, interfacial dynamics, 3D tracking, high-speed imaging, surface tension, water entry, fieldwork (Borneo)</p>
       <p class="dc-full-proj-pubs">
         <strong>Publications:</strong>
         <a href="https://doi.org/10.1093/icb/icaf139" class="dc-btn" target="_blank" rel="noopener">Integr. Comp. Biol. 2025</a>
