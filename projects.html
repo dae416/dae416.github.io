@@ -620,23 +620,29 @@
 
       <div class="dc-full-proj-text">
         <p>
-          We developed <strong>DeepBubbleVelocimetry</strong> — the first CNN-based optical flow algorithm
-          purpose-built for bubble velocimetry — enabling non-invasive velocity diagnostics at bubble void
-          fractions up to 58%, far beyond the ~11% limit of conventional particle tracking velocimetry (PTV).
-          The algorithm fine-tunes the PWC-Net optical flow network on synthetically generated bubble image
-          datasets, achieving superior accuracy and speed across all bubble density regimes.
+          Standard particle tracking velocimetry breaks down in high-density bubble flows where overlapping
+          bubbles and void fractions above ~11% prevent reliable tracking. To address this, we developed
+          <strong>DeepBubbleVelocimetry</strong> — the first CNN-based optical flow algorithm purpose-built
+          for bubble-laden flows. By fine-tuning the PWC-Net architecture on synthetically generated bubble
+          image datasets, the method tracks velocity through intensity changes across image pairs rather than
+          individual bubbles. It outperforms conventional Lucas–Kanade and Farnebäck optical flow in accuracy,
+          runs 5× faster, and remains accurate at void fractions up to 58% where standard PTV fails entirely.
         </p>
         <p>
-          Liquid atomization studies of water columns broken by annular dual-nozzle gas jets revealed
-          Rayleigh–Taylor instability as the primary atomization mechanism. Flow regime boundaries were
-          theoretically derived using control volume analysis and validated experimentally. The resulting
-          droplet diameter predictions match Rayleigh–Taylor cell wavelengths.
+          Building on interface diagnostics, we also studied liquid column atomization driven by an annular
+          dual-nozzle gas jet — a configuration designed to prevent nozzle clogging by eliminating backflow
+          through an independently controlled upper gas jet. Using PIV and high-speed imaging, we identified
+          four distinct flow regimes governed by momentum flux ratio, nozzle angle, and liquid flow rate.
+          Gas velocity gradients (acceleration) drive atomization onset, while droplet sizes remain determined
+          by Rayleigh–Taylor instability wavelengths regardless of the inter-nozzle momentum ratio. Operating
+          the upper nozzle at m₁₂ ≥ 0.067 completely suppresses backflow, enabling reliable atomization with
+          independent jet control.
         </p>
         <p>
-          Industrial collaborations addressed spray coating film formation for marine paint applications
-          (Daewoo Shipbuilding), and the effects of superhydrophobic surface coatings on bluff-body wakes
-          (Samsung SAIT), where the optimal SHPo condition was found to reduce recirculation length by
-          augmenting near-separation flow fluctuations.
+          Additional industrial collaborations addressed spray coating film formation in marine paint
+          applications (Daewoo Shipbuilding) and the effect of superhydrophobic surface coatings on
+          bluff-body wakes (Samsung SAIT), where optimal SHPo conditions were shown to reduce recirculation
+          length by augmenting near-separation flow fluctuations.
         </p>
       </div>
       <p class="dc-full-proj-kw"><strong>Keywords:</strong> bubble velocimetry, CNN optical flow, liquid atomization, Rayleigh–Taylor instability, spray coating, superhydrophobicity, PIV</p>
