@@ -49,7 +49,7 @@
       <p class="dc-pub-cat">Under Review / In Preparation</p>
       <ul class="dc-publist">
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
             <source src="thumbs/darpa_thrust_thumb.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -59,7 +59,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata" data-rate="2">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata" data-rate="2">
             <source src="thumbs/pulsed_jet_optimization.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -69,7 +69,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
             <source src="thumbs/mudskipper_hopping_stacked.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -79,7 +79,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
             <source src="thumbs/boat_flexible_nozzle_crop.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -92,7 +92,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata" style="object-position: 20% 50%">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata" style="object-position: 20% 50%">
             <source src="thumbs/CFD_Q_ani.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -118,7 +118,7 @@
       <ul class="dc-publist">
         <li>
           <div class="dc-pub-img" style="overflow:hidden;">
-            <video id="icb-video" class="dc-autoplay-video" muted loop playsinline preload="metadata"
+            <video autoplay id="icb-video" class="dc-autoplay-video" muted loop playsinline preload="metadata"
                    style="width:100%;height:100%;object-fit:cover;transform:scale(1.95);transform-origin:50% 50%;display:block;">
               <source src="thumbs/ICB_combined.mp4" type="video/mp4">
             </video>
@@ -133,7 +133,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
             <source src="thumbs/manu_splash.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -146,7 +146,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
             <source src="thumbs/pulsed_jet_comparison.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -159,7 +159,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
             <source src="thumbs/raw_and_deepbub_crop.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -172,7 +172,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata">
             <source src="thumbs/flexible_nozzle_jfm_mid.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -184,7 +184,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata" style="object-position: 50% 40%">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata" style="object-position: 50% 40%">
             <source src="thumbs/two_nozzle_crop.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -207,7 +207,7 @@
           </div>
         </li>
         <li>
-          <video class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata" style="object-position: 0% 50%">
+          <video autoplay class="dc-pub-img dc-autoplay-video" muted loop playsinline preload="metadata" style="object-position: 0% 50%">
             <source src="thumbs/sphere_array_4_1D_side.mp4" type="video/mp4">
           </video>
           <div class="dc-pub-text">
@@ -263,12 +263,18 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@3.4.1/dist/js/bootstrap.min.js"></script>
 <script>
 const videoObs = new IntersectionObserver(function(entries) {
-  entries.forEach(function(e) { e.isIntersecting ? e.target.play() : e.target.pause(); });
+  entries.forEach(function(e) {
+    if (e.isIntersecting) {
+      var p = e.target.play();
+      if (p !== undefined) p.catch(function() {});
+    } else {
+      e.target.pause();
+    }
+  });
 }, { threshold: 0.25 });
 document.querySelectorAll('.dc-autoplay-video').forEach(function(v) {
   if (v.dataset.rate) {
     var r = parseFloat(v.dataset.rate);
-    v.playbackRate = r;
     v.addEventListener('play', function() { v.playbackRate = r; });
   }
   videoObs.observe(v);
