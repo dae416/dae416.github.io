@@ -730,6 +730,39 @@
           was found to reduce recirculation length by augmenting near-separation flow fluctuations.
         </p>
       </div>
+
+      <div class="dc-full-proj-img-single">
+        <video muted loop playsinline preload="metadata" autoplay
+               style="width:100%;display:block;border-radius:5px;">
+          <source src="videos/atomization/fluent_spray.mp4" type="video/mp4">
+        </video>
+        <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">ANSYS Fluent CFD simulation of paint spray nozzle primary atomization — droplet size and velocity distributions</p>
+      </div>
+
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-spray">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <img src="images/P_spray_model.png" alt="Film growth rate model">
+                <div class="dc-slide-caption">Weber-number film growth rate model — droplet size/velocity distributions from CFD feed empirical coefficients B₁, B₂, B₃ (Kalantari &amp; Tropea 2007)</div>
+              </div>
+            </div>
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <img src="images/P_spray_process.png" alt="Spray coating digital twin framework">
+                <div class="dc-slide-caption">Digital twin framework for robotic hull painting — CFD-resolved spray cone mapped to film deposition on ship hull surface</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-spray',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-spray"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-spray',1)">&#8250;</button>
+        </div>
+      </div>
+
       <p class="dc-full-proj-kw"><strong>Keywords:</strong> bubble velocimetry, CNN optical flow, liquid atomization, Rayleigh–Taylor instability, spray coating, superhydrophobicity, PIV</p>
       <p class="dc-full-proj-pubs">
         <strong>Publications:</strong>
