@@ -639,6 +639,44 @@
           individual bubbles. It outperforms conventional Lucas–Kanade and Farnebäck optical flow in accuracy,
           runs 5× faster, and remains accurate at void fractions up to 58% where standard PTV fails entirely.
         </p>
+      </div>
+
+      <div class="dc-full-proj-img-single">
+        <video muted loop playsinline preload="metadata" autoplay
+               style="width:100%;display:block;border-radius:5px;">
+          <source src="videos/bubble/raw_and_deepbub_main.mp4" type="video/mp4">
+        </video>
+        <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">Raw bubble image (left) vs. DeepBubbleVelocimetry velocity field (right)</p>
+      </div>
+
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-bubble">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <video muted loop playsinline preload="metadata" autoplay>
+                  <source src="videos/bubble/syntehtic_bubble.mp4" type="video/mp4">
+                </video>
+                <div class="dc-slide-caption">Synthetic bubble image generation for CNN training</div>
+                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
+              </div>
+            </div>
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <img src="images/P_cnn_architecture.png" alt="DeepBubbleVelocimetry CNN architecture">
+                <div class="dc-slide-caption">PWC-Net architecture fine-tuned for bubble optical flow</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-bubble',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-bubble"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-bubble',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <div class="dc-full-proj-text">
         <p>
           Building on interface diagnostics, we also studied liquid column atomization driven by an annular
           dual-nozzle gas jet — a configuration designed to prevent nozzle clogging by eliminating backflow
