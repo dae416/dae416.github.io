@@ -11,6 +11,10 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" />
   <link rel="stylesheet" href="assets/css/daehyun.css" />
   <link rel="stylesheet" href="assets/css/projects.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css" />
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js"
+    onload="renderMathInElement(document.body, {delimiters:[{left:'\\(',right:'\\)',display:false},{left:'\\[',right:'\\]',display:true}]})"></script>
 </head>
 
 <body>
@@ -693,7 +697,7 @@
           Primary atomization of the paint spray nozzle was resolved through CFD simulation, yielding
           spatially resolved droplet size and velocity distributions. These distributions feed a
           Weber-number-based film growth rate model
-          (ḣ = B₁ · d_s · v_s · (Q/v_s)<sup>B₂</sup> · We<sub>d</sub><sup>B₃</sup>),
+          \(\dot{h} = B_1 \cdot d_s v_s \left(\tfrac{Q}{v_s}\right)^{\!B_2} \mathit{We}_d^{B_3}\),
           whose empirical coefficients and spray-angle scaling were validated against experimental data,
           enabling predictive control of paint film thickness for automated coating processes.
           A separate collaboration with Samsung Advanced Institute of Technology (SAIT) examined how
