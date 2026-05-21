@@ -675,31 +675,17 @@
         </p>
       </div>
 
-      <div class="dc-gallery-slider dc-gallery-static" id="gallery-atom-backflow">
-        <div class="dc-gallery-viewport">
-          <div class="dc-gallery-track">
-            <div class="dc-gallery-slide">
-              <div class="dc-slide-wrap">
-                <video muted loop playsinline preload="metadata" autoplay>
-                  <source src="videos/atomization/removing_backflow.mp4" type="video/mp4">
-                </video>
-                <div class="dc-slide-caption">High-speed shadowgraph of the backflow regime: reverse flow (arrows) at the lower nozzle exit draws atomized droplets back toward the nozzle wall, causing clogging and bearding. Activating the upper gas nozzle at m₁₂ ≥ 0.067 redirects the negative pressure zone and fully eliminates backflow.</div>
-                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
-              </div>
-            </div>
-            <div class="dc-gallery-slide">
-              <div class="dc-slide-wrap">
-                <img src="images/P_atom_schematic.png" alt="Dual-nozzle atomization schematic">
-                <div class="dc-slide-caption">Atomization schematics: (left) conventional single-nozzle configuration — Kelvin–Helmholtz instability generates wavy structures, Rayleigh–Taylor instability sets droplet size, and strong backflow draws droplets back to the nozzle; (right) dual-nozzle geometry — the upper annular gas nozzle provides independent backflow control while the lower nozzle governs atomization, enabling two distinct modes (bulk atomization and droplet atomization) within a single assembly.</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="dc-gallery-nav" style="display:none">
-          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-atom-backflow',-1)">&#8249;</button>
-          <div class="dc-gallery-dots" id="dots-gallery-atom-backflow"></div>
-          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-atom-backflow',1)">&#8250;</button>
-        </div>
+      <div class="dc-full-proj-img-single">
+        <video muted loop playsinline preload="metadata" autoplay
+               style="width:100%;display:block;border-radius:5px;">
+          <source src="videos/atomization/removing_backflow.mp4" type="video/mp4">
+        </video>
+        <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">Backflow suppression by upper gas nozzle (m₁₂ ≥ 0.067) — reverse flow (arrows) at lower nozzle exit</p>
+      </div>
+
+      <div class="dc-full-proj-img-single">
+        <img src="images/P_atom_schematic.png" alt="Dual-nozzle atomization schematic" style="border-radius:5px;">
+        <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">Single-nozzle (KH/RT instability + backflow) vs. dual-nozzle (bulk / droplet atomization modes, independent backflow control)</p>
       </div>
 
       <div class="dc-gallery-slider dc-gallery-static" id="gallery-atom-results">
@@ -710,14 +696,14 @@
                 <video muted loop playsinline preload="metadata" autoplay>
                   <source src="videos/atomization/coreliquid.mp4" type="video/mp4">
                 </video>
-                <div class="dc-slide-caption">Core liquid column dynamics visualized by high-speed shadowgraphy (Re_L ~ 2400–11 900). Gas velocity gradient (acceleration) at the lower nozzle exit — not absolute velocity — is the key parameter driving atomization onset. The column transitions through four identified regimes as lower-nozzle angle θ₂ and inter-nozzle momentum ratio m₁₂ are varied: bulk atomization (lower jet dominates), droplet atomization (upper jet forces breakup above the lower nozzle exit), backflow (strong reverse pressure without upper jet suppression), and floating liquid column (stagnation at very low flow rate).</div>
+                <div class="dc-slide-caption">Core liquid column — four regimes (bulk atomization, droplet atomization, backflow, floating column) under varying θ₂ and m₁₂; gas acceleration governs onset</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
             <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
                 <img src="images/P_atom_RT.png" alt="Rayleigh-Taylor instability wavelength validation">
-                <div class="dc-slide-caption">Experimental Rayleigh–Taylor instability wavelengths λ<sub>RT,exp</sub> vs. theoretical prediction 4π√(σD_L / (C_d ρ_g Δu²)) across all nozzle angles (θ₂ = 20°, 40°, 60°) and momentum flux ratios (m₁₂ = 0–0.27) — with corresponding high-speed shadowgraph images for each condition. The unit-slope collapse confirms that atomized droplet size is universally governed by RT instability, independent of the inter-nozzle ratio, providing a parameter-free predictive model for dual-nozzle atomizer design.</div>
+                <div class="dc-slide-caption">RT instability wavelength λ<sub>RT,exp</sub> vs. prediction — unit-slope collapse across all θ₂ and m₁₂; droplet size independent of inter-nozzle ratio</div>
               </div>
             </div>
           </div>
