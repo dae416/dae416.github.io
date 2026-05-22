@@ -322,16 +322,35 @@
 
 /* ── Responsive: stack on narrow screens ── */
 @media (max-width: 768px) {
-  .dc-proj-page { flex-direction: column; }
+  html, body { overflow-x: hidden; max-width: 100%; }
+  .dc-proj-page {
+    flex-direction: column;
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
   .dc-proj-sidebar-panel {
     position: static;
     width: 100%;
+    max-width: 100vw;
     height: auto;
     border-right: none;
     border-bottom: 1px solid #e4e9f5;
+    box-sizing: border-box;
   }
-  .dc-proj-main-panel { padding: 1.5em 1em; }
+  .dc-sidebar-title,
+  .dc-sidebar-desc,
+  .dc-sidebar-pubs {
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+  .dc-proj-main-panel {
+    padding: 1.5em 1em;
+    max-width: 100vw;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
   .dc-full-proj-gallery { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); }
+  table { display: block; overflow-x: auto; }
 }
 
 /* ── Click-to-play overlay for main project videos ── */
