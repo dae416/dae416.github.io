@@ -614,14 +614,19 @@ details[open] summary {
   display: inline-block;
   margin-left: 4px;
   font-size: 1em;
-  color: #1a2f6b;
+  color: #111;
   text-decoration: underline;
 }
 
-.dc-btn:hover { color: #1a2f6b; }
+.dc-btn:hover { color: #111; }
 
 .dc-press-link {
-  color: #000;
+  color: #111;
+  text-decoration: underline;
+}
+
+.dc-pub-text a, .dc-pub-note a {
+  color: #111;
   text-decoration: underline;
 }
 
