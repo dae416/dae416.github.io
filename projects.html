@@ -677,9 +677,28 @@
         </p>
       </div>
 
-      <div class="dc-full-proj-img-single">
-        <img src="images/P_atom_schematic.png" alt="Dual-nozzle atomization schematic" style="border-radius:5px;">
-        <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">Single-nozzle (KH/RT instability + backflow) vs. dual-nozzle (bulk / droplet atomization modes, independent backflow control)</p>
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-atom-concept">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <img src="images/P_atom_clogged_nozzle.jpg" alt="Clogged atomization nozzle">
+                <div class="dc-slide-caption">Nozzle clogging and bearding caused by backflow in single-nozzle configuration</div>
+              </div>
+            </div>
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <img src="images/P_atom_dual_nozzle_concept.png" alt="Single vs dual nozzle concept">
+                <div class="dc-slide-caption">Single-nozzle (backflow, clogging) vs. dual-nozzle (upper jet suppresses backflow, focused spray cone)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-atom-concept',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-atom-concept"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-atom-concept',1)">&#8250;</button>
+        </div>
       </div>
 
       <div class="dc-full-proj-img-single">
