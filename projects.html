@@ -746,8 +746,8 @@
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
-                <img src="images/P_spray_model.png" alt="Film growth rate model">
-                <div class="dc-slide-caption">Weber-number film growth rate model — droplet size/velocity distributions from CFD feed empirical coefficients B₁, B₂, B₃ (Kalantari &amp; Tropea 2007)</div>
+                <img src="images/P_spray_demo.jpg" alt="Digital twin demo">
+                <div class="dc-slide-caption">Daewoo Shipbuilding digital twin demo — real-time film distribution visualization during robotic spray coating</div>
               </div>
             </div>
             <div class="dc-gallery-slide">
@@ -762,6 +762,30 @@
           <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-spray',-1)">&#8249;</button>
           <div class="dc-gallery-dots" id="dots-gallery-spray"></div>
           <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-spray',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-spray-valid">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <img src="images/P_spray_thickness_dist.png" alt="Coating thickness distribution">
+                <div class="dc-slide-caption">Predicted film thickness distribution at spray speeds 400–1000 mm/s — model captures bell-curve profile across spray path positions</div>
+              </div>
+            </div>
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <img src="images/P_spray_thickness_valid.png" alt="Film thickness model validation">
+                <div class="dc-slide-caption">Model validation: experimental vs. estimated film thickness — near unit-slope agreement confirms predictive accuracy across conditions</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-spray-valid',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-spray-valid"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-spray-valid',1)">&#8250;</button>
         </div>
       </div>
 
