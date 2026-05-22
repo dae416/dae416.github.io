@@ -290,19 +290,23 @@
         </div>
       </div>
 
-      <h3 class="dc-proj-sub">Bayesian Nozzle Shape Optimization</h3>
+      <h3 class="dc-proj-sub">Bayesian Nozzle Shape Optimization — Pulsed Jet</h3>
       <div class="dc-full-proj-text">
         <p>
           Beyond passive compliance, nozzle contour geometry critically shapes both inlet energy and
-          outlet impulse. As a continuation, we employ multi-objective Bayesian optimization (MOBO)
-          with Gaussian Process surrogate models to efficiently navigate the nozzle design space —
-          parametrized by control-point splines — evaluated through high-fidelity OpenFOAM FSI
-          simulations. This sample-efficient framework iteratively identifies Pareto-optimal
+          outlet impulse. We employ multi-objective Bayesian optimization (MOBO) with Gaussian
+          Process surrogate models to efficiently navigate the nozzle design space — parametrized by
+          control-point splines — evaluated through high-fidelity OpenFOAM FSI simulations coupled
+          via preCICE. This sample-efficient framework iteratively identifies Pareto-optimal
           geometries that maximize outlet impulse while minimizing inlet energy, without exhaustive
-          brute-force simulation. The approach is currently being extended from pulsed jet systems
-          to rotary propellers, targeting enhanced thrust efficiency for underwater vehicles.
+          brute-force simulation.
         </p>
         <p class="dc-proj-sub-ref"><a href="https://arxiv.org/abs/2605.17319" target="_blank" rel="noopener">arXiv:2605.17319</a> (under review) &nbsp;·&nbsp; Bi-objective BO of soft nozzle geometry (in preparation)</p>
+      </div>
+
+      <div class="dc-full-proj-img-single">
+        <img src="images/P_squid_precice.png" alt="preCICE FSI coupling" style="border-radius:5px;">
+        <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">OpenFOAM–CalculiX two-way FSI coupling via preCICE — fluid mesh and solid mesh exchange displacement and force at every time step through socket-based communicators with parallel-implicit coupling scheme</p>
       </div>
 
       <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid-4">
@@ -310,19 +314,16 @@
           <div class="dc-gallery-track">
             <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
-                <video muted loop playsinline data-rate="2">
-                  <source src="videos/squid/pulsed_jet_optimization_web.mp4" type="video/mp4">
-                </video>
-                <div class="dc-slide-caption">Bayesian optimization of nozzle geometry</div>
-                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
+                <img src="images/P_squid_bo_framework.png" alt="Bayesian optimization framework">
+                <div class="dc-slide-caption">MOBO loop: surrogate model → acquisition function → CFD evaluation → dataset update, iterated until convergence</div>
               </div>
             </div>
             <div class="dc-gallery-slide">
               <div class="dc-slide-wrap">
-                <video muted loop playsinline>
-                  <source src="videos/squid/darpa_thrust_thumb_web.mp4" type="video/mp4">
+                <video muted loop playsinline autoplay preload="metadata" data-rate="2">
+                  <source src="videos/squid/pulsed_jet_optimization_web.mp4" type="video/mp4">
                 </video>
-                <div class="dc-slide-caption">DARPA thrust demonstration</div>
+                <div class="dc-slide-caption">Bayesian optimization of pulsed-jet nozzle geometry</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
@@ -332,6 +333,41 @@
           <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid-4',-1)">&#8249;</button>
           <div class="dc-gallery-dots" id="dots-gallery-squid-4"></div>
           <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-4',1)">&#8250;</button>
+        </div>
+      </div>
+
+      <h3 class="dc-proj-sub">DARPA Rotary Propeller Thrust Optimization</h3>
+      <div class="dc-full-proj-text">
+        <p>
+          The MOBO framework is extended to rotary propulsion under the DARPA Young Faculty Award
+          program. A squid-inspired compliant nozzle sleeve fitted over a conventional rotary
+          propeller passively reshapes the outflow in synchrony with the blade pressure cycles.
+          Bi-objective Bayesian optimization identifies Pareto-optimal sleeve geometries that
+          simultaneously maximize thrust and minimize input torque, with candidates evaluated
+          experimentally via water-tank dynamometry. These demonstrations establish the viability
+          of soft nozzle augmentation for next-generation compact underwater vehicles.
+        </p>
+        <p class="dc-proj-sub-ref"><a href="https://arxiv.org/abs/2605.03239" target="_blank" rel="noopener">arXiv:2605.03239</a> (under review) &nbsp;·&nbsp; Bi-objective BO of soft nozzle geometry for rotary propeller (in preparation)</p>
+      </div>
+
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid-5">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <video muted loop playsinline autoplay preload="metadata">
+                  <source src="videos/squid/darpa_thrust_thumb_web.mp4" type="video/mp4">
+                </video>
+                <div class="dc-slide-caption">DARPA thrust demonstration — squid-inspired nozzle on rotary propeller</div>
+                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-squid-5',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-squid-5"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-5',1)">&#8250;</button>
         </div>
       </div>
 
