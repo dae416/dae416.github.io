@@ -463,13 +463,69 @@
 }
 
 .dc-proj-sub-ref {
-  font-size: 0.78em;
+  font-size: 0.85em;
+  margin: 0.8em 0 0;
   color: #555;
-  margin-top: 0.45em;
-  margin-bottom: 0;
 }
 
 .dc-proj-sub-ref a {
+  display: inline-block;
   color: #111;
-  text-decoration: underline;
+  border: 1px solid #bbb;
+  border-radius: 3px;
+  padding: 1px 8px;
+  text-decoration: none;
+  margin: 0 3px 3px 0;
+}
+
+.dc-proj-sub-ref a:hover {
+  color: #1a2f6b;
+  border-color: #1a2f6b;
+}
+
+/* ── Medical device product grid ── */
+.dc-product-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.2em;
+  margin: 0.8em 0 1.2em;
+}
+
+.dc-product-card {
+  border: 1px solid #e4e9f5;
+  border-radius: 5px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.dc-product-card img {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  object-fit: cover;
+  display: block;
+}
+
+.dc-product-card-body {
+  padding: 0.7em 0.9em 0.9em;
+  flex: 1;
+}
+
+.dc-product-card-title {
+  font-weight: 700;
+  font-size: 0.9em;
+  margin: 0 0 0.35em;
+  color: #111;
+}
+
+.dc-product-card-specs {
+  font-size: 0.78em;
+  color: #444;
+  margin: 0;
+  padding-left: 1.1em;
+  line-height: 1.65;
+}
+
+@media (max-width: 600px) {
+  .dc-product-grid { grid-template-columns: 1fr; }
 }
