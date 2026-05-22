@@ -483,6 +483,16 @@
   border-color: #1a2f6b;
 }
 
+.dc-proj-sub-ref .tag {
+  display: inline-block;
+  color: #555;
+  border: 1px solid #ccc;
+  border-radius: 3px;
+  padding: 1px 8px;
+  margin: 0 3px 3px 0;
+  font-style: italic;
+}
+
 /* ── Medical device product grid ── */
 .dc-product-grid {
   display: grid;
