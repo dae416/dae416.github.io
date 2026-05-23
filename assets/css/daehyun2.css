@@ -176,6 +176,17 @@ details[open] summary {
 
 .dc-interests li { margin-bottom: 0.35em; }
 
+.dc-ri-more {
+  margin: 0.6em 0 0 0;
+  font-size: 0.88em;
+}
+.dc-ri-more a {
+  color: #1a2f6b;
+  text-decoration: none;
+  opacity: 0.75;
+}
+.dc-ri-more a:hover { opacity: 1; text-decoration: underline; }
+
 /* ─── Divider ─────────────────────────── */
 .dc-hr { margin: 2.2em 0; border-color: #e8ecf3; }
 
@@ -514,6 +525,12 @@ details[open] summary {
   height: 160px;
   object-fit: cover;
   display: block;
+}
+
+.dc-slide-caption {
+  text-align: center;
+  font-size: 0.82em;
+  color: #555;
 }
 
 .dc-research-caption {
