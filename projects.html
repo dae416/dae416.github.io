@@ -397,6 +397,11 @@
         </p>
       </div>
 
+      <div class="dc-full-proj-img-single">
+        <img src="images/P_squid_darpa_optim.png" alt="DARPA nozzle optimization: spline parameterization and Bayesian optimization convergence" style="border-radius:5px;">
+        <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">Nozzle spline parameterization (left: R_avg, t_top, t_bottom, x_spline 1–3) and Bayesian optimization convergence — normalized thrust across 1st, 2nd, and 3rd generations of flexible vs. rigid designs</p>
+      </div>
+
       <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid-5">
         <div class="dc-gallery-viewport">
           <div class="dc-gallery-track">
@@ -481,11 +486,25 @@
           A flexible circular nozzle fabricated from silicone rubber fundamentally modifies the
           vortical structure of a starting jet and enhances thrust generation. Back-and-forth
           elastic wave propagation on the nozzle wall drives the augmented jet-vortex evolution.
-          By combining hydrodynamic conservation equations with linearized shell theory, we derive
-          two governing dimensionless parameters — the effective jet acceleration time \(\Pi_0\)
-          and the effective nozzle stiffness \(\Pi_1\) — and show that jet momentum is maximized
-          when the dimensionless wave speed \(\hat{c} = (\Pi_0^2 \Pi_1/2)^{0.5}\) reaches a
-          critical value \(\hat{c}_\text{crit} \simeq 3.0\). At this condition, elastic energy
+          By combining hydrodynamic conservation equations with linearized shell theory, the
+          governing equations of the coupled nozzle–jet system reduce to a dimensionless form
+          with two key parameters:
+          \[
+            \frac{1}{\Pi_0}\frac{\partial \hat{w}_y}{\partial \hat{t}}
+            + \hat{u}\,\frac{\partial \hat{w}_n}{\partial \hat{y}}
+            + \frac{1+\hat{w}_n}{2}\,\frac{\partial \hat{u}}{\partial \hat{y}} = 0
+          \]
+          \[
+            \frac{1}{\Pi_0}\frac{\partial \hat{u}}{\partial \hat{t}}
+            + \hat{u}\,\frac{\partial \hat{u}}{\partial \hat{y}}
+            + \Pi_1\,\frac{\partial \hat{w}_n}{\partial \hat{y}} = 0
+          \]
+          where \(\Pi_0 = u_m T_\text{acc}/L\) is the effective jet acceleration time and
+          \(\Pi_1 = Eh/(2\rho_f u_m^2 R)\) is the effective nozzle stiffness.
+          Asymptotic analysis yields the dimensionless wave speed
+          \(\hat{c} = (\Pi_0^2\Pi_1/2)^{0.5}\),
+          and jet momentum is maximized at the critical value
+          \(\hat{c}_\text{crit} \simeq 3.0\). At this condition, elastic energy
           stored during nozzle contraction is released in synchrony with the instant of jet
           acceleration termination, producing the largest achievable vortex circulation and
           hydrodynamic impulse. This work establishes the theoretical framework for optimal
