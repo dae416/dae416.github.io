@@ -137,6 +137,13 @@ body {
 
 #bio .dc-bio-body p { font-size: 1em; color: #333; margin-bottom: 1em; }
 
+#bio .dc-bio-body a,
+#bio .dc-interests a,
+#bio .dc-ri-more a {
+  color: #111;
+  text-decoration: underline;
+}
+
 details {
   background: #f7f9fc;
   border: 1px solid #dde4f0;
