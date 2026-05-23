@@ -304,18 +304,22 @@
           <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-3',1)">&#8250;</button>
         </div>
       </div>
+      <div class="dc-full-proj-img-single">
+        <img src="images/P_squid_performance.png" alt="Performance summary: Aerial Jet, Squid Boat, Mixing" style="border-radius:5px;">
+        <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">Performance comparison — Rigid (blue) vs. Flexible (red) nozzle across three applications: aerial jet height (+45%), squid boat speed (+41%) at reduced cost of transport (−28%), and inking plume mixing area (+41%)</p>
+      </div>
       <p class="dc-proj-sub-ref"><a href="https://arxiv.org/abs/2605.03239" target="_blank" rel="noopener">arXiv:2605.03239</a></p>
 
-      <h3 class="dc-proj-sub">Bayesian Nozzle Shape Optimization — Pulsed Jet</h3>
+      <h3 class="dc-proj-sub">Elastic Wave Mechanism in Pulsed Jets</h3>
       <div class="dc-full-proj-text">
         <p>
-          Beyond passive compliance, nozzle contour geometry critically shapes both inlet energy and
-          outlet impulse. We employ multi-objective Bayesian optimization (MOBO) with Gaussian
-          Process surrogate models to efficiently navigate the nozzle design space — parametrized by
-          control-point splines — evaluated through high-fidelity OpenFOAM FSI simulations coupled
-          via preCICE. This sample-efficient framework iteratively identifies Pareto-optimal
-          geometries that maximize outlet impulse while minimizing inlet energy, without exhaustive
-          brute-force simulation.
+          High-fidelity 3D FSI simulations (OpenFOAM + CalculiX coupled via preCICE) computationally
+          confirm the elastic-wave-speed criterion derived for the starting jet: pulsed-jet impulse is
+          maximized when \(\hat{c} = (\Pi_0^2\Pi_1/2)^{0.5} \simeq 3\), at which the nozzle
+          contraction wave reaches the exit in synchrony with jet termination. The simulations resolve
+          the coupled nozzle-wall deformation and vortex-ring dynamics across a wide range of nozzle
+          stiffness and jet acceleration times — establishing elastic wave timing as the universal
+          design criterion for compliant pulsed-jet propulsors.
         </p>
       </div>
 
@@ -330,6 +334,26 @@
       <div class="dc-full-proj-img-single">
         <img src="images/P_squid_precice.png" alt="preCICE FSI coupling" style="border-radius:5px;">
         <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">OpenFOAM–CalculiX two-way FSI coupling via preCICE — fluid mesh and solid mesh exchange displacement and force at every time step through socket-based communicators with parallel-implicit coupling scheme</p>
+      </div>
+      <p class="dc-proj-sub-ref"><a href="https://arxiv.org/abs/2605.17319" target="_blank" rel="noopener">arXiv:2605.17319</a> <span class="tag">Under review</span></p>
+
+      <h3 class="dc-proj-sub">Multi-Objective Nozzle Shape Optimization</h3>
+      <div class="dc-full-proj-text">
+        <p>
+          Beyond material compliance, nozzle contour geometry independently governs both inlet energy
+          and outlet impulse. The nozzle profile is parameterized by three spline control points
+          (six design variables: axial positions \(x_1, x_2, x_3\) and radial offsets
+          \(y_1, y_2, y_3\)). A multi-objective Bayesian optimization (MOBO) framework using
+          Gaussian Process surrogate models (BoTorch, Matérn kernel) and log expected
+          hypervolume improvement (qLogEHVI) acquisition iteratively identifies Pareto-optimal
+          geometries that simultaneously maximize outlet impulse \(I\) and minimize inlet energy
+          \(E\), with each candidate evaluated via high-fidelity OpenFOAM FSI simulation.
+          Starting from 20 Latin Hypercube samples, batches of 5 designs are evaluated per
+          iteration until hypervolume convergence. Rigid nozzles reach higher peak impulse
+          (\(I/I_0 \approx 5\)) at greater energy cost; flexible nozzles achieve superior
+          efficiency at moderate thrust — demonstrating that structural compliance fundamentally
+          shifts the efficiency–thrust trade-off.
+        </p>
       </div>
 
       <div class="dc-gallery-slider dc-gallery-static" id="gallery-squid-4">
@@ -358,7 +382,7 @@
           <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-squid-4',1)">&#8250;</button>
         </div>
       </div>
-      <p class="dc-proj-sub-ref"><a href="https://arxiv.org/abs/2605.17319" target="_blank" rel="noopener">arXiv:2605.17319</a> <span class="tag">In preparation</span></p>
+      <p class="dc-proj-sub-ref"><span class="tag">Singh et al. — Under review</span></p>
 
       <h3 class="dc-proj-sub">DARPA Rotary Propeller Thrust Optimization</h3>
       <div class="dc-full-proj-text">
@@ -528,6 +552,44 @@
         </p>
       </div>
       <p class="dc-proj-sub-ref"><a href="papers/choi2024_jfm.pdf" target="_blank" rel="noopener">Choi &amp; Park, JFM 2024</a></p>
+
+      <div class="dc-full-proj-img-single">
+        <video muted loop playsinline autoplay preload="metadata"
+               style="width:100%;display:block;border-radius:5px;">
+          <source src="videos/squid/jfms/supp_video1_trimmed.mp4" type="video/mp4">
+        </video>
+        <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">Pulsed jet through flexible nozzle — vortex ring formation and entrainment enhancement with optimal compliance (Supplementary Video 1)</p>
+      </div>
+
+      <div class="dc-gallery-slider dc-gallery-static" id="gallery-fsi-pulsed">
+        <div class="dc-gallery-viewport">
+          <div class="dc-gallery-track">
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <video muted loop playsinline autoplay preload="metadata">
+                  <source src="videos/squid/jfms/supp_video2_trimmed.mp4" type="video/mp4">
+                </video>
+                <div class="dc-slide-caption">Nozzle surface wave dynamics — back-and-forth elastic wave propagation during pulsed jet ejection (Supplementary Video 2)</div>
+                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
+              </div>
+            </div>
+            <div class="dc-gallery-slide">
+              <div class="dc-slide-wrap">
+                <video muted loop playsinline autoplay preload="metadata">
+                  <source src="videos/squid/jfms/vehicle_demo.mp4" type="video/mp4">
+                </video>
+                <div class="dc-slide-caption">Underwater vehicle propulsion demonstration — flexible nozzle producing enhanced thrust</div>
+                <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="dc-gallery-nav" style="display:none">
+          <button class="dc-gallery-btn dc-gallery-prev" onclick="moveSlide('gallery-fsi-pulsed',-1)">&#8249;</button>
+          <div class="dc-gallery-dots" id="dots-gallery-fsi-pulsed"></div>
+          <button class="dc-gallery-btn dc-gallery-next" onclick="moveSlide('gallery-fsi-pulsed',1)">&#8250;</button>
+        </div>
+      </div>
 
     </section>
 
