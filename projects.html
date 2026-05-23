@@ -60,13 +60,20 @@
       <div class="dc-sidebar-item" id="nav-squid">
         <a href="#proj-squid" class="dc-sidebar-title">🦑 Squid-Inspired Nozzles &amp; Bioinspired Propulsion</a>
         <p class="dc-sidebar-desc">
-          bioinspired propulsion · FSI · elastic waves · Bayesian optimization · DARPA · soft robotics · PIV · dynamometry
+          bioinspired propulsion · superpropulsion · squid biomechanics · soft robotics · PIV · dynamometry
         </p>
         <div class="dc-sidebar-pubs">
           <a href="https://arxiv.org/abs/2605.03239" target="_blank" rel="noopener">arXiv:2605.03239</a>
-          <a href="https://arxiv.org/abs/2605.17319" target="_blank" rel="noopener">arXiv:2605.17319</a>
-          <a href="papers/choi2024_jfm.pdf" target="_blank" rel="noopener">JFM 2024</a>
-          <a href="papers/choi2022b_jfm.pdf" target="_blank" rel="noopener">JFM 2022</a>
+        </div>
+      </div>
+
+      <div class="dc-sidebar-item" id="nav-optim">
+        <a href="#proj-optim" class="dc-sidebar-title">🎯 Nozzle Geometry Optimization</a>
+        <p class="dc-sidebar-desc">
+          multi-objective Bayesian optimization · MOBO · spline parameterization · DARPA rotary propeller · FSI simulation
+        </p>
+        <div class="dc-sidebar-pubs">
+          <span>Singh et al. — Under review</span>
           <span>US 19/568,682</span>
           <span>US 19/568,695</span>
         </div>
@@ -309,6 +316,19 @@
         <p class="dc-slide-caption" style="text-align:left;padding:0.3em 0 0.8em;">Performance comparison — Rigid (blue) vs. Flexible (red) nozzle across three applications: aerial jet height (+45%), squid boat speed (+41%) at reduced cost of transport (−28%), and inking plume mixing area (+41%)</p>
       </div>
       <p class="dc-proj-sub-ref"><a href="https://arxiv.org/abs/2605.03239" target="_blank" rel="noopener">arXiv:2605.03239</a></p>
+
+
+    </section>
+
+    <hr class="dc-full-proj-hr">
+
+    <!-- ── NOZZLE OPTIMIZATION ── -->
+    <section class="dc-full-proj" id="proj-optim">
+      <h2 class="dc-full-proj-title">Bioinspired Nozzle Geometry Optimization</h2>
+      <p class="dc-full-proj-meta">
+        <strong>Support:</strong> DARPA (Young Faculty Award) · NRF Korea<br>
+        <strong>Collaborators:</strong> Prof. M. Saad Bhamla (Georgia Tech) · Prof. Chandan Bose (University of Birmingham)
+      </p>
 
       <h3 class="dc-proj-sub">Multi-Objective Nozzle Shape Optimization</h3>
       <div class="dc-full-proj-text">
@@ -1580,6 +1600,7 @@ document.querySelectorAll('.dc-autoplay-video').forEach(function(v) {
 const sections = document.querySelectorAll('.dc-full-proj');
 const navItems = {
   'proj-squid':      document.getElementById('nav-squid'),
+  'proj-optim':      document.getElementById('nav-optim'),
   'proj-fsi':        document.getElementById('nav-fsi'),
   'proj-mudskipper': document.getElementById('nav-mudskipper'),
   'proj-interface':  document.getElementById('nav-interface'),
