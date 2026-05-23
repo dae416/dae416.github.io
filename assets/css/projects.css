@@ -89,6 +89,16 @@
 
 .dc-sidebar-pubs a:hover { background: #1a2f6b; color: #fff; }
 
+.dc-sidebar-pubs span {
+  font-size: 0.72em;
+  color: #1a2f6b;
+  background: #e4eaf7;
+  border: 1px solid #c0cce8;
+  border-radius: 3px;
+  padding: 1px 6px;
+  white-space: nowrap;
+}
+
 /* ── RIGHT main panel (70%) ── */
 .dc-proj-main-panel {
   flex: 1;
