@@ -177,9 +177,13 @@
 .dc-slide-wrap {
   position: relative;
   display: block;
-  cursor: pointer;
+  cursor: default;
   line-height: 0;
   background: #fff;
+}
+
+.dc-slide-wrap:has(video) {
+  cursor: pointer;
 }
 
 .dc-slide-caption {
