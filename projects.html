@@ -182,6 +182,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/squid/2_SI_movie_v15_highres_freesquid_web.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Free-swimming squid (<em>Doryteuthis opalescens</em>)</p>
       </div>
 
@@ -231,6 +232,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/squid/2_2_optmialconidtion_web.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Optimal nozzle compliance condition</p>
       </div>
 
@@ -511,6 +513,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/squid/jfms/eh_comparison_vel_field.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">PIV: rigid vs. flexible</p>
       </div>
 
@@ -592,6 +595,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/squid/jfms/supp_video1_trimmed.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Pulsed jet: vortex formation</p>
       </div>
 
@@ -644,6 +648,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/squid/CFD_Q_ani_web.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">3D FSI Q-criterion isosurface</p>
       </div>
 
@@ -678,6 +683,7 @@
             <source data-src="videos/squid/3d_reconstruction/rot_view3_reconstructed.mp4" type="video/mp4">
           </video>
         </div>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">3D nozzle deformation</p>
       </div>
 
@@ -852,6 +858,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/mudskipper/physical_model_hflip.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Mudskipper dynamics model</p>
       </div>
 
@@ -934,6 +941,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/splash/manu_demo.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Demo of Manu jump by Halley (author)</p>
       </div>
 
@@ -1023,6 +1031,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/bubble/raw_and_deepbub_main.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Prediction vs. raw</p>
       </div>
 
@@ -1096,6 +1105,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/atomization/removing_backflow.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Backflow suppression (see the intact liquid column at right)</p>
       </div>
 
@@ -1151,6 +1161,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/atomization/fluent_spray.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">CFD spray atomization</p>
       </div>
 
@@ -1237,6 +1248,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/wake/sphere_mix5_dye_crop.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Multi-sphere wake: dye visualization</p>
       </div>
 
@@ -1281,6 +1293,7 @@
                style="width:100%;display:block;border-radius:5px;">
           <source data-src="videos/wake/sphere_wake_summary.mp4" type="video/mp4">
         </video>
+        <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Multi-sphere wake summary</p>
       </div>
 
@@ -1717,6 +1730,16 @@ document.querySelectorAll('.dc-sidebar-item').forEach(function(item) {
 </script>
 
 <script>
+// ── Inline single video progress bars ──
+document.querySelectorAll('.dc-full-proj-img-single video').forEach(function(video) {
+  var wrap = video.closest('.dc-full-proj-img-single');
+  var bar  = wrap && wrap.querySelector('.dc-slide-bar');
+  if (!bar) return;
+  video.addEventListener('timeupdate', function() {
+    if (video.duration) bar.style.width = (video.currentTime / video.duration * 100) + '%';
+  });
+});
+
 document.querySelectorAll('.dc-video-wrap').forEach(function(wrap) {
   var video   = wrap.querySelector('video');
   var btn     = wrap.querySelector('.dc-video-btn');
