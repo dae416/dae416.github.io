@@ -186,6 +186,11 @@
   cursor: pointer;
 }
 
+.dc-full-proj-img-single:hover .dc-slide-progress {
+  opacity: 1;
+  height: 5px;
+}
+
 .dc-slide-caption {
   padding: 0.3em 0.5em;
   background: transparent;
