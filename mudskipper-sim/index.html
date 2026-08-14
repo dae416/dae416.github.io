@@ -66,6 +66,7 @@
       <div class="mini"><span>TOP · X-Y</span><canvas id="mTop" width="200" height="140"></canvas></div>
       <div class="mini"><span>SIDE · X-Z</span><canvas id="mSide" width="200" height="140"></canvas></div>
       <div class="mini"><span>FRONT · Y-Z</span><canvas id="mFront" width="200" height="140"></canvas></div>
+      <div class="mini"><span>OBLIQUE</span><canvas id="mObl" width="200" height="140"></canvas></div>
     </div>
   </div>
 
@@ -92,6 +93,19 @@
       <button data-p="60,60">Max</button>
       <button id="reset" class="primary">Reset</button>
     </div>
+
+    <h2>PID pitch control (firmware-style)</h2>
+    <div class="checks">
+      <label><input type="checkbox" id="pidOn"> PID on (overrides duty sliders)</label>
+    </div>
+    <div class="row"><label>Target pitch</label><input type="range" id="pidT" min="-60" max="60" value="0" step="1"><span class="val" id="pidTv">0°</span></div>
+    <div class="row"><label>Kp</label><input type="range" id="pidKp" min="0" max="30" value="10" step="0.5"><span class="val" id="pidKpv">10</span></div>
+    <div class="row"><label>Ki</label><input type="range" id="pidKi" min="0" max="5" value="0" step="0.1"><span class="val" id="pidKiv">0</span></div>
+    <div class="row"><label>Kd</label><input type="range" id="pidKd" min="0" max="3" value="0.5" step="0.1"><span class="val" id="pidKdv">0.5</span></div>
+    <div class="row"><label>Base duty</label><input type="range" id="pidBase" min="0" max="40" value="10" step="1"><span class="val" id="pidBasev">10</span></div>
+    <div class="row"><label>Loop delay</label><input type="range" id="pidDly" min="0" max="150" value="60" step="10"><span class="val" id="pidDlyv">60 ms</span></div>
+    <div class="note" id="pidNote">Campaign gains: Kp 10 · Ki 0 · Kd 0.5, ceiling 60/255, measured ~60 ms transport delay.
+    u = Kp·e + Ki·∫e − Kd·dθ/dt → top = base − u, bottom = base + u.</div>
 
     <h2>Pectoral fins · 0.1 s stroke</h2>
     <div class="btns">
@@ -126,6 +140,20 @@
     </div>
     <div class="note">Kirchhoff terms: effective mass on acceleration (x +10 g · y +51 g · z +41 g),
     ω×(M·v) momentum coupling, v×(M_A·v) Munk moment. Off = bare rigid body.</div>
+
+    <h2>Force model per shape (keywords)</h2>
+    <div class="note">
+      <b>Body</b>: 3-axis quadratic drag (CFD Cd_x 0.622 · flat-plate y/z, CP 12 mm aft) ·
+        lift CL₀ + CLα·α @ CoP −8 mm · Kirchhoff added mass + Munk.<br>
+      <b>Topfin / Bottomfin</b>: x-normal plate — Cn·|u|u normal force + CLα·u·v cross-flow lift,
+        at tail ±z arm; bottomfin × drag-ratio, mirrored about CoM height.<br>
+      <b>Pectoral fins</b>: CFD open−shut Δ(Cd, CL₀, A_z) + CLα·α lift, applied @ fin bay
+        (fwd of CoM) × fold fraction.<br>
+      <b>Props</b>: B-series KT/KQ(J) ⇌ motor-curve equilibrium; thrust @ CAD disc centre,
+        reaction = pure couple.<br>
+      <b>Weight / Buoyancy</b>: split per component (body + each fin) at own centroid;
+        righting = CoM-below-CoB offset.
+    </div>
     <div class="note">Bottomfin = mirrored topfin, open back → mass ≈ 0, balances top/bottom drag.
     1.0 = balanced · 0 = removed (topfin drag alone → pitch moment).</div>
 
@@ -151,7 +179,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814b"></script>
+<script src="sim_data.js?v=20260814c"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -175,10 +203,13 @@ const P = {                    // ponytail: every entry is a calibration knob
   ma:  [0.010, 0.051, 0.041],    // translational added mass [kg] (x,y,z — flat body: lateral/vertical large)
   cob: [-3.5e-3, 0, 16.8e-3],  // buoyancy centre (mesh frame)
   comDrop: 3e-3,
-  propX: -63e-3, propSep: 15e-3, propZmid: 17e-3,  // real motor stack: mesh z 24.5 / 9.5 mm (FIXED)
+  pT: S.propT_c.map(v => v*1e-3),  // CAD prop disc centres (mesh frame), axis = +x
+  pB: S.propB_c.map(v => v*1e-3),
   zMid: 17e-3,                 // hull mid-plane (bottomfin mirror)
   D: S.propD_mm * 1e-3,
-  motor: {Vnom: 3.7, rpmNL: 50000, Qstall: 1.8e-3, Vrail: 5.0, Vstart: 0.25},
+  motor: {Vnom: 3.7, rpmNL: 50000, Qstall: 1.8e-3, Vrail: 5.0, Vstart: 0.05},
+  // Vstart low: coreless motors respond to PWM peak volts — a hard cutoff at low duty
+  // creates a control deadband the real robot doesn't have
   derT: 0.65, derQ: 1.15,      // low-Re: thrust down, torque up
   // axial drag + CL0 interpolate with fin deploy fraction (CFD open/shut)
   CdxShut: 0.622, CdxOpen: 0.692, Aref: 1.043e-3,
@@ -189,6 +220,9 @@ const P = {                    // ponytail: every entry is a calibration knob
   finCLa: 4.0,                 // fin lift slope [/rad] — weathervane stiffness vs Munk moment
   finR: [-47e-3, 0, 55e-3],
   pfinX: 13e-3,                // pectoral-fin force CP, mesh x [m] — ~16 mm fwd of CoM; calibrate
+  pfinS: 7.7e-4, pfinCLa: 3.9, // pectoral planform (2×35×11 mm) + lift slope: AoA lift fwd of CoM = destabilizing
+  // per-component mass [g] / displaced volume [cm³] — split out of the 34 g / 34 cm³ totals
+  finMassT: 0.5, finVolT: 0.3, finMassB: 0.05, finVolB: 0.05, pfinMass: 0.6, pfinVol: 0.4,
   xDragCP: -12e-3,             // lateral/vertical body drag centre aft of CoM (restoring)
   bfDrag: 1.0,
   netBuoyG: 0,
@@ -239,7 +273,9 @@ function resetState(){
   trailPts.length = 0; hist.length = 0; path.length = 0;
 }
 
-const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true};
+const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true,
+             pid:false, target:0, kp:10, ki:0, kd:0.5, base:10, delayMs:60};
+const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0};   // controller state + delay line
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
 let COM = new THREE.Vector3();
@@ -262,16 +298,36 @@ function physicsStep(dt){
   const F = new THREE.Vector3(), M = new THREE.Vector3();
   const A = dbg.arrows;
 
+  // --- PID pitch control (firmware-style: differential trim, 60 ms loop delay) ---
+  let dutyT = ctl.dutyT, dutyB = ctl.dutyB;
+  {
+    const fz = Math.max(-1, Math.min(1, 2*(state.q.x*state.q.z - state.q.w*state.q.y)));
+    const pitchNow = Math.asin(fz)*180/Math.PI;
+    pid.buf.push({t: state.t, p: pitchNow});
+    while (pid.buf.length > 2 && pid.buf[0].t < state.t - 0.3) pid.buf.shift();
+    if (ctl.pid){
+      const tD = state.t - ctl.delayMs*1e-3;          // delayed measurement
+      let m = pid.buf[0];
+      for (const b of pid.buf){ if (b.t <= tD) m = b; else break; }
+      const e = ctl.target - m.p;
+      pid.i = Math.max(-60, Math.min(60, pid.i + (ctl.ki ? e*dt : 0)));
+      const dm = (m.p - pid.prev)/dt; pid.prev = m.p;
+      const u = ctl.kp*e + ctl.ki*pid.i - ctl.kd*dm;  // PWM counts; e in deg
+      dutyT = Math.max(0, Math.min(60, ctl.base - u));
+      dutyB = Math.max(0, Math.min(60, ctl.base + u));
+      pid.u = u; pid.e = e; pid.dT = dutyT; pid.dB = dutyB;
+    } else { pid.i = 0; pid.prev = pitchNow; }
+  }
+
   // --- props (top/bottom) ---
   // torque bookkeeping: thrust → moment r×F about CoM; prop reaction torque is a
-  // pure couple (point of application irrelevant). Props at their REAL mesh position.
-  const zT = P.propZmid + P.propSep/2, zB = P.propZmid - P.propSep/2;
-  const rT = new THREE.Vector3(P.propX, 0, zT).sub(COM);
-  const rB = new THREE.Vector3(P.propX, 0, zB).sub(COM);
+  // pure couple (point of application irrelevant). Positions = CAD disc centres.
+  const rT = new THREE.Vector3(...P.pT).sub(COM);
+  const rB = new THREE.Vector3(...P.pB).sub(COM);
   const uT = vb.x + w.y*rT.z - w.z*rT.y;
   const uB = vb.x + w.y*rB.z - w.z*rB.y;
-  motTop = solveMotor(ctl.dutyT, uT);
-  motBot = solveMotor(ctl.dutyB, uB);
+  motTop = solveMotor(dutyT, uT);
+  motBot = solveMotor(dutyB, uB);
   const sT = 1, sB = ctl.counter ? -1 : 1;
   F.x += motTop.T + motBot.T;
   M.add(rT.clone().cross(new THREE.Vector3(motTop.T,0,0)));
@@ -308,12 +364,14 @@ function physicsStep(dt){
     const up = vb.x + w.y*rp.z - w.z*rp.y;
     const wp = vb.z + w.x*rp.y - w.y*rp.x;
     const dCd = ff*(P.CdxOpen - P.CdxShut);
-    const dCL = ff*(P.CL0Open - P.CL0Shut);       // extra downforce (CFD)
+    const dCL = ff*(P.CL0Open - P.CL0Shut);       // extra downforce (CFD, α=0)
     const dAz = ff*P.dragZfins;
+    // AoA lift: fwd of CoM → statically DESTABILIZING in pitch, both directions
+    const al = Math.max(-0.35, Math.min(0.35, Math.atan2(-wp, Math.max(up, 1e-3))));
     const Fp = new THREE.Vector3(
       -0.5*RHO*dCd*P.Aref*Math.abs(up)*up,
       0,
-      (up > 0.02 ? 0.5*RHO*(up*up+wp*wp)*P.Aref*dCL : 0)
+      (up > 0.02 ? 0.5*RHO*(up*up+wp*wp)*(P.Aref*dCL + ff*P.pfinS*P.pfinCLa*al) : 0)
         - 0.5*RHO*P.dragZ[0]*dAz*Math.abs(wp)*wp);
     F.add(Fp);
     M.add(rp.clone().cross(Fp));
@@ -341,10 +399,28 @@ function physicsStep(dt){
   A.finB = (ctl.bfOn && P.bfDrag > 0.001)
     ? finOne(new THREE.Vector3(P.finR[0], 0, 2*(P.cob[2]-P.comDrop) - P.finR[2]), P.bfDrag) : null;
 
-  // --- gravity · buoyancy ---
-  const W = P.mass*G, B = W + P.netBuoyG*1e-3*G;
-  const gB = new THREE.Vector3(0,0,-W).applyQuaternion(qi);
-  const bB = new THREE.Vector3(0,0, B).applyQuaternion(qi);
+  // --- gravity · buoyancy — split per component (body + each fin) so all are drawn ---
+  const Wtot = P.mass*G, Btot = Wtot + P.netBuoyG*1e-3*G;
+  const dn = new THREE.Vector3(0,0,-1).applyQuaternion(qi);   // world-down, body frame
+  const comps = [
+    ['FinT', P.finMassT, P.finVolT, new THREE.Vector3(...P.finR)],
+    ['FinB', ctl.bfOn ? P.finMassB : 0, ctl.bfOn ? P.finVolB : 0,
+             new THREE.Vector3(P.finR[0], 0, 2*(P.cob[2]-P.comDrop)-P.finR[2])],
+    ['Pfin', P.pfinMass, P.pfinVol, new THREE.Vector3(P.pfinX, 0, -1.4e-3)],
+  ];
+  let mBody = P.mass, bBody = Btot;
+  for (const [nm, mg, vc, posMesh] of comps){
+    const r = posMesh.sub(COM);
+    const w_ = mg*1e-3*G, b_ = vc*1e-6*RHO*G;
+    mBody -= mg*1e-3; bBody -= b_;
+    const Fw = dn.clone().multiplyScalar(w_), Fb = dn.clone().multiplyScalar(-b_);
+    F.add(Fw); F.add(Fb);
+    M.add(r.clone().cross(Fw)); M.add(r.clone().cross(Fb));
+    A['w'+nm] = w_ > 1e-6 ? [r.clone(), Fw] : null;
+    A['b'+nm] = b_ > 1e-6 ? [r.clone(), Fb] : null;
+  }
+  const gB = dn.clone().multiplyScalar(mBody*G);
+  const bB = dn.clone().multiplyScalar(-bBody);
   const rCob = new THREE.Vector3(0,0,P.comDrop);
   F.add(gB); F.add(bB);
   M.add(rCob.clone().cross(bB));
@@ -433,15 +509,18 @@ const bfin = meshFromB64(window.BOTTOMFIN_B64,
   new THREE.MeshStandardMaterial({color:0x35c4b0, transparent:true, opacity:.45,
                                   side:THREE.DoubleSide, depthWrite:false}));
 const propMat = new THREE.MeshStandardMaterial({color:0x3987e5, metalness:.3, roughness:.4});
-const propT = meshFromB64(window.PROP_B64, propMat);
-const propB = meshFromB64(window.PROP_B64, propMat.clone());
+const propT = meshFromB64(window.PROPT_B64, propMat);          // CAD's own propellers
+const propB = meshFromB64(window.PROPB_B64, propMat.clone());
 const finMat = new THREE.MeshStandardMaterial({color:0xb8c4cc, metalness:.15, roughness:.55,
                                                side:THREE.DoubleSide});
 const finRm = meshFromB64(window.FINR_B64, finMat);
 const finLm = meshFromB64(window.FINL_B64, finMat);
 [hull, bfin, propT, propB, finRm, finLm].forEach(m => m.scale.setScalar(MM));
 meshGrp.add(hull, bfin);
+// pivot each CAD prop at its disc centre; spin about local x
 const propTg = new THREE.Group(), propBg = new THREE.Group();
+propT.position.set(-P.pT[0], -P.pT[1], -P.pT[2]);
+propB.position.set(-P.pB[0], -P.pB[1], -P.pB[2]);
 propTg.add(propT); propBg.add(propB);
 meshGrp.add(propTg, propBg);
 
@@ -454,8 +533,8 @@ finRg.add(finRm); finLg.add(finLm);
 meshGrp.add(finRg, finLg);
 
 function placeProps(){
-  propTg.position.set(P.propX, 0, P.propZmid + P.propSep/2);
-  propBg.position.set(P.propX, 0, P.propZmid - P.propSep/2);
+  propTg.position.set(...P.pT);
+  propBg.position.set(...P.pB);
   meshGrp.position.set(-COM.x, -COM.y, -COM.z);
 }
 placeProps();
@@ -479,33 +558,49 @@ robotGrp.add(comDot, cobDot, comLbl, cobLbl);
 
 const arrowDefs = {thrustT:0xe66767, thrustB:0xe66767, drag:0xd95926, lift:0x199e70,
                    finT:0x199e70, finB:0x35c4b0, pfin:0x86b6ef,
-                   buoy:0x3987e5, grav:0xc3c2b7, roll:0xd55181};
-const arrows = {};
+                   buoy:0x3987e5, grav:0xc3c2b7, roll:0xd55181,
+                   wFinT:0x8a8a85, bFinT:0x6da7ec, wFinB:0x8a8a85, bFinB:0x6da7ec,
+                   wPfin:0x8a8a85, bPfin:0x6da7ec};
+const arrowNames = {thrustT:'T·top', thrustB:'T·bot', drag:'body drag', lift:'body lift',
+                    finT:'topfin F', finB:'botfin F', pfin:'pect F',
+                    buoy:'B·body', grav:'W·body', roll:'roll τ',
+                    wFinT:'W·topfin', bFinT:'B·topfin', wFinB:'W·botfin', bFinB:'B·botfin',
+                    wPfin:'W·pect', bPfin:'B·pect'};
+const arrows = {}, arrowLbls = {};
 for (const k in arrowDefs){
   arrows[k] = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(), 0.01,
                                     arrowDefs[k], 0.008, 0.005);
-  robotGrp.add(arrows[k]);
+  arrowLbls[k] = textSprite(arrowNames[k], '#'+arrowDefs[k].toString(16).padStart(6,'0'));
+  arrowLbls[k].scale.set(0.020, 0.0075, 1);
+  robotGrp.add(arrows[k], arrowLbls[k]);
 }
 const F_SCALE = 0.35;
 function updateArrows(){
   const show = document.getElementById('arrows').checked;
-  for (const k in arrows) arrows[k].visible = false;
+  for (const k in arrows){ arrows[k].visible = false; arrowLbls[k].visible = false; }
   if (!show) return;
   for (const k in dbg.arrows){
     const e = dbg.arrows[k]; if (!e) continue;
     const a = arrows[k]; if (!a) continue;
-    const len = e[1].length()*F_SCALE;
-    if (len < 0.004) continue;
-    a.position.copy(e[0]); a.setDirection(e[1].clone().normalize());
+    let len = e[1].length()*F_SCALE;
+    if (len < 0.0006) continue;
+    len = Math.max(len, 0.009);          // floor: tiny forces (fin W/B) stay visible
+    const dir = e[1].clone().normalize();
+    a.position.copy(e[0]); a.setDirection(dir);
     a.setLength(len, Math.min(0.012, len*0.4), Math.min(0.007, len*0.25));
     a.visible = true;
+    arrowLbls[k].position.copy(e[0]).addScaledVector(dir, len + 0.010);   // name at the tip
+    arrowLbls[k].visible = true;
   }
   const Mx = dbg.M ? dbg.M.x : 0;
   if (Math.abs(Mx) > 2e-5){
     const a = arrows.roll, len = Math.min(0.12, Math.abs(Mx)*40);
     a.position.set(0.05,0,0);
-    a.setDirection(new THREE.Vector3(Math.sign(Mx),0,0));
+    const dir = new THREE.Vector3(Math.sign(Mx),0,0);
+    a.setDirection(dir);
     a.setLength(len, len*0.3, len*0.18); a.visible = true;
+    arrowLbls.roll.position.set(0.05,0,0).addScaledVector(dir, len + 0.010);
+    arrowLbls.roll.visible = true;
   }
 }
 
@@ -521,6 +616,13 @@ const bind = (id, fmt, cb) => { const el = $(id); const f = () => { $(id+'v').te
 bind('dutyT', v=>v, v=>ctl.dutyT=v);
 bind('dutyB', v=>v, v=>ctl.dutyB=v);
 bind('pfx', v=>v+' mm', v=>P.pfinX=v*1e-3);
+bind('pidT', v=>v+'°', v=>ctl.target=v);
+bind('pidKp', v=>v, v=>ctl.kp=v);
+bind('pidKi', v=>v, v=>ctl.ki=v);
+bind('pidKd', v=>v, v=>ctl.kd=v);
+bind('pidBase', v=>v, v=>ctl.base=v);
+bind('pidDly', v=>v+' ms', v=>ctl.delayMs=v);
+$('pidOn').addEventListener('change', e=>{ctl.pid=e.target.checked; pid.i=0;});
 bind('comDrop', v=>v+' mm', v=>{P.comDrop=v*1e-3; updateCOM(); placeProps();});
 bind('buoy', v=>(v>0?'+':'')+v+' g', v=>P.netBuoyG=v);
 bind('derT', v=>v, v=>P.derT=v);
@@ -569,6 +671,11 @@ function drawChart(){
   c.stroke();
   c.fillStyle = css('--muted'); c.font = '11px system-ui'; c.textAlign='right';
   for (const gy of [-ymax, 0, ymax]) c.fillText(gy+'°', padL-4, Y(gy)+3);
+  if (ctl.pid){                                   // dashed target-pitch line
+    c.strokeStyle = css('--s1'); c.setLineDash([4,4]); c.beginPath();
+    c.moveTo(padL, Y(ctl.target)); c.lineTo(w-padR, Y(ctl.target)); c.stroke();
+    c.setLineDash([]);
+  }
   c.textAlign='center';
   for (let ts=Math.ceil(t0); ts<=t1; ts+=2) c.fillText(ts+'s', X(ts), h-4);
   const series = [['pitch','--s1'],['roll','--s2'],['yaw','--s3']];
@@ -596,43 +703,42 @@ function drawChart(){
 
 /* ============ trajectory mini views (full path, auto-fit) ============ */
 const MINI = [
-  {cv:$('mTop'),   ax:0, ay:1, flipY:false},   // TOP: x→right, y→up
-  {cv:$('mSide'),  ax:0, ay:2, flipY:false},   // SIDE: x→right, z→up
-  {cv:$('mFront'), ax:1, ay:2, flipY:false},   // FRONT: y→right, z→up
+  {cv:$('mTop'),   proj: p => [p[0], p[1]]},                       // TOP: x→right, y→up
+  {cv:$('mSide'),  proj: p => [p[0], p[2]]},                       // SIDE: x→right, z→up
+  {cv:$('mFront'), proj: p => [p[1], p[2]]},                       // FRONT: y→right, z→up
+  {cv:$('mObl'),   proj: p => [(p[0]-p[1])*0.7071,                 // OBLIQUE: isometric
+                               p[2] + (p[0]+p[1])*0.4082]},
 ];
 function drawMinis(){
   const css = n => getComputedStyle(document.documentElement).getPropertyValue(n);
+  const cur = [state.p.x, state.p.y, state.p.z];
   for (const m of MINI){
     const c = m.cv.getContext('2d'), W = m.cv.width, H = m.cv.height;
     c.clearRect(0,0,W,H);
-    // extents over path + current pos
-    let lo0=1e9, hi0=-1e9, lo1=1e9, hi1=-1e9;
     const pts = path.length ? path : [[0,0,0]];
+    let lo0=1e9, hi0=-1e9, lo1=1e9, hi1=-1e9;
     for (const p of pts){
-      lo0=Math.min(lo0,p[m.ax]); hi0=Math.max(hi0,p[m.ax]);
-      lo1=Math.min(lo1,p[m.ay]); hi1=Math.max(hi1,p[m.ay]);
+      const [a,b] = m.proj(p);
+      lo0=Math.min(lo0,a); hi0=Math.max(hi0,a);
+      lo1=Math.min(lo1,b); hi1=Math.max(hi1,b);
     }
     const span = Math.max(hi0-lo0, hi1-lo1, 0.2), pad = span*0.12;
     const c0 = (lo0+hi0)/2, c1 = (lo1+hi1)/2, s = Math.min((W-24)/(span+2*pad), (H-24)/(span+2*pad));
     const px = v => W/2 + (v-c0)*s;
     const py = v => H/2 - (v-c1)*s;
-    // axes cross at origin
+    const o = m.proj([0,0,0]);
     c.strokeStyle = css('--axis'); c.lineWidth = 1; c.beginPath();
-    c.moveTo(px(0), 0); c.lineTo(px(0), H); c.moveTo(0, py(0)); c.lineTo(W, py(0)); c.stroke();
-    // path
+    c.moveTo(px(o[0]), 0); c.lineTo(px(o[0]), H); c.moveTo(0, py(o[1])); c.lineTo(W, py(o[1])); c.stroke();
     if (path.length > 1){
       c.strokeStyle = '#86b6ef'; c.lineWidth = 1.5; c.beginPath();
-      c.moveTo(px(path[0][m.ax]), py(path[0][m.ay]));
-      for (const p of path) c.lineTo(px(p[m.ax]), py(p[m.ay]));
+      const p0 = m.proj(path[0]); c.moveTo(px(p0[0]), py(p0[1]));
+      for (const p of path){ const q = m.proj(p); c.lineTo(px(q[0]), py(q[1])); }
       c.stroke();
     }
-    // start marker + current pos
-    c.fillStyle = css('--s3');
-    c.fillRect(px(pts[0][m.ax])-2, py(pts[0][m.ay])-2, 4, 4);
-    const cur = [state.p.x, state.p.y, state.p.z];
-    c.fillStyle = '#fff'; c.beginPath();
-    c.arc(px(cur[m.ax]), py(cur[m.ay]), 3, 0, 7); c.fill();
-    // scale label
+    const st = m.proj(pts[0]);
+    c.fillStyle = css('--s3'); c.fillRect(px(st[0])-2, py(st[1])-2, 4, 4);
+    const cu = m.proj(cur);
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(px(cu[0]), py(cu[1]), 3, 0, 7); c.fill();
     c.fillStyle = css('--muted'); c.font = '10px system-ui'; c.textAlign = 'right';
     c.fillText((span<0.5 ? (span*100).toFixed(0)+' cm' : span.toFixed(1)+' m'), W-6, H-6);
   }
@@ -721,10 +827,14 @@ function loop(now){
     };
     set('mT', motTop); set('mB', motBot);
     $('finState').textContent = 'deploy ' + (finFrac*100).toFixed(0) + '%';
+    const armZ = (P.pT[2] - P.pB[2]) / 2;
     $('momNote').textContent =
-      `ΔT ${( (motTop.T-motBot.T)*1e3).toFixed(1)} mN × arm ±${(P.propSep/2*1e3).toFixed(1)} mm → ` +
-      `pitch ${((motTop.T-motBot.T)*P.propSep/2*1e6).toFixed(1)} µN·m · ` +
+      `ΔT ${( (motTop.T-motBot.T)*1e3).toFixed(1)} mN × arm ±${(armZ*1e3).toFixed(1)} mm → ` +
+      `pitch ${((motTop.T-motBot.T)*armZ*1e6).toFixed(1)} µN·m · ` +
       `net roll reaction ${(-(motTop.Q + (ctl.counter?-1:1)*motBot.Q)*1e3).toFixed(2)} mN·m`;
+    if (ctl.pid) $('pidNote').textContent =
+      `e ${pid.e.toFixed(1)}° · u ${pid.u.toFixed(1)} → duty T ${pid.dT.toFixed(0)} / B ${pid.dB.toFixed(0)}` +
+      ` · I ${(ctl.ki*pid.i).toFixed(1)}`;
     drawChart();
     drawMinis();
   }
