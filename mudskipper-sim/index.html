@@ -74,7 +74,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14h</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14i</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -120,8 +120,8 @@
       <button id="step0">Step 0°</button>
       <button id="stepUp">Step +40°</button>
     </div>
-    <div class="note" id="agiNote">Needs PID on. Measured: step −40° rise 0.95 s OPEN vs 1.27 s SHUT
-    (open ≈25% faster, less overshoot); fast sine tracking is delay/saturation-limited either way.</div>
+    <div class="note" id="agiNote">Needs PID on. Measured (build i, pure-theory fins): step −40° rise
+    0.52 s OPEN vs 0.58 s SHUT; fast sine tracking is delay/saturation-limited either way.</div>
 
     <h2>Pectoral fins · 0.1 s stroke</h2>
     <div class="btns">
@@ -129,7 +129,8 @@
       <span class="note" style="align-self:center" id="finState">deploy 100%</span>
     </div>
     <div class="note">z-hinge at fin-motor axis (x 17, y ±8 mm — from open/shut mesh diff); shut = blades stowed inside hull ·
-    open: Cd 0.692, CL₀ −0.284 · shut: Cd 0.622, CL₀ −0.112 (CFD) · fin force applied at fin bay, fwd of CoM</div>
+    per-blade pure flat-plate theory: CL = CLα·α (3.9/rad, stall ±20°, zero offset — symmetric plate),
+    drag Cd0 + CL²/πARe · force at the blade's current position, fwd of CoM</div>
 
     <h2>Motors · props</h2>
     <table class="mot">
@@ -158,12 +159,13 @@
 
     <h2>Force model per shape (keywords)</h2>
     <div class="note">
-      <b>Body</b>: 3-axis quadratic drag (CFD Cd_x 0.622 · flat-plate y/z, CP 12 mm aft) ·
-        lift CL₀ + CLα·α @ CoP −8 mm · Kirchhoff added mass + Munk.<br>
-      <b>Topfin / Bottomfin</b>: x-normal plate — Cn·|u|u normal force + CLα·u·v cross-flow lift,
-        at tail ±z arm; bottomfin × drag-ratio, mirrored about CoM height.<br>
-      <b>Pectoral fins</b>: CFD open−shut Δ(Cd, CL₀, A_z) + CLα·α lift, applied @ fin bay
-        (fwd of CoM) × fold fraction.<br>
+      <b>Body</b>: 3-axis quadratic drag (CFD-shut Cd_x 0.622 · flat-plate y/z, CP 12 mm aft) ·
+        vertical lift CL₀ −0.112 + CLα·α @ CoP −8 mm · side lift CY_β 1.8/rad (yaw weathervane) ·
+        Kirchhoff added mass + Munk.<br>
+      <b>Topfin / Bottomfin</b>: pure x-normal plate — Cn·|u|u normal force + in-plane friction;
+        bottomfin × drag-ratio, mirrored about CoM height.<br>
+      <b>Pectoral fins</b>: symmetric flat plates, pure theory — CL = CLα·α (2π/(1+2/AR)=3.9/rad,
+        stall ±20°, <b>no α=0 offset</b>), drag Cd0 0.03 + CL²/πARe, per blade at its fold position.<br>
       <b>Props</b>: B-series KT/KQ(J) ⇌ motor-curve equilibrium; thrust @ CAD disc centre,
         reaction = pure couple.<br>
       <b>Weight / Buoyancy</b>: split per component (body + each fin) at own centroid;
@@ -195,7 +197,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814h"></script>
+<script src="sim_data.js?v=20260814i"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -227,15 +229,18 @@ const P = {                    // ponytail: every entry is a calibration knob
   // Vstart low: coreless motors respond to PWM peak volts — a hard cutoff at low duty
   // creates a control deadband the real robot doesn't have
   derT: 0.65, derQ: 1.15,      // low-Re: thrust down, torque up
-  // axial drag + CL0 interpolate with fin deploy fraction (CFD open/shut)
-  CdxShut: 0.622, CdxOpen: 0.692, Aref: 1.043e-3,
-  CL0Shut: -0.112, CL0Open: -0.284, CLa: 2.5, xCoP: -8e-3,
+  // BODY anchored to CFD shut config (fins stowed); pectoral-fin forces are pure theory
+  CdxShut: 0.622, Aref: 1.043e-3,
+  CL0Shut: -0.112, CLa: 2.5, xCoP: -8e-3,
+  CYb: 1.8,                    // body side-force slope [/rad], low-AR side profile — yaw stiffness vs Munk
   dragY: [1.1, 4.5e-3],
-  dragZ: [1.2, 2.9e-3], dragZfins: 0.7e-3,   // pectoral fins add planform when open
-  finS: 2.5e-4, finCn: 1.17,   // topfin: thin tail plate, normal ≈ x
-  finCLa: 4.0,                 // fin lift slope [/rad] — weathervane stiffness vs Munk moment
+  dragZ: [1.2, 2.9e-3],
+  finS: 2.5e-4, finCn: 1.17,   // topfin: thin tail plate, normal ≈ x — pure plate model
   finR: [-47e-3, 0, 55e-3],
-  pfinS: 7.7e-4, pfinCLa: 3.9, // pectoral planform (2×35×11 mm) + lift slope: AoA lift fwd of CoM = destabilizing
+  // pectoral fins: symmetric flat plates → pure theory, NO α=0 offset
+  pfinS: 7.7e-4,               // planform 2×(35×11 mm)
+  pfinCLa: 3.9,                // 2π/(1+2/AR), AR≈3.2
+  pfinCd0: 0.03, pfinE: 0.8,   // profile drag (both faces + edges) + Oswald factor
   // per-component mass [g] / displaced volume [cm³] — split out of the 34 g / 34 cm³ totals
   finMassT: 0.5, finVolT: 0.3, finMassB: 0.05, finVolB: 0.05, pfinMass: 0.6, pfinVol: 0.4,
   xDragCP: -12e-3,             // lateral/vertical body drag centre aft of CoM (restoring)
@@ -357,16 +362,14 @@ function physicsStep(dt){
   A.thrustT = [rT, new THREE.Vector3(motTop.T,0,0)];
   A.thrustB = [rB, new THREE.Vector3(motBot.T,0,0)];
 
-  // --- body drag (3 axes) + lift — shut-config coefficients; pectoral fin deltas
-  //     are applied separately AT the fin bay (forward of CoM) below ---
-  const Cdx = P.CdxShut;
-  const Az  = P.dragZ[1];
+  // --- body drag (3 axes, CFD-shut axial) + linear circulation side force ---
   const dragF = new THREE.Vector3(
-    -0.5*RHO*Cdx*P.Aref*Math.abs(vb.x)*vb.x,
-    -0.5*RHO*P.dragY[0]*P.dragY[1]*Math.abs(vb.y)*vb.y,
-    -0.5*RHO*P.dragZ[0]*Az*Math.abs(vb.z)*vb.z);
+    -0.5*RHO*P.CdxShut*P.Aref*Math.abs(vb.x)*vb.x,
+    -0.5*RHO*P.dragY[0]*P.dragY[1]*Math.abs(vb.y)*vb.y
+      - 0.5*RHO*P.CYb*P.dragY[1]*Math.max(vb.x,0)*vb.y,   // linear in v — yaw weathervane
+    -0.5*RHO*P.dragZ[0]*P.dragZ[1]*Math.abs(vb.z)*vb.z);
   F.add(dragF);
-  // lateral/vertical drag acts aft of CoM → weathervane restoring moment
+  // lateral/vertical force centre aft of CoM → restoring moment
   M.add(new THREE.Vector3(P.xDragCP,0,0).cross(new THREE.Vector3(0, dragF.y, dragF.z)));
   A.drag = [new THREE.Vector3(P.xDragCP,0,0), dragF.clone()];
   if (vb.x > 0.02){
@@ -385,9 +388,7 @@ function physicsStep(dt){
   //     stall-clamped) + flat-plate normal drag Cn|w|w. Fwd of CoM → destabilizing.
   A.pfinR = null; A.pfinL = null;
   if (ff > 0.001){
-    const dCdH = ff*(P.CdxOpen - P.CdxShut)/2;
-    const dCLH = ff*(P.CL0Open - P.CL0Shut)/2;
-    const Sh = ff*P.pfinS/2;
+    const Sh = ff*P.pfinS/2, AR = 3.2;
     for (const s of [1, -1]){
       const th = s*(1-ff)*Math.PI/2;               // fold angle, matches visual
       const d0x = -4e-3, d0y = s*19e-3;            // deployed blade centroid rel hinge
@@ -396,12 +397,13 @@ function physicsStep(dt){
       const r = new THREE.Vector3(cx, cy, -1.4e-3).sub(COM);
       const up = vb.x + w.y*r.z - w.z*r.y;
       const wp = vb.z + w.x*r.y - w.y*r.x;
-      const wnL = up > 0.02 ? Math.max(-0.36*up, Math.min(0.36*up, wp)) : 0;  // stall clamp
+      // symmetric flat plate, pure theory: CL = CLα·α (stall-clamped), no α=0 offset
+      const wnL = up > 0.02 ? Math.max(-0.36*up, Math.min(0.36*up, wp)) : 0;
+      const CL = up > 0.02 ? P.pfinCLa*(-wnL/up) : 0;
       const Fp = new THREE.Vector3(
-        -0.5*RHO*dCdH*P.Aref*Math.abs(up)*up,
+        -0.5*RHO*Sh*(P.pfinCd0 + CL*CL/(Math.PI*AR*P.pfinE))*Math.abs(up)*up,  // profile + induced
         0,
-        (up > 0.02 ? 0.5*RHO*up*up*P.Aref*dCLH : 0)
-          - 0.5*RHO*Sh*(P.pfinCLa*Math.max(up,0)*wnL + P.finCn*Math.abs(wp)*wp));
+        -0.5*RHO*Sh*(P.pfinCLa*Math.max(up,0)*wnL + P.finCn*Math.abs(wp)*wp)); // lift + post-stall plate drag
       F.add(Fp);
       M.add(r.clone().cross(Fp));
       if (s > 0) A.pfinR = [r.clone(), Fp]; else A.pfinL = [r.clone(), Fp];
@@ -415,11 +417,11 @@ function physicsStep(dt){
                                  vb.y + w.z*r.x - w.x*r.z,
                                  vb.z + w.x*r.y - w.y*r.x);
     const k = 0.5*RHO*P.finS*scale;
-    const Fx = -k*P.finCn*Math.abs(uf.x)*uf.x;
-    // lift slope: linear cross-flow force ∝ u·v — stabilizes against the Munk moment
-    const Ft = new THREE.Vector3(Fx,
-      -k*(0.1*Math.abs(uf.y)*uf.y + P.finCLa*Math.abs(uf.x)*uf.y),
-      -k*(0.1*Math.abs(uf.z)*uf.z + P.finCLa*Math.abs(uf.x)*uf.z));
+    // pure flat plate: normal force ⊥ face + in-plane friction only (no fictitious lift)
+    const Ft = new THREE.Vector3(
+      -k*P.finCn*Math.abs(uf.x)*uf.x,
+      -k*0.1*Math.abs(uf.y)*uf.y,
+      -k*0.1*Math.abs(uf.z)*uf.z);
     F.add(Ft);
     M.add(r.clone().cross(Ft));
     return [r.clone(), Ft];
@@ -436,7 +438,7 @@ function physicsStep(dt){
     ['FinT', P.finMassT, P.finVolT, new THREE.Vector3(...P.finR)],
     ['FinB', ctl.bfOn ? P.finMassB : 0, ctl.bfOn ? P.finVolB : 0,
              new THREE.Vector3(P.finR[0], 0, 2*(P.cob[2]-P.comDrop)-P.finR[2])],
-    ['Pfin', P.pfinMass, P.pfinVol, new THREE.Vector3(P.pfinX, 0, -1.4e-3)],
+    ['Pfin', P.pfinMass, P.pfinVol, new THREE.Vector3(13e-3, 0, -1.4e-3)],
   ];
   let mBody = P.mass, bBody = Btot;
   for (const [nm, mg, vc, posMesh] of comps){
