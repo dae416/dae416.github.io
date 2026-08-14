@@ -74,7 +74,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14j</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14k</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -180,6 +180,7 @@
       <label><input type="checkbox" id="arrows" checked> Force arrows</label>
       <label><input type="checkbox" id="trail" checked> Trail</label>
       <label><input type="checkbox" id="follow" checked> Follow cam</label>
+      <label><input type="checkbox" id="lat" checked> 1 m markers</label>
     </div>
     <div class="note">Arrows named at tips: <span style="color:#e66767">thrust</span> ·
       <span style="color:#d95926">body drag</span> · <span style="color:#199e70">body lift / fin F</span> ·
@@ -198,7 +199,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814j"></script>
+<script src="sim_data.js?v=20260814k"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -522,6 +523,30 @@ const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(1,-1,2); s
 const grid = new THREE.GridHelper(4, 40, 0x2c3a4a, 0x1c2735);
 grid.rotation.x = Math.PI/2; grid.position.z = -0.35; scene.add(grid);
 
+// spatial reference: 1 m lattice of small markers, re-centred on the robot
+const LAT_N = 4, LAT_ZLO = -4, LAT_ZHI = 2;
+const latCount = (2*LAT_N+1)*(2*LAT_N+1)*(LAT_ZHI-LAT_ZLO+1);
+const lattice = new THREE.InstancedMesh(
+  new THREE.OctahedronGeometry(0.016),
+  new THREE.MeshBasicMaterial({color:0x3a5570, transparent:true, opacity:0.75}),
+  latCount);
+scene.add(lattice);
+let latCenter = null;
+function updateLattice(){
+  const cx = Math.round(state.p.x), cy = Math.round(state.p.y), cz = Math.round(state.p.z);
+  const key = cx+','+cy+','+cz;
+  if (key === latCenter) return;
+  latCenter = key;
+  const m = new THREE.Matrix4();
+  let i = 0;
+  for (let x=-LAT_N; x<=LAT_N; x++)
+    for (let y=-LAT_N; y<=LAT_N; y++)
+      for (let z=LAT_ZLO; z<=LAT_ZHI; z++)
+        lattice.setMatrixAt(i++, m.makeTranslation(cx+x, cy+y, cz+z));
+  lattice.instanceMatrix.needsUpdate = true;
+}
+updateLattice();
+
 function meshFromB64(b64, mat){
   const bin = atob(b64), buf = new Uint8Array(bin.length);
   for (let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
@@ -698,17 +723,26 @@ finBtn.addEventListener('click', () => {
   finBtn.textContent = ctl.finsOpen ? 'FINS OPEN' : 'FINS SHUT';
   finBtn.className = 'fins ' + (ctl.finsOpen ? 'open' : 'shut');
 });
-addEventListener('keydown', e => {   // shortcuts: F fins · Space PID · ↑/↓ target ±30°
-  if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
-  if (e.key === 'f' || e.key === 'F'){ finBtn.click(); e.preventDefault(); }
-  else if (e.key === ' '){ $('pidOn').click(); e.preventDefault(); }
-  else if (e.key === 'ArrowUp' || e.key === 'ArrowDown'){
-    const t = $('pidT'), d = e.key === 'ArrowUp' ? 30 : -30;
+// shortcuts: F fins · Space PID · ↑/↓ target ±30°.
+// e.code = physical key → works regardless of Korean/English IME; capture phase +
+// keyup block + blur so focused sliders/checkboxes can't eat or double-fire them.
+const keyHandler = e => {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const c = e.code;
+  if (c !== 'KeyF' && c !== 'Space' && c !== 'ArrowUp' && c !== 'ArrowDown') return;
+  e.preventDefault();
+  if (e.type !== 'keydown' || e.repeat) return;
+  if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
+  if (c === 'KeyF') finBtn.click();
+  else if (c === 'Space') $('pidOn').click();
+  else {
+    const t = $('pidT'), d = c === 'ArrowUp' ? 30 : -30;
     t.value = Math.max(-60, Math.min(60, parseFloat(t.value) + d));
     t.dispatchEvent(new Event('input'));
-    e.preventDefault();
   }
-});
+};
+addEventListener('keydown', keyHandler, {capture:true});
+addEventListener('keyup', keyHandler, {capture:true});
 
 /* ============ attitude chart (single axis · 3 series · legend + crosshair) ============ */
 const hist = [];
@@ -940,6 +974,8 @@ function loop(now){
   cobDot.position.set(0,0,P.comDrop);
   comLbl.position.set(0,-0.020,-0.004);
   cobLbl.position.set(0, 0.020, P.comDrop+0.004);
+  lattice.visible = document.getElementById('lat').checked;
+  if (lattice.visible) updateLattice();
   updateArrows(frame % 6 === 0);
 
   if (document.getElementById('trail').checked && !ctl.hold){
