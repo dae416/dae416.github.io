@@ -74,7 +74,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14i</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14j</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -127,6 +127,7 @@
     <div class="btns">
       <button id="finBtn" class="fins open">FINS OPEN</button>
       <span class="note" style="align-self:center" id="finState">deploy 100%</span>
+      <span class="note" style="align-self:center">· shortcut: <b>F</b></span>
     </div>
     <div class="note">z-hinge at fin-motor axis (x 17, y ±8 mm — from open/shut mesh diff); shut = blades stowed inside hull ·
     per-blade pure flat-plate theory: CL = CLα·α (3.9/rad, stall ±20°, zero offset — symmetric plate),
@@ -197,7 +198,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814i"></script>
+<script src="sim_data.js?v=20260814j"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -696,6 +697,10 @@ finBtn.addEventListener('click', () => {
   ctl.finsOpen = !ctl.finsOpen;
   finBtn.textContent = ctl.finsOpen ? 'FINS OPEN' : 'FINS SHUT';
   finBtn.className = 'fins ' + (ctl.finsOpen ? 'open' : 'shut');
+});
+addEventListener('keydown', e => {           // F = fin toggle (0.1 s stroke)
+  if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+  if (e.key === 'f' || e.key === 'F'){ finBtn.click(); e.preventDefault(); }
 });
 
 /* ============ attitude chart (single axis · 3 series · legend + crosshair) ============ */
