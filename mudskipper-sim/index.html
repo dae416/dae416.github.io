@@ -74,7 +74,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14f</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14g</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -181,7 +181,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814f"></script>
+<script src="sim_data.js?v=20260814g"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -734,7 +734,8 @@ const MINI = [
   {cv:$('mTop'),   proj: p => [p[0], p[1]]},                       // TOP: x→right, y→up
   {cv:$('mSide'),  proj: p => [p[0], p[2]]},                       // SIDE: x→right, z→up
   {cv:$('mFront'), proj: p => [p[1], p[2]]},                       // FRONT: y→right, z→up
-  {cv:$('mObl'),   proj: p => [(p[0]-p[1])*0.7071,                 // OBLIQUE: isometric
+  {cv:$('mObl'),   iso:true,
+                   proj: p => [(p[0]-p[1])*0.7071,                 // OBLIQUE: isometric
                                p[2] + (p[0]+p[1])*0.4082]},
 ];
 function drawMinis(){
@@ -744,19 +745,61 @@ function drawMinis(){
     const c = m.cv.getContext('2d'), W = m.cv.width, H = m.cv.height;
     c.clearRect(0,0,W,H);
     const pts = path.length ? path : [[0,0,0]];
+    // 3D bounds (for the iso base plane) + projected bounds for auto-fit
+    let bx=[1e9,-1e9], by=[1e9,-1e9], bz=[1e9,-1e9];
+    for (const p of pts){ bx[0]=Math.min(bx[0],p[0]); bx[1]=Math.max(bx[1],p[0]);
+      by[0]=Math.min(by[0],p[1]); by[1]=Math.max(by[1],p[1]);
+      bz[0]=Math.min(bz[0],p[2]); bz[1]=Math.max(bz[1],p[2]); }
+    const zB = Math.min(0, bz[0]);
     let lo0=1e9, hi0=-1e9, lo1=1e9, hi1=-1e9;
-    for (const p of pts){
-      const [a,b] = m.proj(p);
-      lo0=Math.min(lo0,a); hi0=Math.max(hi0,a);
-      lo1=Math.min(lo1,b); hi1=Math.max(hi1,b);
-    }
+    const fit = q => { const [a,b]=m.proj(q);
+      lo0=Math.min(lo0,a); hi0=Math.max(hi0,a); lo1=Math.min(lo1,b); hi1=Math.max(hi1,b); };
+    for (const p of pts){ fit(p); if (m.iso) fit([p[0],p[1],zB]); }
     const span = Math.max(hi0-lo0, hi1-lo1, 0.2), pad = span*0.12;
     const c0 = (lo0+hi0)/2, c1 = (lo1+hi1)/2, s = Math.min((W-24)/(span+2*pad), (H-24)/(span+2*pad));
     const px = v => W/2 + (v-c0)*s;
     const py = v => H/2 - (v-c1)*s;
-    const o = m.proj([0,0,0]);
-    c.strokeStyle = css('--axis'); c.lineWidth = 1; c.beginPath();
-    c.moveTo(px(o[0]), 0); c.lineTo(px(o[0]), H); c.moveTo(0, py(o[1])); c.lineTo(W, py(o[1])); c.stroke();
+    const P2 = q => { const [a,b] = m.proj(q); return [px(a), py(b)]; };
+    if (m.iso){
+      // base-plane grid at z = zB — reads as a 3-D floor
+      const gx0=Math.min(bx[0],-0.05), gx1=Math.max(bx[1],0.05);
+      const gy0=Math.min(by[0],-0.05), gy1=Math.max(by[1],0.05);
+      c.strokeStyle = css('--grid'); c.lineWidth = 1; c.beginPath();
+      for (let i=0;i<=4;i++){
+        const gx = gx0 + (gx1-gx0)*i/4, gy = gy0 + (gy1-gy0)*i/4;
+        let a = P2([gx,gy0,zB]), b2 = P2([gx,gy1,zB]);
+        c.moveTo(a[0],a[1]); c.lineTo(b2[0],b2[1]);
+        a = P2([gx0,gy,zB]); b2 = P2([gx1,gy,zB]);
+        c.moveTo(a[0],a[1]); c.lineTo(b2[0],b2[1]);
+      }
+      c.stroke();
+      // shadow of the trajectory on the floor + vertical stems
+      if (path.length > 1){
+        c.strokeStyle = 'rgba(137,135,129,.45)'; c.beginPath();
+        let q = P2([path[0][0],path[0][1],zB]); c.moveTo(q[0],q[1]);
+        for (const p of path){ q = P2([p[0],p[1],zB]); c.lineTo(q[0],q[1]); }
+        c.stroke();
+        c.strokeStyle = 'rgba(134,182,239,.22)'; c.beginPath();
+        for (let i=0;i<path.length;i+=Math.max(1,Math.floor(path.length/14))){
+          const p = path[i], a = P2(p), b2 = P2([p[0],p[1],zB]);
+          c.moveTo(a[0],a[1]); c.lineTo(b2[0],b2[1]);
+        }
+        c.stroke();
+      }
+      // axis triad at origin: X fwd, Y left, Z up
+      const L = span*0.18, o3 = P2([0,0,zB]);
+      c.font = '9px system-ui'; c.textAlign = 'left';
+      for (const [ax,col] of [[[L,0,zB],'#d95926'],[[0,L,zB],'#199e70'],[[0,0,zB+L],'#3987e5']]){
+        const t = P2(ax);
+        c.strokeStyle = col; c.beginPath(); c.moveTo(o3[0],o3[1]); c.lineTo(t[0],t[1]); c.stroke();
+        c.fillStyle = col;
+        c.fillText(ax[2]>zB ? 'Z' : (ax[0]>0 ? 'X' : 'Y'), t[0]+2, t[1]-2);
+      }
+    } else {
+      const o = m.proj([0,0,0]);
+      c.strokeStyle = css('--axis'); c.lineWidth = 1; c.beginPath();
+      c.moveTo(px(o[0]), 0); c.lineTo(px(o[0]), H); c.moveTo(0, py(o[1])); c.lineTo(W, py(o[1])); c.stroke();
+    }
     if (path.length > 1){
       c.strokeStyle = '#86b6ef'; c.lineWidth = 1.5; c.beginPath();
       const p0 = m.proj(path[0]); c.moveTo(px(p0[0]), py(p0[1]));
