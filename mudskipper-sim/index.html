@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Mudskipper 6-DOF Simulator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" href="data:,">
+<style>
+  :root{
+    color-scheme: dark;
+    --surface-1:#1a1a19; --page:#0d0d0d;
+    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+    --s1:#3987e5; --s2:#d95926; --s3:#199e70;   /* pitch / roll / yaw */
+    --warn:#fab219; --crit:#d03b3b;
+  }
+  *{box-sizing:border-box; margin:0}
+  html,body{height:100%}
+  body{background:var(--page); color:var(--ink);
+       font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; overflow:hidden}
+  #app{display:grid; grid-template-columns:1fr 430px; grid-template-rows:1fr 180px; height:100vh}
+  #view{grid-row:1; grid-column:1; position:relative; min-width:0; min-height:0}
+  #view canvas{display:block}
+  #hud{position:absolute; top:10px; left:12px; color:var(--ink-2); pointer-events:none;
+       font-variant-numeric:tabular-nums; text-shadow:0 1px 2px #000; font-size:15px}
+  #hud b{color:var(--ink)}
+  #minis{position:absolute; top:10px; right:12px; display:flex; flex-direction:column; gap:8px}
+  .mini{background:rgba(13,13,13,.72); border:1px solid var(--border); border-radius:6px; position:relative}
+  .mini span{position:absolute; top:3px; left:7px; font-size:11px; color:var(--muted); letter-spacing:.05em}
+  #panel{grid-row:1/3; grid-column:2; background:var(--surface-1); border-left:1px solid var(--border);
+         overflow-y:auto; padding:18px 20px}
+  #chartbox{grid-row:2; grid-column:1; background:var(--surface-1); border-top:1px solid var(--border);
+            position:relative; padding:6px 10px 4px}
+  h1{font-size:17px; margin-bottom:2px}
+  .sub{color:var(--muted); font-size:12px; margin-bottom:14px}
+  h2{font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:18px 0 8px}
+  .row{display:flex; align-items:center; gap:10px; margin:7px 0}
+  .row label{flex:0 0 140px; color:var(--ink-2)}
+  .row input[type=range]{flex:1; min-width:80px; accent-color:var(--s1); height:20px}
+  .row .val{flex:0 0 78px; text-align:right; color:var(--ink); font-variant-numeric:tabular-nums}
+  .duty .val{color:var(--warn); font-size:17px; font-weight:600}
+  .checks label{display:inline-flex; align-items:center; gap:6px; margin:3px 14px 3px 0; color:var(--ink-2)}
+  .checks input{width:16px; height:16px; accent-color:var(--s1)}
+  .btns{display:flex; flex-wrap:wrap; gap:7px; margin:8px 0}
+  button{background:#262624; color:var(--ink-2); border:1px solid var(--border); border-radius:7px;
+         padding:6px 12px; font:inherit; font-size:14px; cursor:pointer}
+  button:hover{background:#31312e; color:var(--ink)}
+  button.primary{background:var(--s1); border-color:var(--s1); color:#fff}
+  button.fins{min-width:130px; font-weight:600}
+  button.fins.open{background:#123a26; border-color:var(--s3); color:#7fe0b8}
+  button.fins.shut{background:#3a2412; border-color:var(--s2); color:#f0a879}
+  table.mot{width:100%; border-collapse:collapse; margin-top:4px; font-variant-numeric:tabular-nums; font-size:15px}
+  table.mot td,table.mot th{padding:4px 6px; text-align:right; border-bottom:1px solid var(--grid)}
+  table.mot th{color:var(--muted); font-weight:500}
+  table.mot td:first-child, table.mot th:first-child{text-align:left; color:var(--ink-2)}
+  #legend{position:absolute; top:8px; right:14px; display:flex; gap:16px; font-size:13px; color:var(--ink-2)}
+  #legend i{display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:5px}
+  .note{color:var(--muted); font-size:12px; margin-top:5px; line-height:1.45}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="view">
+    <div id="hud"></div>
+    <div id="minis">
+      <div class="mini"><span>TOP · X-Y</span><canvas id="mTop" width="200" height="140"></canvas></div>
+      <div class="mini"><span>SIDE · X-Z</span><canvas id="mSide" width="200" height="140"></canvas></div>
+      <div class="mini"><span>FRONT · Y-Z</span><canvas id="mFront" width="200" height="140"></canvas></div>
+    </div>
+  </div>
+
+  <div id="panel">
+    <h1>Mudskipper 6-DOF Simulator</h1>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ</div>
+
+    <h2>Motor duty (0–255 · limit 60)</h2>
+    <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
+    <div class="row duty"><label>Bottom</label><input type="range" id="dutyB" min="0" max="255" value="0"><span class="val" id="dutyBv">0</span></div>
+    <div class="checks">
+      <label><input type="checkbox" id="counter" checked> Counter-rotate (real config)</label>
+      <label><input type="checkbox" id="hold"> Hold position (gimbal)</label>
+    </div>
+    <div class="note">Counter-rotating pair cancels prop reaction torque → straight cruise.
+    Uncheck to see same-direction roll imbalance.</div>
+    <div class="btns">
+      <button data-p="0,0">Stop</button>
+      <button data-p="30,30">Cruise</button>
+      <button data-p="45,15">Diff 45/15</button>
+      <button data-p="15,45">Diff 15/45</button>
+      <button data-p="60,0">Top 60</button>
+      <button data-p="60,60">Max</button>
+      <button id="reset" class="primary">Reset</button>
+    </div>
+
+    <h2>Pectoral fins · 0.1 s stroke</h2>
+    <div class="btns">
+      <button id="finBtn" class="fins open">FINS OPEN</button>
+      <span class="note" style="align-self:center" id="finState">deploy 100%</span>
+    </div>
+    <div class="note">z-hinge at root neck (x 7.2, y ±9.7 mm) · open: Cd 0.692, CL₀ −0.284 · shut: Cd 0.622, CL₀ −0.112 (CFD)</div>
+
+    <h2>Motors · props</h2>
+    <table class="mot">
+      <tr><th></th><th>rpm</th><th>thrust mN</th><th>torque mN·m</th><th>J</th></tr>
+      <tr><td>Top</td><td id="mT0">0</td><td id="mT1">0</td><td id="mT2">0</td><td id="mT3">0</td></tr>
+      <tr><td>Bottom</td><td id="mB0">0</td><td id="mB1">0</td><td id="mB2">0</td><td id="mB3">0</td></tr>
+    </table>
+    <div class="note" id="momNote"></div>
+
+    <h2>Geometry · mass</h2>
+    <div class="row"><label>Prop separation</label><input type="range" id="sep" min="8" max="30" value="15" step="1"><span class="val" id="sepv">15 mm</span></div>
+    <div class="row"><label>Thrust line vs CoM</label><input type="range" id="pzoff" min="-8" max="8" value="0" step="0.5"><span class="val" id="pzoffv">0 mm</span></div>
+    <div class="row"><label>CoM below CoB</label><input type="range" id="comDrop" min="0" max="10" value="3" step="0.5"><span class="val" id="comDropv">3 mm</span></div>
+    <div class="row"><label>Net buoyancy</label><input type="range" id="buoy" min="-3" max="3" value="0" step="0.1"><span class="val" id="buoyv">0 g</span></div>
+
+    <h2>Hydro</h2>
+    <div class="row"><label>Thrust low-Re factor</label><input type="range" id="derT" min="0.3" max="1" value="0.65" step="0.05"><span class="val" id="derTv">0.65</span></div>
+    <div class="row"><label>Bottomfin drag ratio</label><input type="range" id="bfDrag" min="0" max="1.5" value="1" step="0.05"><span class="val" id="bfDragv">1.00</span></div>
+    <div class="checks">
+      <label><input type="checkbox" id="amass" checked> Added mass (accel + Munk coupling)</label>
+    </div>
+    <div class="note">Kirchhoff terms: effective mass on acceleration (x +10 g · y +51 g · z +41 g),
+    ω×(M·v) momentum coupling, v×(M_A·v) Munk moment. Off = bare rigid body.</div>
+    <div class="note">Bottomfin = mirrored topfin, open back → mass ≈ 0, balances top/bottom drag.
+    1.0 = balanced · 0 = removed (topfin drag alone → pitch moment).</div>
+
+    <h2>Display</h2>
+    <div class="checks">
+      <label><input type="checkbox" id="arrows" checked> Force arrows</label>
+      <label><input type="checkbox" id="trail" checked> Trail</label>
+      <label><input type="checkbox" id="follow" checked> Follow cam</label>
+    </div>
+    <div class="note">Arrows: <span style="color:#e66767">thrust</span> ·
+      <span style="color:#d95926">drag</span> · <span style="color:#199e70">fin/lift</span> ·
+      <span style="color:#3987e5">buoyancy</span> · <span style="color:#c3c2b7">weight</span> ·
+      <span style="color:#d55181">roll reaction torque</span></div>
+  </div>
+
+  <div id="chartbox">
+    <div id="legend">
+      <span><i style="background:var(--s1)"></i>Pitch</span>
+      <span><i style="background:var(--s2)"></i>Roll</span>
+      <span><i style="background:var(--s3)"></i>Yaw</span>
+    </div>
+    <canvas id="chart"></canvas>
+  </div>
+</div>
+
+<script src="sim_data.js"></script>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
+            "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+
+/* ============ frames ============
+   Mesh/body frame: +x forward (nose), +y port, +z up. Units m (STL mm → 0.001).
+   World frame: same axes, z up. */
+
+const S = window.SIM;
+const RHO = 1000, G = 9.81;
+
+const P = {                    // ponytail: every entry is a calibration knob
+  mass: 0.034,                 // from CFD weight back-calc (~0.33 N)
+  volume: 34e-6,
+  Irb: [2.0e-5, 4.0e-5, 2.5e-5], // rigid-body inertia (box approx)
+  Ia:  [2.0e-5, 4.0e-5, 2.5e-5], // added rotational inertia in water
+  ma:  [0.010, 0.051, 0.041],    // translational added mass [kg] (x,y,z — flat body: lateral/vertical large)
+  cob: [-3.5e-3, 0, 16.8e-3],  // buoyancy centre (mesh frame)
+  comDrop: 3e-3,
+  propX: -63e-3, propSep: 15e-3,
+  propZoff: 0,                 // thrust-line vertical offset from CoM (0 = through CoM → straight cruise)
+  zMid: 17e-3,                 // hull mid-plane (bottomfin mirror)
+  D: S.propD_mm * 1e-3,
+  motor: {Vnom: 3.7, rpmNL: 50000, Qstall: 1.8e-3, Vrail: 5.0, Vstart: 0.25},
+  derT: 0.65, derQ: 1.15,      // low-Re: thrust down, torque up
+  // axial drag + CL0 interpolate with fin deploy fraction (CFD open/shut)
+  CdxShut: 0.622, CdxOpen: 0.692, Aref: 1.043e-3,
+  CL0Shut: -0.112, CL0Open: -0.284, CLa: 2.5, xCoP: -8e-3,
+  dragY: [1.1, 4.5e-3],
+  dragZ: [1.2, 2.9e-3], dragZfins: 0.7e-3,   // pectoral fins add planform when open
+  finS: 2.5e-4, finCn: 1.17,   // topfin: thin tail plate, normal ≈ x
+  finCLa: 4.0,                 // fin lift slope [/rad] — weathervane stiffness vs Munk moment
+  finR: [-47e-3, 0, 55e-3],
+  xDragCP: -12e-3,             // lateral/vertical body drag centre aft of CoM (restoring)
+  bfDrag: 1.0,
+  netBuoyG: 0,
+  rotDampL: [2e-5, 6e-5, 4e-5], rotDampQ: [3e-6, 1.2e-5, 8e-6],
+  finStroke: 0.1,              // pectoral fin open/close time [s]
+};
+
+/* ============ B-series open-water table ============ */
+function lerpTable(J){
+  const Js = S.J, n = Js.length;
+  if (J <= Js[0]) return [S.KT[0], S.KQ[0]];
+  if (J >= Js[n-1]){
+    const t = (J - Js[n-2]) / (Js[n-1] - Js[n-2]);
+    return [S.KT[n-2] + t*(S.KT[n-1]-S.KT[n-2]), S.KQ[n-2] + t*(S.KQ[n-1]-S.KQ[n-2])];
+  }
+  const i = Math.floor(J / 0.025), t = (J - Js[i]) / 0.025;
+  return [S.KT[i] + t*(S.KT[i+1]-S.KT[i]), S.KQ[i] + t*(S.KQ[i+1]-S.KQ[i])];
+}
+
+/* motor-prop equilibrium rpm: Qmotor(n) = KQ(J)·ρ·n²·D⁵ (bisection) */
+function solveMotor(duty, uAx){
+  const m = P.motor, V = m.Vrail * duty / 255;
+  if (V < m.Vstart) return {n:0, T:0, Q:0, J:0};
+  const nNL = (m.rpmNL/60) * V / m.Vnom;
+  const Qs  = m.Qstall * V / m.Vnom;
+  const u = Math.max(0, uAx), D = P.D;
+  const f = n => {
+    const J = n > 1 ? u/(n*D) : 10;
+    const kq = Math.max(1e-4, lerpTable(Math.min(J,1.5))[1]) * P.derQ;
+    return Qs*(1 - n/nNL) - kq*RHO*n*n*Math.pow(D,5);
+  };
+  let lo = 0, hi = nNL;
+  for (let i=0;i<40;i++){ const mid=(lo+hi)/2; f(mid)>0 ? lo=mid : hi=mid; }
+  const n = (lo+hi)/2;
+  const J = n > 1 ? Math.min(u/(n*D), 1.5) : 0;
+  const [kt, kq] = lerpTable(J);
+  return {n, J,
+    T: P.derT * kt * RHO*n*n*Math.pow(D,4),
+    Q: P.derQ * Math.max(0,kq) * RHO*n*n*Math.pow(D,5)};
+}
+
+/* ============ rigid-body state ============ */
+const state = {p:new THREE.Vector3(), q:new THREE.Quaternion(),
+               v:new THREE.Vector3(), w:new THREE.Vector3(), t:0};
+const path = [];                       // full trajectory for the mini views
+function resetState(){
+  state.p.set(0,0,0); state.q.identity(); state.v.set(0,0,0); state.w.set(0,0,0); state.t=0;
+  trailPts.length = 0; hist.length = 0; path.length = 0;
+}
+
+const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true};
+let finFrac = 1;                       // 1 = deployed, 0 = folded
+
+let COM = new THREE.Vector3();
+function updateCOM(){ COM.set(P.cob[0], P.cob[1], P.cob[2] - P.comDrop); }
+updateCOM();
+
+const tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), tmpQ = new THREE.Quaternion();
+let motTop = {n:0,T:0,Q:0,J:0}, motBot = {n:0,T:0,Q:0,J:0};
+const dbg = {arrows:{}};
+
+function physicsStep(dt){
+  // pectoral fin actuator: full stroke in P.finStroke seconds
+  const tgt = ctl.finsOpen ? 1 : 0;
+  finFrac += Math.sign(tgt - finFrac) * Math.min(dt / P.finStroke, Math.abs(tgt - finFrac));
+  const ff = finFrac;
+
+  const qi = tmpQ.copy(state.q).invert();
+  const vb = tmpV.copy(state.v).applyQuaternion(qi);
+  const w = state.w;
+  const F = new THREE.Vector3(), M = new THREE.Vector3();
+  const A = dbg.arrows;
+
+  // --- props (top/bottom) ---
+  // torque bookkeeping: thrust → moment r×F about CoM; prop reaction torque is a
+  // pure couple (point of application irrelevant). Thrust line passes through CoM
+  // + propZoff — real robot cruises straight at equal duty (counter-rotating pair).
+  const zMidP = (P.cob[2] - P.comDrop) + P.propZoff;
+  const zT = zMidP + P.propSep/2, zB = zMidP - P.propSep/2;
+  const rT = new THREE.Vector3(P.propX, 0, zT).sub(COM);
+  const rB = new THREE.Vector3(P.propX, 0, zB).sub(COM);
+  const uT = vb.x + w.y*rT.z - w.z*rT.y;
+  const uB = vb.x + w.y*rB.z - w.z*rB.y;
+  motTop = solveMotor(ctl.dutyT, uT);
+  motBot = solveMotor(ctl.dutyB, uB);
+  const sT = 1, sB = ctl.counter ? -1 : 1;
+  F.x += motTop.T + motBot.T;
+  M.add(rT.clone().cross(new THREE.Vector3(motTop.T,0,0)));
+  M.add(rB.clone().cross(new THREE.Vector3(motBot.T,0,0)));
+  M.x += -(sT*motTop.Q + sB*motBot.Q);           // prop reaction torque → roll
+  A.thrustT = [rT, new THREE.Vector3(motTop.T,0,0)];
+  A.thrustB = [rB, new THREE.Vector3(motBot.T,0,0)];
+
+  // --- body drag (3 axes) + lift, fin-deploy dependent ---
+  const Cdx = P.CdxShut + ff*(P.CdxOpen - P.CdxShut);
+  const Az  = P.dragZ[1] + ff*P.dragZfins;
+  const dragF = new THREE.Vector3(
+    -0.5*RHO*Cdx*P.Aref*Math.abs(vb.x)*vb.x,
+    -0.5*RHO*P.dragY[0]*P.dragY[1]*Math.abs(vb.y)*vb.y,
+    -0.5*RHO*P.dragZ[0]*Az*Math.abs(vb.z)*vb.z);
+  F.add(dragF);
+  // lateral/vertical drag acts aft of CoM → weathervane restoring moment
+  M.add(new THREE.Vector3(P.xDragCP,0,0).cross(new THREE.Vector3(0, dragF.y, dragF.z)));
+  A.drag = [new THREE.Vector3(P.xDragCP,0,0), dragF.clone()];
+  if (vb.x > 0.02){
+    const alpha = Math.atan2(-vb.z, vb.x);
+    const CL0 = P.CL0Shut + ff*(P.CL0Open - P.CL0Shut);
+    const qdyn = 0.5*RHO*(vb.x*vb.x + vb.z*vb.z)*P.Aref;
+    const Lz = qdyn*(CL0 + P.CLa*Math.max(-0.35, Math.min(0.35, alpha)));
+    F.z += Lz;
+    M.add(new THREE.Vector3(P.xCoP,0,0).cross(new THREE.Vector3(0,0,Lz)));
+    A.lift = [new THREE.Vector3(P.xCoP,0,0), new THREE.Vector3(0,0,Lz)];
+  } else A.lift = null;
+
+  // --- topfin / bottomfin: x-normal plates (drag + normal force) ---
+  const finOne = (rMesh, scale) => {
+    const r = tmpV2.copy(rMesh).sub(COM);
+    const uf = new THREE.Vector3(vb.x + w.y*r.z - w.z*r.y,
+                                 vb.y + w.z*r.x - w.x*r.z,
+                                 vb.z + w.x*r.y - w.y*r.x);
+    const k = 0.5*RHO*P.finS*scale;
+    const Fx = -k*P.finCn*Math.abs(uf.x)*uf.x;
+    // lift slope: linear cross-flow force ∝ u·v — stabilizes against the Munk moment
+    const Ft = new THREE.Vector3(Fx,
+      -k*(0.1*Math.abs(uf.y)*uf.y + P.finCLa*Math.abs(uf.x)*uf.y),
+      -k*(0.1*Math.abs(uf.z)*uf.z + P.finCLa*Math.abs(uf.x)*uf.z));
+    F.add(Ft);
+    M.add(r.clone().cross(Ft));
+    return [r.clone(), Ft];
+  };
+  A.finT = finOne(new THREE.Vector3(...P.finR), 1.0);
+  // bottomfin mirrored about the CoM height → equal moment arms, drag couple cancels
+  A.finB = P.bfDrag > 0.001
+    ? finOne(new THREE.Vector3(P.finR[0], 0, 2*(P.cob[2]-P.comDrop) - P.finR[2]), P.bfDrag) : null;
+
+  // --- gravity · buoyancy ---
+  const W = P.mass*G, B = W + P.netBuoyG*1e-3*G;
+  const gB = new THREE.Vector3(0,0,-W).applyQuaternion(qi);
+  const bB = new THREE.Vector3(0,0, B).applyQuaternion(qi);
+  const rCob = new THREE.Vector3(0,0,P.comDrop);
+  F.add(gB); F.add(bB);
+  M.add(rCob.clone().cross(bB));
+  A.buoy = [rCob, bB]; A.grav = [new THREE.Vector3(0,0,0), gB];
+
+  // --- added-mass Munk moment: v×(M_A·v) from Kirchhoff — destabilizing at incidence ---
+  if (ctl.addedMass){
+    M.x += (P.ma[1]-P.ma[2])*vb.y*vb.z;
+    M.y += (P.ma[2]-P.ma[0])*vb.x*vb.z;
+    M.z += (P.ma[0]-P.ma[1])*vb.x*vb.y;
+  }
+
+  // --- rotational damping (open fins add roll damping) ---
+  const rollQ = P.rotDampQ[0]*(1 + 2*ff);
+  M.x += -P.rotDampL[0]*w.x - rollQ*Math.abs(w.x)*w.x*40;
+  M.y += -P.rotDampL[1]*w.y - P.rotDampQ[1]*Math.abs(w.y)*w.y*40;
+  M.z += -P.rotDampL[2]*w.z - P.rotDampQ[2]*Math.abs(w.z)*w.z*40;
+
+  // --- integrate (semi-implicit Euler, body frame) ---
+  // Kirchhoff equations with diagonal added mass (toggle). AM off → plain rigid body.
+  const on = ctl.addedMass;
+  const mX = P.mass + (on ? P.ma[0] : 0);
+  const mY = P.mass + (on ? P.ma[1] : 0);
+  const mZ = P.mass + (on ? P.ma[2] : 0);
+  const Ix = P.Irb[0] + (on ? P.Ia[0] : 0);
+  const Iy = P.Irb[1] + (on ? P.Ia[1] : 0);
+  const Iz = P.Irb[2] + (on ? P.Ia[2] : 0);
+  // translational: (m+ma)v̇ = F − ω×((M_RB+M_A)v)  — momentum coupling per axis
+  const du = (F.x - w.y*mZ*vb.z + w.z*mY*vb.y)/mX;
+  const dv = (F.y - w.z*mX*vb.x + w.x*mZ*vb.z)/mY;
+  const dw = (F.z - w.x*mY*vb.y + w.y*mX*vb.x)/mZ;
+  const Iw = new THREE.Vector3(Ix*w.x, Iy*w.y, Iz*w.z);
+  const gyro = new THREE.Vector3().copy(w).cross(Iw);
+  w.x += dt*(M.x - gyro.x)/Ix;
+  w.y += dt*(M.y - gyro.y)/Iy;
+  w.z += dt*(M.z - gyro.z)/Iz;
+
+  if (ctl.hold){ state.v.set(0,0,0); }
+  else {
+    vb.x += dt*du; vb.y += dt*dv; vb.z += dt*dw;
+    state.v.copy(vb).applyQuaternion(state.q);
+    state.p.addScaledVector(state.v, dt);
+  }
+  const dq = new THREE.Quaternion(w.x*dt/2, w.y*dt/2, w.z*dt/2, 1);
+  state.q.multiply(dq).normalize();
+  state.t += dt;
+  dbg.M = M;
+}
+
+/* ============ scene ============ */
+const view = document.getElementById('view');
+const renderer = new THREE.WebGLRenderer({antialias:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+view.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1420);
+scene.fog = new THREE.Fog(0x0d1420, 1.5, 8);
+const camera = new THREE.PerspectiveCamera(45, 1, 0.005, 50);
+camera.up.set(0,0,1);
+camera.position.set(-0.14, -0.20, 0.10);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+
+scene.add(new THREE.HemisphereLight(0x88aacc, 0x223344, 1.1));
+const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(1,-1,2); scene.add(dl);
+
+const grid = new THREE.GridHelper(4, 40, 0x2c3a4a, 0x1c2735);
+grid.rotation.x = Math.PI/2; grid.position.z = -0.35; scene.add(grid);
+
+function meshFromB64(b64, mat){
+  const bin = atob(b64), buf = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
+  const pos = new Float32Array(buf.buffer);
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+  g.computeVertexNormals();
+  return new THREE.Mesh(g, mat);
+}
+
+const robotGrp = new THREE.Group(); scene.add(robotGrp);   // CoM-origin group
+const meshGrp = new THREE.Group(); robotGrp.add(meshGrp);  // mesh coords → CoM offset
+const MM = 1e-3;
+const hullMat = new THREE.MeshStandardMaterial({color:0x9aa4ad, metalness:.15, roughness:.6});
+const hull = meshFromB64(window.ROBOT_B64, hullMat);
+const bfin = meshFromB64(window.BOTTOMFIN_B64,
+  new THREE.MeshStandardMaterial({color:0x35c4b0, transparent:true, opacity:.45,
+                                  side:THREE.DoubleSide, depthWrite:false}));
+const propMat = new THREE.MeshStandardMaterial({color:0x3987e5, metalness:.3, roughness:.4});
+const propT = meshFromB64(window.PROP_B64, propMat);
+const propB = meshFromB64(window.PROP_B64, propMat.clone());
+const finMat = new THREE.MeshStandardMaterial({color:0xb8c4cc, metalness:.15, roughness:.55,
+                                               side:THREE.DoubleSide});
+const finRm = meshFromB64(window.FINR_B64, finMat);
+const finLm = meshFromB64(window.FINL_B64, finMat);
+[hull, bfin, propT, propB, finRm, finLm].forEach(m => m.scale.setScalar(MM));
+meshGrp.add(hull, bfin);
+const propTg = new THREE.Group(), propBg = new THREE.Group();
+propTg.add(propT); propBg.add(propB);
+meshGrp.add(propTg, propBg);
+
+// pectoral fin pivots at root necks; mesh offset so hinge is the group origin
+const hR = S.hingeR_mm.map(v => v*MM), hL = S.hingeL_mm.map(v => v*MM);
+const finRg = new THREE.Group(), finLg = new THREE.Group();
+finRg.position.set(...hR); finRm.position.set(-hR[0], -hR[1], -hR[2]);
+finLg.position.set(...hL); finLm.position.set(-hL[0], -hL[1], -hL[2]);
+finRg.add(finRm); finLg.add(finLm);
+meshGrp.add(finRg, finLg);
+
+function placeProps(){
+  const zMidP = (P.cob[2] - P.comDrop) + P.propZoff;
+  propTg.position.set(P.propX, 0, zMidP + P.propSep/2);
+  propBg.position.set(P.propX, 0, zMidP - P.propSep/2);
+  meshGrp.position.set(-COM.x, -COM.y, -COM.z);
+}
+placeProps();
+
+const comDot = new THREE.Mesh(new THREE.SphereGeometry(0.004),
+  new THREE.MeshBasicMaterial({color:0xffffff}));
+const cobDot = new THREE.Mesh(new THREE.SphereGeometry(0.0035),
+  new THREE.MeshBasicMaterial({color:0x3987e5}));
+robotGrp.add(comDot, cobDot);
+
+const arrowDefs = {thrustT:0xe66767, thrustB:0xe66767, drag:0xd95926, lift:0x199e70,
+                   finT:0x199e70, finB:0x35c4b0, buoy:0x3987e5, grav:0xc3c2b7, roll:0xd55181};
+const arrows = {};
+for (const k in arrowDefs){
+  arrows[k] = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(), 0.01,
+                                    arrowDefs[k], 0.008, 0.005);
+  robotGrp.add(arrows[k]);
+}
+const F_SCALE = 0.35;
+function updateArrows(){
+  const show = document.getElementById('arrows').checked;
+  for (const k in arrows) arrows[k].visible = false;
+  if (!show) return;
+  for (const k in dbg.arrows){
+    const e = dbg.arrows[k]; if (!e) continue;
+    const a = arrows[k]; if (!a) continue;
+    const len = e[1].length()*F_SCALE;
+    if (len < 0.004) continue;
+    a.position.copy(e[0]); a.setDirection(e[1].clone().normalize());
+    a.setLength(len, Math.min(0.012, len*0.4), Math.min(0.007, len*0.25));
+    a.visible = true;
+  }
+  const Mx = dbg.M ? dbg.M.x : 0;
+  if (Math.abs(Mx) > 2e-5){
+    const a = arrows.roll, len = Math.min(0.12, Math.abs(Mx)*40);
+    a.position.set(0.05,0,0);
+    a.setDirection(new THREE.Vector3(Math.sign(Mx),0,0));
+    a.setLength(len, len*0.3, len*0.18); a.visible = true;
+  }
+}
+
+const trailPts = [];
+const trailGeo = new THREE.BufferGeometry();
+const trailLine = new THREE.Line(trailGeo,
+  new THREE.LineBasicMaterial({color:0x86b6ef, transparent:true, opacity:.6}));
+scene.add(trailLine);
+
+/* ============ UI ============ */
+const $ = id => document.getElementById(id);
+const bind = (id, fmt, cb) => { const el = $(id); const f = () => { $(id+'v').textContent = fmt(el.value); cb(parseFloat(el.value)); }; el.addEventListener('input', f); f(); };
+bind('dutyT', v=>v, v=>ctl.dutyT=v);
+bind('dutyB', v=>v, v=>ctl.dutyB=v);
+bind('sep', v=>v+' mm', v=>{P.propSep=v*1e-3; placeProps();});
+bind('pzoff', v=>v+' mm', v=>{P.propZoff=v*1e-3; placeProps();});
+bind('comDrop', v=>v+' mm', v=>{P.comDrop=v*1e-3; updateCOM(); placeProps();});
+bind('buoy', v=>(v>0?'+':'')+v+' g', v=>P.netBuoyG=v);
+bind('derT', v=>v, v=>P.derT=v);
+bind('bfDrag', v=>(+v).toFixed(2), v=>{P.bfDrag=v; bfin.material.opacity = 0.06 + 0.4*Math.min(1,v);});
+$('counter').addEventListener('change', e=>ctl.counter=e.target.checked);
+$('amass').addEventListener('change', e=>ctl.addedMass=e.target.checked);
+$('hold').addEventListener('change', e=>ctl.hold=e.target.checked);
+$('reset').addEventListener('click', resetState);
+document.querySelectorAll('button[data-p]').forEach(b => b.addEventListener('click', ()=>{
+  const [t,bo] = b.dataset.p.split(',');
+  $('dutyT').value=t; $('dutyB').value=bo;
+  $('dutyT').dispatchEvent(new Event('input')); $('dutyB').dispatchEvent(new Event('input'));
+}));
+const finBtn = $('finBtn');
+finBtn.addEventListener('click', () => {
+  ctl.finsOpen = !ctl.finsOpen;
+  finBtn.textContent = ctl.finsOpen ? 'FINS OPEN' : 'FINS SHUT';
+  finBtn.className = 'fins ' + (ctl.finsOpen ? 'open' : 'shut');
+});
+
+/* ============ attitude chart (single axis · 3 series · legend + crosshair) ============ */
+const hist = [];
+const chart = $('chart'), cctx = chart.getContext('2d');
+let hoverX = null;
+chart.addEventListener('mousemove', e => hoverX = e.offsetX);
+chart.addEventListener('mouseleave', () => hoverX = null);
+const WINDOW_S = 12;
+function drawChart(){
+  const box = document.getElementById('chartbox');
+  const w = box.clientWidth-20, h = box.clientHeight-12;
+  if (chart.width !== w*devicePixelRatio){ chart.width=w*devicePixelRatio; chart.height=h*devicePixelRatio;
+    chart.style.width=w+'px'; chart.style.height=h+'px'; }
+  const c = cctx; c.setTransform(devicePixelRatio,0,0,devicePixelRatio,0,0);
+  c.clearRect(0,0,w,h);
+  const padL=38, padR=8, padT=10, padB=18, pw=w-padL-padR, ph=h-padT-padB;
+  const t1 = state.t, t0 = Math.max(0, t1-WINDOW_S);
+  let ymax = 20;
+  for (const d of hist) ymax = Math.max(ymax, Math.abs(d.pitch), Math.abs(d.roll), Math.abs(d.yaw));
+  ymax = Math.ceil(ymax/10)*10;
+  const X = t => padL + (t-t0)/(t1-t0+1e-9)*pw;
+  const Y = v => padT + ph/2 - v/ymax*(ph/2);
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n);
+  c.strokeStyle = css('--grid'); c.lineWidth = 1; c.beginPath();
+  for (const gy of [-ymax, -ymax/2, 0, ymax/2, ymax]){ c.moveTo(padL, Y(gy)); c.lineTo(w-padR, Y(gy)); }
+  c.stroke();
+  c.fillStyle = css('--muted'); c.font = '11px system-ui'; c.textAlign='right';
+  for (const gy of [-ymax, 0, ymax]) c.fillText(gy+'°', padL-4, Y(gy)+3);
+  c.textAlign='center';
+  for (let ts=Math.ceil(t0); ts<=t1; ts+=2) c.fillText(ts+'s', X(ts), h-4);
+  const series = [['pitch','--s1'],['roll','--s2'],['yaw','--s3']];
+  for (const [key, col] of series){
+    c.strokeStyle = css(col); c.lineWidth = 2; c.beginPath();
+    let started = false;
+    for (const d of hist){ if (d.t < t0) continue;
+      const x=X(d.t), y=Y(d[key]);
+      started ? c.lineTo(x,y) : c.moveTo(x,y); started = true; }
+    c.stroke();
+  }
+  if (hoverX !== null && hist.length > 2 && hoverX > padL){
+    const tH = t0 + (hoverX-padL)/pw*(t1-t0);
+    let d = hist[0];
+    for (const e of hist){ if (e.t <= tH) d = e; else break; }
+    c.strokeStyle = css('--axis'); c.beginPath(); c.moveTo(hoverX,padT); c.lineTo(hoverX,padT+ph); c.stroke();
+    c.textAlign='left'; c.font='12px system-ui';
+    const lines = [['Pitch',d.pitch,'--s1'],['Roll',d.roll,'--s2'],['Yaw',d.yaw,'--s3']];
+    const bx = Math.min(hoverX+8, w-100);
+    c.fillStyle = 'rgba(13,13,13,.85)'; c.fillRect(bx-4, padT, 96, 50);
+    lines.forEach(([nm,v,col],i)=>{ c.fillStyle=css(col);
+      c.fillText(`${nm} ${v.toFixed(1)}°`, bx, padT+14+i*15); });
+  }
+}
+
+/* ============ trajectory mini views (full path, auto-fit) ============ */
+const MINI = [
+  {cv:$('mTop'),   ax:0, ay:1, flipY:false},   // TOP: x→right, y→up
+  {cv:$('mSide'),  ax:0, ay:2, flipY:false},   // SIDE: x→right, z→up
+  {cv:$('mFront'), ax:1, ay:2, flipY:false},   // FRONT: y→right, z→up
+];
+function drawMinis(){
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n);
+  for (const m of MINI){
+    const c = m.cv.getContext('2d'), W = m.cv.width, H = m.cv.height;
+    c.clearRect(0,0,W,H);
+    // extents over path + current pos
+    let lo0=1e9, hi0=-1e9, lo1=1e9, hi1=-1e9;
+    const pts = path.length ? path : [[0,0,0]];
+    for (const p of pts){
+      lo0=Math.min(lo0,p[m.ax]); hi0=Math.max(hi0,p[m.ax]);
+      lo1=Math.min(lo1,p[m.ay]); hi1=Math.max(hi1,p[m.ay]);
+    }
+    const span = Math.max(hi0-lo0, hi1-lo1, 0.2), pad = span*0.12;
+    const c0 = (lo0+hi0)/2, c1 = (lo1+hi1)/2, s = Math.min((W-24)/(span+2*pad), (H-24)/(span+2*pad));
+    const px = v => W/2 + (v-c0)*s;
+    const py = v => H/2 - (v-c1)*s;
+    // axes cross at origin
+    c.strokeStyle = css('--axis'); c.lineWidth = 1; c.beginPath();
+    c.moveTo(px(0), 0); c.lineTo(px(0), H); c.moveTo(0, py(0)); c.lineTo(W, py(0)); c.stroke();
+    // path
+    if (path.length > 1){
+      c.strokeStyle = '#86b6ef'; c.lineWidth = 1.5; c.beginPath();
+      c.moveTo(px(path[0][m.ax]), py(path[0][m.ay]));
+      for (const p of path) c.lineTo(px(p[m.ax]), py(p[m.ay]));
+      c.stroke();
+    }
+    // start marker + current pos
+    c.fillStyle = css('--s3');
+    c.fillRect(px(pts[0][m.ax])-2, py(pts[0][m.ay])-2, 4, 4);
+    const cur = [state.p.x, state.p.y, state.p.z];
+    c.fillStyle = '#fff'; c.beginPath();
+    c.arc(px(cur[m.ax]), py(cur[m.ay]), 3, 0, 7); c.fill();
+    // scale label
+    c.fillStyle = css('--muted'); c.font = '10px system-ui'; c.textAlign = 'right';
+    c.fillText((span<0.5 ? (span*100).toFixed(0)+' cm' : span.toFixed(1)+' m'), W-6, H-6);
+  }
+}
+
+/* ============ main loop ============ */
+const hud = $('hud');
+function resize(){
+  const w = view.clientWidth, h = view.clientHeight;
+  renderer.setSize(w, h); camera.aspect = w/h; camera.updateProjectionMatrix();
+}
+addEventListener('resize', resize); resize();
+
+function attitude(){
+  const e = new THREE.Matrix4().makeRotationFromQuaternion(state.q).elements;
+  const fwd = {x:e[0], y:e[1], z:e[2]};
+  const pitch = Math.asin(Math.max(-1,Math.min(1,fwd.z)))*180/Math.PI;
+  const yaw = Math.atan2(fwd.y, fwd.x)*180/Math.PI;
+  const roll = Math.atan2(e[6], e[10])*180/Math.PI;
+  return {pitch, roll, yaw};
+}
+
+let last = performance.now(), acc = 0, propAngT = 0, propAngB = 0, frame = 0;
+const DT = 1/240;
+function loop(now){
+  requestAnimationFrame(loop);
+  let dt = Math.min(0.05, (now-last)/1000); last = now; acc += dt;
+  while (acc > DT){ physicsStep(DT); acc -= DT; }
+
+  const att = attitude();
+  if (!hist.length || state.t - hist[hist.length-1].t > 0.03){
+    hist.push({t:state.t, ...att});
+    while (hist.length && hist[0].t < state.t - WINDOW_S - 1) hist.shift();
+  }
+  if (!ctl.hold){
+    const lp = path[path.length-1];
+    if (!lp || (state.p.x-lp[0])**2 + (state.p.y-lp[1])**2 + (state.p.z-lp[2])**2 > 4e-6){
+      path.push([state.p.x, state.p.y, state.p.z]);
+      if (path.length > 6000) path.splice(0, 1000);
+    }
+  }
+
+  robotGrp.position.copy(state.p);
+  robotGrp.quaternion.copy(state.q);
+  const sB = ctl.counter ? -1 : 1;
+  propAngT += motTop.n*2*Math.PI*dt*0.12;
+  propAngB += sB*motBot.n*2*Math.PI*dt*0.12;
+  propTg.rotation.x = propAngT; propBg.rotation.x = propAngB;
+  // pectoral fins: fold back about the z hinge (0 = open, 90° = shut)
+  finRg.rotation.z =  (1-finFrac)*Math.PI/2;
+  finLg.rotation.z = -(1-finFrac)*Math.PI/2;
+  cobDot.position.set(0,0,P.comDrop);
+  updateArrows();
+
+  if (document.getElementById('trail').checked && !ctl.hold){
+    if (!trailPts.length || trailPts[trailPts.length-1].distanceToSquared(state.p) > 1e-5){
+      trailPts.push(state.p.clone());
+      if (trailPts.length > 800) trailPts.shift();
+      trailGeo.setFromPoints(trailPts);
+    }
+    trailLine.visible = true;
+  } else trailLine.visible = false;
+
+  if (document.getElementById('follow').checked){
+    const off = camera.position.clone().sub(controls.target);
+    controls.target.lerp(state.p, 0.1);
+    camera.position.copy(controls.target).add(off);
+  }
+  controls.update();
+  renderer.render(scene, camera);
+
+  if (++frame % 6 === 0){
+    const spd = state.v.length();
+    hud.innerHTML =
+      `Pitch <b>${att.pitch.toFixed(1)}°</b> · Roll <b>${att.roll.toFixed(1)}°</b> · Yaw <b>${att.yaw.toFixed(1)}°</b><br>` +
+      `Speed <b>${spd.toFixed(3)} m/s</b> · Depth <b>${(-state.p.z).toFixed(3)} m</b> · t ${state.t.toFixed(1)}s` +
+      (ctl.hold ? ' · <span style="color:var(--warn)">HOLD</span>' : '') +
+      ` · Fins <b>${(finFrac*100).toFixed(0)}%</b>`;
+    const set = (id, m) => {
+      $(id+'0').textContent = (m.n*60).toFixed(0);
+      $(id+'1').textContent = (m.T*1e3).toFixed(1);
+      $(id+'2').textContent = (m.Q*1e3).toFixed(2);
+      $(id+'3').textContent = m.J.toFixed(2);
+    };
+    set('mT', motTop); set('mB', motBot);
+    $('finState').textContent = 'deploy ' + (finFrac*100).toFixed(0) + '%';
+    $('momNote').textContent =
+      `ΔT ${( (motTop.T-motBot.T)*1e3).toFixed(1)} mN × arm ±${(P.propSep/2*1e3).toFixed(1)} mm → ` +
+      `pitch ${((motTop.T-motBot.T)*P.propSep/2*1e6).toFixed(1)} µN·m · ` +
+      `net roll reaction ${(-(motTop.Q + (ctl.counter?-1:1)*motBot.Q)*1e3).toFixed(2)} mN·m`;
+    drawChart();
+    drawMinis();
+  }
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
