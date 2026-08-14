@@ -74,7 +74,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ</div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14d</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -126,8 +126,7 @@
     <div class="note" id="momNote"></div>
 
     <h2>Geometry · mass</h2>
-    <div class="note">Props fixed at real position: x −63, z 24.5 / 9.5 mm (sep 15 mm).</div>
-    <div class="row"><label>Pect. fin CP (mesh x)</label><input type="range" id="pfx" min="-5" max="25" value="13" step="1"><span class="val" id="pfxv">13 mm</span></div>
+    <div class="note">Props at CAD disc centres (−56.5, 0, 25.8 / 5.0 mm) · pectoral force points follow the fold kinematics per blade.</div>
     <div class="row"><label>CoM below CoB</label><input type="range" id="comDrop" min="0" max="10" value="3" step="0.5"><span class="val" id="comDropv">3 mm</span></div>
     <div class="row"><label>Net buoyancy</label><input type="range" id="buoy" min="-3" max="3" value="0" step="0.1"><span class="val" id="buoyv">0 g</span></div>
 
@@ -182,7 +181,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814c"></script>
+<script src="sim_data.js?v=20260814d"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -222,7 +221,6 @@ const P = {                    // ponytail: every entry is a calibration knob
   finS: 2.5e-4, finCn: 1.17,   // topfin: thin tail plate, normal ≈ x
   finCLa: 4.0,                 // fin lift slope [/rad] — weathervane stiffness vs Munk moment
   finR: [-47e-3, 0, 55e-3],
-  pfinX: 13e-3,                // pectoral-fin force CP, mesh x [m] — ~16 mm fwd of CoM; calibrate
   pfinS: 7.7e-4, pfinCLa: 3.9, // pectoral planform (2×35×11 mm) + lift slope: AoA lift fwd of CoM = destabilizing
   // per-component mass [g] / displaced volume [cm³] — split out of the 34 g / 34 cm³ totals
   finMassT: 0.5, finVolT: 0.3, finMassB: 0.05, finVolB: 0.05, pfinMass: 0.6, pfinVol: 0.4,
@@ -360,26 +358,35 @@ function physicsStep(dt){
     A.lift = [new THREE.Vector3(P.xCoP,0,0), new THREE.Vector3(0,0,Lz)];
   } else A.lift = null;
 
-  // --- pectoral fins: CFD open-shut deltas applied AT the fin bay (x≈13 mm,
-  //     ~16 mm forward of CoM, slightly below) → real pitch moment when deployed ---
+  // --- pectoral fins: PER-BLADE forces at each blade's CURRENT position ---
+  //     centroid follows the fold kinematics (same hinge/angle as the visual);
+  //     area, CFD deltas all scale with fold fraction → shut = exactly zero.
+  //     Per blade: axial ΔCd drag + CFD ΔCL₀ downforce + AoA lift (−½ρS·CLα·u·w,
+  //     stall-clamped) + flat-plate normal drag Cn|w|w. Fwd of CoM → destabilizing.
+  A.pfinR = null; A.pfinL = null;
   if (ff > 0.001){
-    const rp = new THREE.Vector3(P.pfinX, 0, -1.4e-3).sub(COM);
-    const up = vb.x + w.y*rp.z - w.z*rp.y;
-    const wp = vb.z + w.x*rp.y - w.y*rp.x;
-    const dCd = ff*(P.CdxOpen - P.CdxShut);
-    const dCL = ff*(P.CL0Open - P.CL0Shut);       // extra downforce (CFD, α=0)
-    const dAz = ff*P.dragZfins;
-    // AoA lift: fwd of CoM → statically DESTABILIZING in pitch, both directions
-    const al = Math.max(-0.35, Math.min(0.35, Math.atan2(-wp, Math.max(up, 1e-3))));
-    const Fp = new THREE.Vector3(
-      -0.5*RHO*dCd*P.Aref*Math.abs(up)*up,
-      0,
-      (up > 0.02 ? 0.5*RHO*(up*up+wp*wp)*(P.Aref*dCL + ff*P.pfinS*P.pfinCLa*al) : 0)
-        - 0.5*RHO*P.dragZ[0]*dAz*Math.abs(wp)*wp);
-    F.add(Fp);
-    M.add(rp.clone().cross(Fp));
-    A.pfin = [rp, Fp];
-  } else A.pfin = null;
+    const dCdH = ff*(P.CdxOpen - P.CdxShut)/2;
+    const dCLH = ff*(P.CL0Open - P.CL0Shut)/2;
+    const Sh = ff*P.pfinS/2;
+    for (const s of [1, -1]){
+      const th = s*(1-ff)*Math.PI/2;               // fold angle, matches visual
+      const d0x = -4e-3, d0y = s*19e-3;            // deployed blade centroid rel hinge
+      const cx = 17e-3 + d0x*Math.cos(th) - d0y*Math.sin(th);
+      const cy = s*8e-3 + d0x*Math.sin(th) + d0y*Math.cos(th);
+      const r = new THREE.Vector3(cx, cy, -1.4e-3).sub(COM);
+      const up = vb.x + w.y*r.z - w.z*r.y;
+      const wp = vb.z + w.x*r.y - w.y*r.x;
+      const wnL = up > 0.02 ? Math.max(-0.36*up, Math.min(0.36*up, wp)) : 0;  // stall clamp
+      const Fp = new THREE.Vector3(
+        -0.5*RHO*dCdH*P.Aref*Math.abs(up)*up,
+        0,
+        (up > 0.02 ? 0.5*RHO*up*up*P.Aref*dCLH : 0)
+          - 0.5*RHO*Sh*(P.pfinCLa*Math.max(up,0)*wnL + P.finCn*Math.abs(wp)*wp));
+      F.add(Fp);
+      M.add(r.clone().cross(Fp));
+      if (s > 0) A.pfinR = [r.clone(), Fp]; else A.pfinL = [r.clone(), Fp];
+    }
+  }
 
   // --- topfin / bottomfin: x-normal plates (drag + normal force) ---
   const finOne = (rMesh, scale) => {
@@ -436,9 +443,8 @@ function physicsStep(dt){
     M.z += (P.ma[0]-P.ma[1])*vb.x*vb.y;
   }
 
-  // --- rotational damping (open fins add roll damping) ---
-  const rollQ = P.rotDampQ[0]*(1 + 2*ff);
-  M.x += -P.rotDampL[0]*w.x - rollQ*Math.abs(w.x)*w.x*40;
+  // --- rotational damping (pectoral roll damping now comes from the per-blade forces) ---
+  M.x += -P.rotDampL[0]*w.x - P.rotDampQ[0]*Math.abs(w.x)*w.x*40;
   M.y += -P.rotDampL[1]*w.y - P.rotDampQ[1]*Math.abs(w.y)*w.y*40;
   M.z += -P.rotDampL[2]*w.z - P.rotDampQ[2]*Math.abs(w.z)*w.z*40;
 
@@ -560,22 +566,26 @@ const comLbl = textSprite('CoM', '#ffffff'), cobLbl = textSprite('CoB', '#3987e5
 robotGrp.add(comDot, cobDot, comLbl, cobLbl);
 
 const arrowDefs = {thrustT:0xe66767, thrustB:0xe66767, drag:0xd95926, lift:0x199e70,
-                   finT:0x199e70, finB:0x35c4b0, pfin:0x86b6ef,
+                   finT:0x199e70, finB:0x35c4b0, pfinR:0x86b6ef, pfinL:0x86b6ef,
                    buoy:0x3987e5, grav:0xc3c2b7, roll:0xd55181,
                    wFinT:0x8a8a85, bFinT:0x6da7ec, wFinB:0x8a8a85, bFinB:0x6da7ec,
                    wPfin:0x8a8a85, bPfin:0x6da7ec};
 const arrowNames = {thrustT:'T·top', thrustB:'T·bot', drag:'body drag', lift:'body lift',
-                    finT:'topfin F', finB:'botfin F', pfin:'pect F',
+                    finT:'topfin F', finB:'botfin F', pfinR:'pect·R', pfinL:'pect·L',
                     buoy:'B·body', grav:'W·body', roll:'roll τ',
                     wFinT:'W·topfin', bFinT:'B·topfin', wFinB:'W·botfin', bFinB:'B·botfin',
                     wPfin:'W·pect', bPfin:'B·pect'};
 const arrows = {}, arrowLbls = {};
 for (const k in arrowDefs){
-  arrows[k] = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(), 0.01,
-                                    arrowDefs[k], 0.008, 0.005);
+  const a = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(), 0.01,
+                                  arrowDefs[k], 0.008, 0.005);
+  // draw through the hull — force arrows must never hide inside the body
+  for (const m of [a.line.material, a.cone.material]){ m.depthTest = false; m.transparent = true; }
+  a.line.renderOrder = 9; a.cone.renderOrder = 9;
+  arrows[k] = a;
   arrowLbls[k] = textSprite(arrowNames[k], '#'+arrowDefs[k].toString(16).padStart(6,'0'));
   arrowLbls[k].scale.set(0.020, 0.0075, 1);
-  robotGrp.add(arrows[k], arrowLbls[k]);
+  robotGrp.add(a, arrowLbls[k]);
 }
 const F_SCALE = 0.35;
 function updateArrows(){
@@ -595,14 +605,14 @@ function updateArrows(){
     arrowLbls[k].position.copy(e[0]).addScaledVector(dir, len + 0.010);   // name at the tip
     arrowLbls[k].visible = true;
   }
-  const Mx = dbg.M ? dbg.M.x : 0;
-  if (Math.abs(Mx) > 2e-5){
-    const a = arrows.roll, len = Math.min(0.12, Math.abs(Mx)*40);
-    a.position.set(0.05,0,0);
+  const Mx = dbg.M ? dbg.M.x : 0;             // net roll torque (prop reaction + hydro)
+  if (Math.abs(Mx) > 1e-5){
+    const a = arrows.roll, len = Math.max(0.02, Math.min(0.15, Math.abs(Mx)*150));
+    a.position.set(0.07,0,0);                  // ahead of the nose, never occluded
     const dir = new THREE.Vector3(Math.sign(Mx),0,0);
     a.setDirection(dir);
     a.setLength(len, len*0.3, len*0.18); a.visible = true;
-    arrowLbls.roll.position.set(0.05,0,0).addScaledVector(dir, len + 0.010);
+    arrowLbls.roll.position.set(0.07,0,0).addScaledVector(dir, len + 0.012);
     arrowLbls.roll.visible = true;
   }
 }
@@ -618,7 +628,6 @@ const $ = id => document.getElementById(id);
 const bind = (id, fmt, cb) => { const el = $(id); const f = () => { $(id+'v').textContent = fmt(el.value); cb(parseFloat(el.value)); }; el.addEventListener('input', f); f(); };
 bind('dutyT', v=>v, v=>ctl.dutyT=v);
 bind('dutyB', v=>v, v=>ctl.dutyB=v);
-bind('pfx', v=>v+' mm', v=>P.pfinX=v*1e-3);
 bind('pidT', v=>v+'°', v=>ctl.target=v);
 bind('pidKp', v=>v, v=>ctl.kp=v);
 bind('pidKi', v=>v, v=>ctl.ki=v);
@@ -632,7 +641,12 @@ bind('derT', v=>v, v=>P.derT=v);
 bind('bfDrag', v=>(+v).toFixed(2), v=>{P.bfDrag=v; bfin.material.opacity = 0.06 + 0.4*Math.min(1,v);});
 $('counter').addEventListener('change', e=>ctl.counter=e.target.checked);
 $('amass').addEventListener('change', e=>ctl.addedMass=e.target.checked);
-$('bfOn').addEventListener('change', e=>{ctl.bfOn=e.target.checked; bfin.visible=e.target.checked;});
+$('bfOn').addEventListener('change', e=>{
+  ctl.bfOn = e.target.checked; bfin.visible = e.target.checked;
+  if (e.target.checked && P.bfDrag < 0.05){        // re-installing restores its force too
+    $('bfDrag').value = 1; $('bfDrag').dispatchEvent(new Event('input'));
+  }
+});
 $('hold').addEventListener('change', e=>ctl.hold=e.target.checked);
 $('reset').addEventListener('click', resetState);
 document.querySelectorAll('button[data-p]').forEach(b => b.addEventListener('click', ()=>{
@@ -843,6 +857,7 @@ function loop(now){
     drawMinis();
   }
 }
+window.P = P; window.CTL = ctl; window.SIMSTATE = state;   // console/debug access
 requestAnimationFrame(loop);
 </script>
 </body>
