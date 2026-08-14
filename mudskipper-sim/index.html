@@ -88,6 +88,7 @@
       <button data-p="45,15">Diff 45/15</button>
       <button data-p="15,45">Diff 15/45</button>
       <button data-p="60,0">Top 60</button>
+      <button data-p="0,60">Bottom 60</button>
       <button data-p="60,60">Max</button>
       <button id="reset" class="primary">Reset</button>
     </div>
@@ -97,7 +98,8 @@
       <button id="finBtn" class="fins open">FINS OPEN</button>
       <span class="note" style="align-self:center" id="finState">deploy 100%</span>
     </div>
-    <div class="note">z-hinge at root neck (x 7.2, y ±9.7 mm) · open: Cd 0.692, CL₀ −0.284 · shut: Cd 0.622, CL₀ −0.112 (CFD)</div>
+    <div class="note">z-hinge at fin-motor axis (x 17, y ±8 mm — from open/shut mesh diff); shut = blades stowed inside hull ·
+    open: Cd 0.692, CL₀ −0.284 · shut: Cd 0.622, CL₀ −0.112 (CFD) · fin force applied at fin bay, fwd of CoM</div>
 
     <h2>Motors · props</h2>
     <table class="mot">
@@ -108,8 +110,8 @@
     <div class="note" id="momNote"></div>
 
     <h2>Geometry · mass</h2>
-    <div class="row"><label>Prop separation</label><input type="range" id="sep" min="8" max="30" value="15" step="1"><span class="val" id="sepv">15 mm</span></div>
-    <div class="row"><label>Thrust line vs CoM</label><input type="range" id="pzoff" min="-8" max="8" value="0" step="0.5"><span class="val" id="pzoffv">0 mm</span></div>
+    <div class="note">Props fixed at real position: x −63, z 24.5 / 9.5 mm (sep 15 mm).</div>
+    <div class="row"><label>Pect. fin CP (mesh x)</label><input type="range" id="pfx" min="-5" max="25" value="13" step="1"><span class="val" id="pfxv">13 mm</span></div>
     <div class="row"><label>CoM below CoB</label><input type="range" id="comDrop" min="0" max="10" value="3" step="0.5"><span class="val" id="comDropv">3 mm</span></div>
     <div class="row"><label>Net buoyancy</label><input type="range" id="buoy" min="-3" max="3" value="0" step="0.1"><span class="val" id="buoyv">0 g</span></div>
 
@@ -170,8 +172,7 @@ const P = {                    // ponytail: every entry is a calibration knob
   ma:  [0.010, 0.051, 0.041],    // translational added mass [kg] (x,y,z — flat body: lateral/vertical large)
   cob: [-3.5e-3, 0, 16.8e-3],  // buoyancy centre (mesh frame)
   comDrop: 3e-3,
-  propX: -63e-3, propSep: 15e-3,
-  propZoff: 0,                 // thrust-line vertical offset from CoM (0 = through CoM → straight cruise)
+  propX: -63e-3, propSep: 15e-3, propZmid: 17e-3,  // real motor stack: mesh z 24.5 / 9.5 mm (FIXED)
   zMid: 17e-3,                 // hull mid-plane (bottomfin mirror)
   D: S.propD_mm * 1e-3,
   motor: {Vnom: 3.7, rpmNL: 50000, Qstall: 1.8e-3, Vrail: 5.0, Vstart: 0.25},
@@ -184,6 +185,7 @@ const P = {                    // ponytail: every entry is a calibration knob
   finS: 2.5e-4, finCn: 1.17,   // topfin: thin tail plate, normal ≈ x
   finCLa: 4.0,                 // fin lift slope [/rad] — weathervane stiffness vs Munk moment
   finR: [-47e-3, 0, 55e-3],
+  pfinX: 13e-3,                // pectoral-fin force CP, mesh x [m] — ~16 mm fwd of CoM; calibrate
   xDragCP: -12e-3,             // lateral/vertical body drag centre aft of CoM (restoring)
   bfDrag: 1.0,
   netBuoyG: 0,
@@ -259,10 +261,8 @@ function physicsStep(dt){
 
   // --- props (top/bottom) ---
   // torque bookkeeping: thrust → moment r×F about CoM; prop reaction torque is a
-  // pure couple (point of application irrelevant). Thrust line passes through CoM
-  // + propZoff — real robot cruises straight at equal duty (counter-rotating pair).
-  const zMidP = (P.cob[2] - P.comDrop) + P.propZoff;
-  const zT = zMidP + P.propSep/2, zB = zMidP - P.propSep/2;
+  // pure couple (point of application irrelevant). Props at their REAL mesh position.
+  const zT = P.propZmid + P.propSep/2, zB = P.propZmid - P.propSep/2;
   const rT = new THREE.Vector3(P.propX, 0, zT).sub(COM);
   const rB = new THREE.Vector3(P.propX, 0, zB).sub(COM);
   const uT = vb.x + w.y*rT.z - w.z*rT.y;
@@ -277,9 +277,10 @@ function physicsStep(dt){
   A.thrustT = [rT, new THREE.Vector3(motTop.T,0,0)];
   A.thrustB = [rB, new THREE.Vector3(motBot.T,0,0)];
 
-  // --- body drag (3 axes) + lift, fin-deploy dependent ---
-  const Cdx = P.CdxShut + ff*(P.CdxOpen - P.CdxShut);
-  const Az  = P.dragZ[1] + ff*P.dragZfins;
+  // --- body drag (3 axes) + lift — shut-config coefficients; pectoral fin deltas
+  //     are applied separately AT the fin bay (forward of CoM) below ---
+  const Cdx = P.CdxShut;
+  const Az  = P.dragZ[1];
   const dragF = new THREE.Vector3(
     -0.5*RHO*Cdx*P.Aref*Math.abs(vb.x)*vb.x,
     -0.5*RHO*P.dragY[0]*P.dragY[1]*Math.abs(vb.y)*vb.y,
@@ -290,13 +291,31 @@ function physicsStep(dt){
   A.drag = [new THREE.Vector3(P.xDragCP,0,0), dragF.clone()];
   if (vb.x > 0.02){
     const alpha = Math.atan2(-vb.z, vb.x);
-    const CL0 = P.CL0Shut + ff*(P.CL0Open - P.CL0Shut);
     const qdyn = 0.5*RHO*(vb.x*vb.x + vb.z*vb.z)*P.Aref;
-    const Lz = qdyn*(CL0 + P.CLa*Math.max(-0.35, Math.min(0.35, alpha)));
+    const Lz = qdyn*(P.CL0Shut + P.CLa*Math.max(-0.35, Math.min(0.35, alpha)));
     F.z += Lz;
     M.add(new THREE.Vector3(P.xCoP,0,0).cross(new THREE.Vector3(0,0,Lz)));
     A.lift = [new THREE.Vector3(P.xCoP,0,0), new THREE.Vector3(0,0,Lz)];
   } else A.lift = null;
+
+  // --- pectoral fins: CFD open-shut deltas applied AT the fin bay (x≈13 mm,
+  //     ~16 mm forward of CoM, slightly below) → real pitch moment when deployed ---
+  if (ff > 0.001){
+    const rp = new THREE.Vector3(P.pfinX, 0, -1.4e-3).sub(COM);
+    const up = vb.x + w.y*rp.z - w.z*rp.y;
+    const wp = vb.z + w.x*rp.y - w.y*rp.x;
+    const dCd = ff*(P.CdxOpen - P.CdxShut);
+    const dCL = ff*(P.CL0Open - P.CL0Shut);       // extra downforce (CFD)
+    const dAz = ff*P.dragZfins;
+    const Fp = new THREE.Vector3(
+      -0.5*RHO*dCd*P.Aref*Math.abs(up)*up,
+      0,
+      (up > 0.02 ? 0.5*RHO*(up*up+wp*wp)*P.Aref*dCL : 0)
+        - 0.5*RHO*P.dragZ[0]*dAz*Math.abs(wp)*wp);
+    F.add(Fp);
+    M.add(rp.clone().cross(Fp));
+    A.pfin = [rp, Fp];
+  } else A.pfin = null;
 
   // --- topfin / bottomfin: x-normal plates (drag + normal force) ---
   const finOne = (rMesh, scale) => {
@@ -432,21 +451,32 @@ finRg.add(finRm); finLg.add(finLm);
 meshGrp.add(finRg, finLg);
 
 function placeProps(){
-  const zMidP = (P.cob[2] - P.comDrop) + P.propZoff;
-  propTg.position.set(P.propX, 0, zMidP + P.propSep/2);
-  propBg.position.set(P.propX, 0, zMidP - P.propSep/2);
+  propTg.position.set(P.propX, 0, P.propZmid + P.propSep/2);
+  propBg.position.set(P.propX, 0, P.propZmid - P.propSep/2);
   meshGrp.position.set(-COM.x, -COM.y, -COM.z);
 }
 placeProps();
 
-const comDot = new THREE.Mesh(new THREE.SphereGeometry(0.004),
-  new THREE.MeshBasicMaterial({color:0xffffff}));
+// CoM / CoB markers — always visible through the hull, with labels
+const comDot = new THREE.Mesh(new THREE.SphereGeometry(0.0035),
+  new THREE.MeshBasicMaterial({color:0xffffff, depthTest:false}));
 const cobDot = new THREE.Mesh(new THREE.SphereGeometry(0.0035),
-  new THREE.MeshBasicMaterial({color:0x3987e5}));
-robotGrp.add(comDot, cobDot);
+  new THREE.MeshBasicMaterial({color:0x3987e5, depthTest:false}));
+comDot.renderOrder = 10; cobDot.renderOrder = 10;
+function textSprite(txt, color){
+  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 48;
+  const c = cv.getContext('2d'); c.font = 'bold 28px system-ui';
+  c.textAlign = 'center'; c.fillStyle = color; c.fillText(txt, 64, 34);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial(
+    {map: new THREE.CanvasTexture(cv), depthTest:false, transparent:true}));
+  sp.scale.set(0.026, 0.00975, 1); sp.renderOrder = 11; return sp;
+}
+const comLbl = textSprite('CoM', '#ffffff'), cobLbl = textSprite('CoB', '#3987e5');
+robotGrp.add(comDot, cobDot, comLbl, cobLbl);
 
 const arrowDefs = {thrustT:0xe66767, thrustB:0xe66767, drag:0xd95926, lift:0x199e70,
-                   finT:0x199e70, finB:0x35c4b0, buoy:0x3987e5, grav:0xc3c2b7, roll:0xd55181};
+                   finT:0x199e70, finB:0x35c4b0, pfin:0x86b6ef,
+                   buoy:0x3987e5, grav:0xc3c2b7, roll:0xd55181};
 const arrows = {};
 for (const k in arrowDefs){
   arrows[k] = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(), 0.01,
@@ -487,8 +517,7 @@ const $ = id => document.getElementById(id);
 const bind = (id, fmt, cb) => { const el = $(id); const f = () => { $(id+'v').textContent = fmt(el.value); cb(parseFloat(el.value)); }; el.addEventListener('input', f); f(); };
 bind('dutyT', v=>v, v=>ctl.dutyT=v);
 bind('dutyB', v=>v, v=>ctl.dutyB=v);
-bind('sep', v=>v+' mm', v=>{P.propSep=v*1e-3; placeProps();});
-bind('pzoff', v=>v+' mm', v=>{P.propZoff=v*1e-3; placeProps();});
+bind('pfx', v=>v+' mm', v=>P.pfinX=v*1e-3);
 bind('comDrop', v=>v+' mm', v=>{P.comDrop=v*1e-3; updateCOM(); placeProps();});
 bind('buoy', v=>(v>0?'+':'')+v+' g', v=>P.netBuoyG=v);
 bind('derT', v=>v, v=>P.derT=v);
@@ -652,6 +681,8 @@ function loop(now){
   finRg.rotation.z =  (1-finFrac)*Math.PI/2;
   finLg.rotation.z = -(1-finFrac)*Math.PI/2;
   cobDot.position.set(0,0,P.comDrop);
+  comLbl.position.set(0,-0.020,-0.004);
+  cobLbl.position.set(0, 0.020, P.comDrop+0.004);
   updateArrows();
 
   if (document.getElementById('trail').checked && !ctl.hold){
