@@ -16,44 +16,46 @@
   }
   *{box-sizing:border-box; margin:0}
   html,body{height:100%}
+  /* type scale: 16 (h1) · 14 (base/values) · 12 (labels/notes) — nothing else */
   body{background:var(--page); color:var(--ink);
-       font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; overflow:hidden}
+       font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif; overflow:hidden}
   #app{display:grid; grid-template-columns:1fr 430px; grid-template-rows:1fr 180px; height:100vh}
   #view{grid-row:1; grid-column:1; position:relative; min-width:0; min-height:0}
   #view canvas{display:block}
   #hud{position:absolute; top:10px; left:12px; color:var(--ink-2); pointer-events:none;
-       font-variant-numeric:tabular-nums; text-shadow:0 1px 2px #000; font-size:15px}
+       font-variant-numeric:tabular-nums; text-shadow:0 1px 2px #000}
   #hud b{color:var(--ink)}
   #minis{position:absolute; top:10px; right:12px; display:flex; flex-direction:column; gap:8px}
   .mini{background:rgba(13,13,13,.72); border:1px solid var(--border); border-radius:6px; position:relative}
-  .mini span{position:absolute; top:3px; left:7px; font-size:11px; color:var(--muted); letter-spacing:.05em}
+  .mini span{position:absolute; top:3px; left:7px; font-size:12px; color:var(--muted); letter-spacing:.05em}
   #panel{grid-row:1/3; grid-column:2; background:var(--surface-1); border-left:1px solid var(--border);
          overflow-y:auto; padding:18px 20px}
   #chartbox{grid-row:2; grid-column:1; background:var(--surface-1); border-top:1px solid var(--border);
             position:relative; padding:6px 10px 4px}
-  h1{font-size:17px; margin-bottom:2px}
+  h1{font-size:16px; margin-bottom:2px}
   .sub{color:var(--muted); font-size:12px; margin-bottom:14px}
   h2{font-size:12px; text-transform:uppercase; letter-spacing:.07em; color:var(--muted); margin:18px 0 8px}
   .row{display:flex; align-items:center; gap:10px; margin:7px 0}
-  .row label{flex:0 0 140px; color:var(--ink-2)}
+  .row label{flex:0 0 140px; color:var(--ink-2); font-size:12px}
   .row input[type=range]{flex:1; min-width:80px; accent-color:var(--s1); height:20px}
   .row .val{flex:0 0 78px; text-align:right; color:var(--ink); font-variant-numeric:tabular-nums}
-  .duty .val{color:var(--warn); font-size:17px; font-weight:600}
-  .checks label{display:inline-flex; align-items:center; gap:6px; margin:3px 14px 3px 0; color:var(--ink-2)}
-  .checks input{width:16px; height:16px; accent-color:var(--s1)}
+  .duty .val{color:var(--warn); font-size:16px; font-weight:600}
+  .checks label{display:inline-flex; align-items:center; gap:6px; margin:3px 14px 3px 0; color:var(--ink-2); font-size:12px}
+  .checks input{width:15px; height:15px; accent-color:var(--s1)}
   .btns{display:flex; flex-wrap:wrap; gap:7px; margin:8px 0}
   button{background:#262624; color:var(--ink-2); border:1px solid var(--border); border-radius:7px;
-         padding:6px 12px; font:inherit; font-size:14px; cursor:pointer}
+         padding:5px 11px; font:inherit; cursor:pointer}
   button:hover{background:#31312e; color:var(--ink)}
   button.primary{background:var(--s1); border-color:var(--s1); color:#fff}
   button.fins{min-width:130px; font-weight:600}
   button.fins.open{background:#123a26; border-color:var(--s3); color:#7fe0b8}
   button.fins.shut{background:#3a2412; border-color:var(--s2); color:#f0a879}
-  table.mot{width:100%; border-collapse:collapse; margin-top:4px; font-variant-numeric:tabular-nums; font-size:15px}
+  table.mot{width:100%; border-collapse:collapse; margin-top:4px; font-variant-numeric:tabular-nums}
+  table.mot th{font-size:12px}
   table.mot td,table.mot th{padding:4px 6px; text-align:right; border-bottom:1px solid var(--grid)}
   table.mot th{color:var(--muted); font-weight:500}
   table.mot td:first-child, table.mot th:first-child{text-align:left; color:var(--ink-2)}
-  #legend{position:absolute; top:8px; right:14px; display:flex; gap:16px; font-size:13px; color:var(--ink-2)}
+  #legend{position:absolute; top:8px; right:14px; display:flex; gap:16px; font-size:12px; color:var(--ink-2)}
   #legend i{display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:5px}
   .note{color:var(--muted); font-size:12px; margin-top:5px; line-height:1.45}
 </style>
@@ -163,10 +165,11 @@
       <label><input type="checkbox" id="trail" checked> Trail</label>
       <label><input type="checkbox" id="follow" checked> Follow cam</label>
     </div>
-    <div class="note">Arrows: <span style="color:#e66767">thrust</span> ·
-      <span style="color:#d95926">drag</span> · <span style="color:#199e70">fin/lift</span> ·
+    <div class="note">Arrows named at tips: <span style="color:#e66767">thrust</span> ·
+      <span style="color:#d95926">body drag</span> · <span style="color:#199e70">body lift / fin F</span> ·
       <span style="color:#3987e5">buoyancy</span> · <span style="color:#c3c2b7">weight</span> ·
-      <span style="color:#d55181">roll reaction torque</span></div>
+      <span style="color:#d55181">roll τ</span>. Length ∝ force (0.35 m/N); tiny forces
+      (fin W/B) are drawn at a 9 mm minimum so they stay visible.</div>
   </div>
 
   <div id="chartbox">
@@ -662,6 +665,7 @@ function drawChart(){
   const t1 = state.t, t0 = Math.max(0, t1-WINDOW_S);
   let ymax = 20;
   for (const d of hist) ymax = Math.max(ymax, Math.abs(d.pitch), Math.abs(d.roll), Math.abs(d.yaw));
+  if (ctl.pid) ymax = Math.max(ymax, Math.abs(ctl.target));   // keep target line on-scale
   ymax = Math.ceil(ymax/10)*10;
   const X = t => padL + (t-t0)/(t1-t0+1e-9)*pw;
   const Y = v => padT + ph/2 - v/ymax*(ph/2);
@@ -692,7 +696,7 @@ function drawChart(){
     let d = hist[0];
     for (const e of hist){ if (e.t <= tH) d = e; else break; }
     c.strokeStyle = css('--axis'); c.beginPath(); c.moveTo(hoverX,padT); c.lineTo(hoverX,padT+ph); c.stroke();
-    c.textAlign='left'; c.font='12px system-ui';
+    c.textAlign='left'; c.font='11px system-ui';
     const lines = [['Pitch',d.pitch,'--s1'],['Roll',d.roll,'--s2'],['Yaw',d.yaw,'--s3']];
     const bx = Math.min(hoverX+8, w-100);
     c.fillStyle = 'rgba(13,13,13,.85)'; c.fillRect(bx-4, padT, 96, 50);
