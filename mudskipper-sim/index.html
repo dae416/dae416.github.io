@@ -22,10 +22,10 @@
   #app{display:grid; grid-template-columns:1fr 430px; grid-template-rows:1fr 180px; height:100vh}
   #view{grid-row:1; grid-column:1; position:relative; min-width:0; min-height:0}
   #view canvas{display:block}
-  #hud{position:absolute; top:10px; left:12px; color:var(--ink-2); pointer-events:none;
+  #hud{position:absolute; bottom:10px; left:12px; color:var(--ink-2); pointer-events:none;
        font-variant-numeric:tabular-nums; text-shadow:0 1px 2px #000}
   #hud b{color:var(--ink)}
-  #minis{position:absolute; top:10px; right:12px; display:flex; flex-direction:column; gap:8px}
+  #minis{position:absolute; top:10px; left:12px; right:12px; display:flex; flex-direction:row; flex-wrap:wrap; gap:8px; justify-content:center}
   .mini{background:rgba(13,13,13,.72); border:1px solid var(--border); border-radius:6px; position:relative}
   .mini span{position:absolute; top:3px; left:7px; font-size:12px; color:var(--muted); letter-spacing:.05em}
   #panel{grid-row:1/3; grid-column:2; background:var(--surface-1); border-left:1px solid var(--border);
@@ -65,16 +65,16 @@
   <div id="view">
     <div id="hud"></div>
     <div id="minis">
-      <div class="mini"><span>TOP · X-Y</span><canvas id="mTop" width="200" height="140"></canvas></div>
-      <div class="mini"><span>SIDE · X-Z</span><canvas id="mSide" width="200" height="140"></canvas></div>
-      <div class="mini"><span>FRONT · Y-Z</span><canvas id="mFront" width="200" height="140"></canvas></div>
-      <div class="mini"><span>OBLIQUE</span><canvas id="mObl" width="200" height="140"></canvas></div>
+      <div class="mini"><span>TOP · X-Y</span><canvas id="mTop" width="240" height="160"></canvas></div>
+      <div class="mini"><span>SIDE · X-Z</span><canvas id="mSide" width="240" height="160"></canvas></div>
+      <div class="mini"><span>FRONT · Y-Z</span><canvas id="mFront" width="240" height="160"></canvas></div>
+      <div class="mini"><span>OBLIQUE</span><canvas id="mObl" width="240" height="160"></canvas></div>
     </div>
   </div>
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14k</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14l</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -182,6 +182,7 @@
       <label><input type="checkbox" id="follow" checked> Follow cam</label>
       <label><input type="checkbox" id="lat" checked> 1 m markers</label>
     </div>
+    <div class="btns"><button id="shotBtn">Screenshot (S)</button></div>
     <div class="note">Arrows named at tips: <span style="color:#e66767">thrust</span> ·
       <span style="color:#d95926">body drag</span> · <span style="color:#199e70">body lift / fin F</span> ·
       <span style="color:#3987e5">buoyancy</span> · <span style="color:#c3c2b7">weight</span> ·
@@ -199,7 +200,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814k"></script>
+<script src="sim_data.js?v=20260814l"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -729,11 +730,12 @@ finBtn.addEventListener('click', () => {
 const keyHandler = e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const c = e.code;
-  if (c !== 'KeyF' && c !== 'Space' && c !== 'ArrowUp' && c !== 'ArrowDown') return;
+  if (c !== 'KeyF' && c !== 'KeyS' && c !== 'Space' && c !== 'ArrowUp' && c !== 'ArrowDown') return;
   e.preventDefault();
   if (e.type !== 'keydown' || e.repeat) return;
   if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   if (c === 'KeyF') finBtn.click();
+  else if (c === 'KeyS') takeShot();
   else if (c === 'Space') $('pidOn').click();
   else {
     const t = $('pidT'), d = c === 'ArrowUp' ? 30 : -30;
@@ -1001,7 +1003,9 @@ function loop(now){
       `Pitch <b>${att.pitch.toFixed(1)}°</b> · Roll <b>${att.roll.toFixed(1)}°</b> · Yaw <b>${att.yaw.toFixed(1)}°</b><br>` +
       `Speed <b>${spd.toFixed(3)} m/s</b> · Depth <b>${(-state.p.z).toFixed(3)} m</b> · t ${state.t.toFixed(1)}s` +
       (ctl.hold ? ' · <span style="color:var(--warn)">HOLD</span>' : '') +
-      ` · Fins <b>${(finFrac*100).toFixed(0)}%</b>`;
+      ` · Fins <b>${(finFrac*100).toFixed(0)}%</b>` +
+      (ctl.pid && stepRef && !ctl.sineOn
+        ? ` · step→${stepRef.to}°: <b>${stepRef.rise==null?'…':stepRef.rise.toFixed(2)+' s'}</b>` : '');
     const set = (id, m) => {
       $(id+'0').textContent = (m.n*60).toFixed(0);
       $(id+'1').textContent = (m.T*1e3).toFixed(1);
@@ -1023,6 +1027,36 @@ function loop(now){
     drawMinis();
   }
 }
+function takeShot(){
+  renderer.render(scene, camera);                    // fresh WebGL buffer (no preserveDrawingBuffer)
+  const src = renderer.domElement, dpr = renderer.getPixelRatio();
+  const viewR = view.getBoundingClientRect();
+  const chartH = chart.height, W = src.width;
+  const cv = document.createElement('canvas');
+  cv.width = W; cv.height = src.height + chartH + 8*dpr;
+  const c = cv.getContext('2d');
+  c.fillStyle = '#1a1a19'; c.fillRect(0, 0, cv.width, cv.height);
+  c.drawImage(src, 0, 0);
+  for (const m of MINI){                             // mini views at their on-screen spots
+    const r = m.cv.getBoundingClientRect();
+    c.fillStyle = 'rgba(13,13,13,.72)';
+    c.fillRect((r.x-viewR.x)*dpr, (r.y-viewR.y)*dpr, r.width*dpr, r.height*dpr);
+    c.drawImage(m.cv, (r.x-viewR.x)*dpr, (r.y-viewR.y)*dpr, r.width*dpr, r.height*dpr);
+  }
+  c.fillStyle = '#c3c2b7'; c.font = (14*dpr)+'px system-ui';   // HUD text
+  const lines = hud.innerText.split('\n');
+  lines.forEach((ln,i)=>c.fillText(ln, 12*dpr, src.height - (lines.length-i)*18*dpr + 4*dpr));
+  c.drawImage(chart, 0, src.height + 8*dpr);
+  cv.toBlob(b => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(b);
+    const d = new Date(), p2 = n => String(n).padStart(2,'0');
+    a.download = `mudskipper_${d.getFullYear()}${p2(d.getMonth()+1)}${p2(d.getDate())}_${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.png`;
+    a.click(); URL.revokeObjectURL(a.href);
+  });
+}
+$('shotBtn').addEventListener('click', takeShot);
+window.TAKESHOT = takeShot;
 window.P = P; window.CTL = ctl; window.SIMSTATE = state; window.DBG = dbg;   // console/debug access
 requestAnimationFrame(loop);
 </script>
