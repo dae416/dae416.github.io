@@ -98,7 +98,7 @@
 
     <h2>PID pitch control (firmware-style)</h2>
     <div class="checks">
-      <label><input type="checkbox" id="pidOn"> PID on (overrides duty sliders)</label>
+      <label><input type="checkbox" id="pidOn"> PID on (overrides duty sliders) · <b>Space</b>, target <b>↑/↓</b> ±30°</label>
     </div>
     <div class="row"><label>Target pitch</label><input type="range" id="pidT" min="-60" max="60" value="0" step="1"><span class="val" id="pidTv">0°</span></div>
     <div class="row"><label>Kp</label><input type="range" id="pidKp" min="0" max="30" value="10" step="0.5"><span class="val" id="pidKpv">10</span></div>
@@ -698,9 +698,16 @@ finBtn.addEventListener('click', () => {
   finBtn.textContent = ctl.finsOpen ? 'FINS OPEN' : 'FINS SHUT';
   finBtn.className = 'fins ' + (ctl.finsOpen ? 'open' : 'shut');
 });
-addEventListener('keydown', e => {           // F = fin toggle (0.1 s stroke)
+addEventListener('keydown', e => {   // shortcuts: F fins · Space PID · ↑/↓ target ±30°
   if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
   if (e.key === 'f' || e.key === 'F'){ finBtn.click(); e.preventDefault(); }
+  else if (e.key === ' '){ $('pidOn').click(); e.preventDefault(); }
+  else if (e.key === 'ArrowUp' || e.key === 'ArrowDown'){
+    const t = $('pidT'), d = e.key === 'ArrowUp' ? 30 : -30;
+    t.value = Math.max(-60, Math.min(60, parseFloat(t.value) + d));
+    t.dispatchEvent(new Event('input'));
+    e.preventDefault();
+  }
 });
 
 /* ============ attitude chart (single axis · 3 series · legend + crosshair) ============ */
