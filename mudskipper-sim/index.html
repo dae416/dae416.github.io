@@ -74,7 +74,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14d</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14e</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -181,7 +181,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814d"></script>
+<script src="sim_data.js?v=20260814e"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -272,6 +272,7 @@ const path = [];                       // full trajectory for the mini views
 function resetState(){
   state.p.set(0,0,0); state.q.identity(); state.v.set(0,0,0); state.w.set(0,0,0); state.t=0;
   trailPts.length = 0; hist.length = 0; path.length = 0;
+  pid.buf.length = 0; pid.i = 0; pid.prev = 0;   // stale delay-line entries poison the loop after t rewinds
 }
 
 const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true,
@@ -304,6 +305,7 @@ function physicsStep(dt){
   {
     const fz = Math.max(-1, Math.min(1, 2*(state.q.x*state.q.z - state.q.w*state.q.y)));
     const pitchNow = Math.asin(fz)*180/Math.PI;
+    while (pid.buf.length && pid.buf[pid.buf.length-1].t > state.t) pid.buf.pop();  // time rewound
     pid.buf.push({t: state.t, p: pitchNow});
     while (pid.buf.length > 2 && pid.buf[0].t < state.t - 0.3) pid.buf.shift();
     if (ctl.pid){
@@ -634,7 +636,7 @@ bind('pidKi', v=>v, v=>ctl.ki=v);
 bind('pidKd', v=>v, v=>ctl.kd=v);
 bind('pidBase', v=>v, v=>ctl.base=v);
 bind('pidDly', v=>v+' ms', v=>ctl.delayMs=v);
-$('pidOn').addEventListener('change', e=>{ctl.pid=e.target.checked; pid.i=0;});
+$('pidOn').addEventListener('change', e=>{ctl.pid=e.target.checked; pid.i=0; pid.buf.length=0;});
 bind('comDrop', v=>v+' mm', v=>{P.comDrop=v*1e-3; updateCOM(); placeProps();});
 bind('buoy', v=>(v>0?'+':'')+v+' g', v=>P.netBuoyG=v);
 bind('derT', v=>v, v=>P.derT=v);
