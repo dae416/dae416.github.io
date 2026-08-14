@@ -74,7 +74,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14g</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14h</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -108,6 +108,20 @@
     <div class="row"><label>Loop delay</label><input type="range" id="pidDly" min="0" max="150" value="60" step="10"><span class="val" id="pidDlyv">60 ms</span></div>
     <div class="note" id="pidNote">Campaign gains: Kp 10 · Ki 0 · Kd 0.5, ceiling 60/255, measured ~60 ms transport delay.
     u = Kp·e + Ki·∫e − Kd·dθ/dt → top = base − u, bottom = base + u.</div>
+
+    <h2>Maneuver · agility</h2>
+    <div class="checks">
+      <label><input type="checkbox" id="sineOn"> Sine target (tracks A·sin 2πt/T)</label>
+    </div>
+    <div class="row"><label>Sine amplitude</label><input type="range" id="sineA" min="5" max="40" value="20" step="1"><span class="val" id="sineAv">20°</span></div>
+    <div class="row"><label>Sine period</label><input type="range" id="sineT" min="0.5" max="5" value="2" step="0.1"><span class="val" id="sineTv">2 s</span></div>
+    <div class="btns">
+      <button id="stepDn">Step −40°</button>
+      <button id="step0">Step 0°</button>
+      <button id="stepUp">Step +40°</button>
+    </div>
+    <div class="note" id="agiNote">Needs PID on. Measured: step −40° rise 0.95 s OPEN vs 1.27 s SHUT
+    (open ≈25% faster, less overshoot); fast sine tracking is delay/saturation-limited either way.</div>
 
     <h2>Pectoral fins · 0.1 s stroke</h2>
     <div class="btns">
@@ -181,7 +195,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814g"></script>
+<script src="sim_data.js?v=20260814h"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -276,8 +290,10 @@ function resetState(){
 }
 
 const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true,
-             pid:false, target:0, kp:10, ki:0, kd:0.5, base:10, delayMs:60};
-const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0};   // controller state + delay line
+             pid:false, target:0, kp:10, ki:0, kd:0.5, base:10, delayMs:60,
+             sineOn:false, sineA:20, sineT:2};
+const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller state + delay line
+let stepRef = null;                                              // last step command, for rise-time metric
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
 let COM = new THREE.Vector3();
@@ -312,7 +328,9 @@ function physicsStep(dt){
       const tD = state.t - ctl.delayMs*1e-3;          // delayed measurement
       let m = pid.buf[0];
       for (const b of pid.buf){ if (b.t <= tD) m = b; else break; }
-      const e = ctl.target - m.p;
+      const tgt = ctl.sineOn ? ctl.sineA*Math.sin(2*Math.PI*state.t/ctl.sineT) : ctl.target;
+      pid.tgt = tgt;
+      const e = tgt - m.p;
       pid.i = Math.max(-60, Math.min(60, pid.i + (ctl.ki ? e*dt : 0)));
       const dm = (m.p - pid.prev)/dt; pid.prev = m.p;
       const u = ctl.kp*e + ctl.ki*pid.i - ctl.kd*dm;  // PWM counts; e in deg
@@ -638,7 +656,14 @@ const $ = id => document.getElementById(id);
 const bind = (id, fmt, cb) => { const el = $(id); const f = () => { $(id+'v').textContent = fmt(el.value); cb(parseFloat(el.value)); }; el.addEventListener('input', f); f(); };
 bind('dutyT', v=>v, v=>ctl.dutyT=v);
 bind('dutyB', v=>v, v=>ctl.dutyB=v);
-bind('pidT', v=>v+'°', v=>ctl.target=v);
+const markStep = to => { stepRef = {t0: state.t, from: null, to, rise: null}; };  // from = pitch at t0, filled lazily
+bind('pidT', v=>v+'°', v=>{ctl.target=v; markStep(v);});
+bind('sineA', v=>v+'°', v=>ctl.sineA=v);
+bind('sineT', v=>v+' s', v=>ctl.sineT=v);
+$('sineOn').addEventListener('change', e=>{ctl.sineOn=e.target.checked; stepRef=null;});
+for (const [id, v] of [['stepDn',-40],['step0',0],['stepUp',40]])
+  $(id).addEventListener('click', ()=>{ $('sineOn').checked=false; ctl.sineOn=false;
+    $('pidT').value=v; $('pidT').dispatchEvent(new Event('input')); });
 bind('pidKp', v=>v, v=>ctl.kp=v);
 bind('pidKi', v=>v, v=>ctl.ki=v);
 bind('pidKd', v=>v, v=>ctl.kd=v);
@@ -688,8 +713,8 @@ function drawChart(){
   const padL=38, padR=8, padT=10, padB=18, pw=w-padL-padR, ph=h-padT-padB;
   const t1 = state.t, t0 = Math.max(0, t1-WINDOW_S);
   let ymax = 20;
-  for (const d of hist) ymax = Math.max(ymax, Math.abs(d.pitch), Math.abs(d.roll), Math.abs(d.yaw));
-  if (ctl.pid) ymax = Math.max(ymax, Math.abs(ctl.target));   // keep target line on-scale
+  for (const d of hist) ymax = Math.max(ymax, Math.abs(d.pitch), Math.abs(d.roll), Math.abs(d.yaw),
+                                        d.tgt == null ? 0 : Math.abs(d.tgt));
   ymax = Math.ceil(ymax/10)*10;
   const X = t => padL + (t-t0)/(t1-t0+1e-9)*pw;
   const Y = v => padT + ph/2 - v/ymax*(ph/2);
@@ -699,10 +724,13 @@ function drawChart(){
   c.stroke();
   c.fillStyle = css('--muted'); c.font = '11px system-ui'; c.textAlign='right';
   for (const gy of [-ymax, 0, ymax]) c.fillText(gy+'°', padL-4, Y(gy)+3);
-  if (ctl.pid){                                   // dashed target-pitch line
+  if (ctl.pid){                                   // dashed target trace (constant or sine)
     c.strokeStyle = css('--s1'); c.setLineDash([4,4]); c.beginPath();
-    c.moveTo(padL, Y(ctl.target)); c.lineTo(w-padR, Y(ctl.target)); c.stroke();
-    c.setLineDash([]);
+    let started = false;
+    for (const d of hist){ if (d.t < t0 || d.tgt == null) continue;
+      const x=X(d.t), y=Y(d.tgt);
+      started ? c.lineTo(x,y) : c.moveTo(x,y); started = true; }
+    c.stroke(); c.setLineDash([]);
   }
   c.textAlign='center';
   for (let ts=Math.ceil(t0); ts<=t1; ts+=2) c.fillText(ts+'s', X(ts), h-4);
@@ -832,6 +860,40 @@ function attitude(){
   return {pitch, roll, yaw};
 }
 
+function agilityMetrics(){
+  if (!ctl.pid) return 'Needs PID on. Compare fins OPEN vs SHUT.';
+  if (ctl.sineOn){
+    const T = ctl.sineT, t1 = state.t;
+    if (t1 < T*1.5) return 'sine: settling…';
+    const seg = hist.filter(d => d.t > t1 - T && d.tgt != null);
+    if (seg.length < 10) return 'sine: settling…';
+    let mx = -1e9, mn = 1e9;
+    for (const d of seg){ mx = Math.max(mx, d.pitch); mn = Math.min(mn, d.pitch); }
+    const AR = (mx - mn) / 2 / ctl.sineA, mean = (mx + mn) / 2;
+    const zc = get => { for (let i = seg.length-1; i > 0; i--){
+      const a = get(seg[i-1]), b = get(seg[i]);
+      if (a > 0 && b <= 0) return seg[i-1].t + (seg[i].t - seg[i-1].t) * a / (a - b); } return null; };
+    const tz = zc(d => d.tgt), pz = zc(d => d.pitch - mean);
+    let lag = (tz != null && pz != null) ? (pz - tz) * 1000 : null;
+    if (lag != null && lag < -T*500) lag += T*1000;
+    return `sine A${ctl.sineA} T${ctl.sineT}s → amp ratio ${AR.toFixed(2)} · lag ${lag==null?'—':lag.toFixed(0)+' ms'}` +
+           ` · fins ${(finFrac*100).toFixed(0)}%`;
+  }
+  if (stepRef){
+    if (stepRef.from == null){
+      let p0 = hist.length ? hist[0].pitch : 0;
+      for (const d of hist){ if (d.t <= stepRef.t0) p0 = d.pitch; else break; }
+      stepRef.from = p0;
+    }
+    const goal = stepRef.to, band = Math.max(2, Math.abs(goal - stepRef.from) * 0.1);
+    if (stepRef.rise == null)
+      for (const d of hist) if (d.t > stepRef.t0 && Math.abs(d.pitch - goal) <= band){ stepRef.rise = d.t - stepRef.t0; break; }
+    return `step ${stepRef.from.toFixed(0)}→${goal}° → rise(90%) ${stepRef.rise==null?'…':stepRef.rise.toFixed(2)+' s'}` +
+           ` · fins ${(finFrac*100).toFixed(0)}%`;
+  }
+  return 'Set a step or enable sine target.';
+}
+
 let last = performance.now(), acc = 0, propAngT = 0, propAngB = 0, frame = 0;
 const DT = 1/240;
 function loop(now){
@@ -841,7 +903,7 @@ function loop(now){
 
   const att = attitude();
   if (!hist.length || state.t - hist[hist.length-1].t > 0.03){
-    hist.push({t:state.t, ...att});
+    hist.push({t:state.t, ...att, tgt: ctl.pid ? pid.tgt : null});
     while (hist.length && hist[0].t < state.t - WINDOW_S - 1) hist.shift();
   }
   if (!ctl.hold){
@@ -906,6 +968,7 @@ function loop(now){
     if (ctl.pid) $('pidNote').textContent =
       `e ${pid.e.toFixed(1)}° · u ${pid.u.toFixed(1)} → duty T ${pid.dT.toFixed(0)} / B ${pid.dB.toFixed(0)}` +
       ` · I ${(ctl.ki*pid.i).toFixed(1)}`;
+    $('agiNote').textContent = agilityMetrics();
     drawChart();
     drawMinis();
   }
