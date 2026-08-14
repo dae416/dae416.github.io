@@ -117,6 +117,9 @@
 
     <h2>Hydro</h2>
     <div class="row"><label>Thrust low-Re factor</label><input type="range" id="derT" min="0.3" max="1" value="0.65" step="0.05"><span class="val" id="derTv">0.65</span></div>
+    <div class="checks">
+      <label><input type="checkbox" id="bfOn" checked> Bottomfin installed</label>
+    </div>
     <div class="row"><label>Bottomfin drag ratio</label><input type="range" id="bfDrag" min="0" max="1.5" value="1" step="0.05"><span class="val" id="bfDragv">1.00</span></div>
     <div class="checks">
       <label><input type="checkbox" id="amass" checked> Added mass (accel + Munk coupling)</label>
@@ -236,7 +239,7 @@ function resetState(){
   trailPts.length = 0; hist.length = 0; path.length = 0;
 }
 
-const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true};
+const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true};
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
 let COM = new THREE.Vector3();
@@ -335,7 +338,7 @@ function physicsStep(dt){
   };
   A.finT = finOne(new THREE.Vector3(...P.finR), 1.0);
   // bottomfin mirrored about the CoM height → equal moment arms, drag couple cancels
-  A.finB = P.bfDrag > 0.001
+  A.finB = (ctl.bfOn && P.bfDrag > 0.001)
     ? finOne(new THREE.Vector3(P.finR[0], 0, 2*(P.cob[2]-P.comDrop) - P.finR[2]), P.bfDrag) : null;
 
   // --- gravity · buoyancy ---
@@ -524,6 +527,7 @@ bind('derT', v=>v, v=>P.derT=v);
 bind('bfDrag', v=>(+v).toFixed(2), v=>{P.bfDrag=v; bfin.material.opacity = 0.06 + 0.4*Math.min(1,v);});
 $('counter').addEventListener('change', e=>ctl.counter=e.target.checked);
 $('amass').addEventListener('change', e=>ctl.addedMass=e.target.checked);
+$('bfOn').addEventListener('change', e=>{ctl.bfOn=e.target.checked; bfin.visible=e.target.checked;});
 $('hold').addEventListener('change', e=>ctl.hold=e.target.checked);
 $('reset').addEventListener('click', resetState);
 document.querySelectorAll('button[data-p]').forEach(b => b.addEventListener('click', ()=>{
