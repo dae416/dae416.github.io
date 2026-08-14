@@ -58,12 +58,17 @@
   #legend{position:absolute; top:8px; right:14px; display:flex; gap:16px; font-size:12px; color:var(--ink-2)}
   #legend i{display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:5px}
   .note{color:var(--muted); font-size:12px; margin-top:5px; line-height:1.45}
+  #resplog{position:absolute; right:12px; bottom:10px; text-align:right; color:var(--muted);
+           font-size:12px; line-height:1.5; pointer-events:none; text-shadow:0 1px 2px #000;
+           font-variant-numeric:tabular-nums}
+  #resplog b{color:var(--ink-2)}
 </style>
 </head>
 <body>
 <div id="app">
   <div id="view">
     <div id="hud"></div>
+    <div id="resplog"></div>
     <div id="minis">
       <div class="mini"><span>TOP · X-Y</span><canvas id="mTop" width="240" height="160"></canvas></div>
       <div class="mini"><span>SIDE · X-Z</span><canvas id="mSide" width="240" height="160"></canvas></div>
@@ -74,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14l</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14m</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -200,7 +205,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814l"></script>
+<script src="sim_data.js?v=20260814m"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -243,7 +248,7 @@ const P = {                    // ponytail: every entry is a calibration knob
   // pectoral fins: symmetric flat plates → pure theory, NO α=0 offset
   pfinS: 7.7e-4,               // planform 2×(35×11 mm)
   pfinCLa: 3.9,                // 2π/(1+2/AR), AR≈3.2
-  pfinCd0: 0.03, pfinE: 0.8,   // profile drag (both faces + edges) + Oswald factor
+  pfinCd0: 0.05, pfinE: 0.8,   // laminar Cf(Re~6e3)x2 + edges ~0.05; Oswald factor
   // per-component mass [g] / displaced volume [cm³] — split out of the 34 g / 34 cm³ totals
   finMassT: 0.5, finVolT: 0.3, finMassB: 0.05, finVolB: 0.05, pfinMass: 0.6, pfinVol: 0.4,
   xDragCP: -12e-3,             // lateral/vertical body drag centre aft of CoM (restoring)
@@ -301,7 +306,8 @@ const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMas
              pid:false, target:0, kp:10, ki:0, kd:0.5, base:10, delayMs:60,
              sineOn:false, sineA:20, sineT:2};
 const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller state + delay line
-let stepRef = null;                                              // last step command, for rise-time metric
+let stepRef = null;
+const respLog = [];    // accumulated step response times (on-screen log)                                              // last step command, for rise-time metric
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
 let COM = new THREE.Vector3();
@@ -366,8 +372,11 @@ function physicsStep(dt){
   A.thrustB = [rB, new THREE.Vector3(motBot.T,0,0)];
 
   // --- body drag (3 axes, CFD-shut axial) + linear circulation side force ---
+  // CFD Cd already includes the topfin (present in both CFD configs) — subtract its
+  // plate-drag share here since finOne() adds it explicitly at the fin position
+  const CdAbody = Math.max(P.CdxShut*P.Aref - P.finCn*P.finS, 2e-4);
   const dragF = new THREE.Vector3(
-    -0.5*RHO*P.CdxShut*P.Aref*Math.abs(vb.x)*vb.x,
+    -0.5*RHO*CdAbody*Math.abs(vb.x)*vb.x,
     -0.5*RHO*P.dragY[0]*P.dragY[1]*Math.abs(vb.y)*vb.y
       - 0.5*RHO*P.CYb*P.dragY[1]*Math.max(vb.x,0)*vb.y,   // linear in v — yaw weathervane
     -0.5*RHO*P.dragZ[0]*P.dragZ[1]*Math.abs(vb.z)*vb.z);
@@ -401,7 +410,7 @@ function physicsStep(dt){
       const up = vb.x + w.y*r.z - w.z*r.y;
       const wp = vb.z + w.x*r.y - w.y*r.x;
       // symmetric flat plate, pure theory: CL = CLα·α (stall-clamped), no α=0 offset
-      const wnL = up > 0.02 ? Math.max(-0.36*up, Math.min(0.36*up, wp)) : 0;
+      const wnL = up > 0.02 ? Math.max(-0.30*up, Math.min(0.30*up, wp)) : 0;  // stall ~17°, CLmax≈1.15
       const CL = up > 0.02 ? P.pfinCLa*(-wnL/up) : 0;
       const Fp = new THREE.Vector3(
         -0.5*RHO*Sh*(P.pfinCd0 + CL*CL/(Math.PI*AR*P.pfinE))*Math.abs(up)*up,  // profile + induced
@@ -937,7 +946,14 @@ function agilityMetrics(){
     }
     const goal = stepRef.to, band = Math.max(2, Math.abs(goal - stepRef.from) * 0.1);
     if (stepRef.rise == null)
-      for (const d of hist) if (d.t > stepRef.t0 && Math.abs(d.pitch - goal) <= band){ stepRef.rise = d.t - stepRef.t0; break; }
+      for (const d of hist) if (d.t > stepRef.t0 && Math.abs(d.pitch - goal) <= band){
+        stepRef.rise = d.t - stepRef.t0;
+        respLog.push(`${stepRef.from.toFixed(0)}→${goal}° · ${stepRef.rise.toFixed(2)} s · fins ${(finFrac*100).toFixed(0)}%`);
+        while (respLog.length > 8) respLog.shift();
+        document.getElementById('resplog').innerHTML =
+          respLog.map((r,i)=> i===respLog.length-1 ? '<b>'+r+'</b>' : r).join('<br>');
+        break;
+      }
     return `step ${stepRef.from.toFixed(0)}→${goal}° → rise(90%) ${stepRef.rise==null?'…':stepRef.rise.toFixed(2)+' s'}` +
            ` · fins ${(finFrac*100).toFixed(0)}%`;
   }
