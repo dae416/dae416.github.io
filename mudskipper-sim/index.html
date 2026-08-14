@@ -74,7 +74,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14e</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14f</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -181,7 +181,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814e"></script>
+<script src="sim_data.js?v=20260814f"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -557,12 +557,15 @@ const cobDot = new THREE.Mesh(new THREE.SphereGeometry(0.0035),
   new THREE.MeshBasicMaterial({color:0x3987e5, depthTest:false}));
 comDot.renderOrder = 10; cobDot.renderOrder = 10;
 function textSprite(txt, color){
-  const cv = document.createElement('canvas'); cv.width = 128; cv.height = 48;
-  const c = cv.getContext('2d'); c.font = 'bold 28px system-ui';
-  c.textAlign = 'center'; c.fillStyle = color; c.fillText(txt, 64, 34);
-  const sp = new THREE.Sprite(new THREE.SpriteMaterial(
-    {map: new THREE.CanvasTexture(cv), depthTest:false, transparent:true}));
-  sp.scale.set(0.026, 0.00975, 1); sp.renderOrder = 11; return sp;
+  const cv = document.createElement('canvas'); cv.width = 192; cv.height = 48;
+  const c = cv.getContext('2d');
+  const tex = new THREE.CanvasTexture(cv);
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, depthTest:false, transparent:true}));
+  sp.scale.set(0.039, 0.00975, 1); sp.renderOrder = 11;
+  sp.setText = t => { c.clearRect(0,0,192,48); c.font = 'bold 26px system-ui';
+    c.textAlign = 'center'; c.fillStyle = color; c.fillText(t, 96, 33); tex.needsUpdate = true; };
+  sp.setText(txt);
+  return sp;
 }
 const comLbl = textSprite('CoM', '#ffffff'), cobLbl = textSprite('CoB', '#3987e5');
 robotGrp.add(comDot, cobDot, comLbl, cobLbl);
@@ -586,25 +589,29 @@ for (const k in arrowDefs){
   a.line.renderOrder = 9; a.cone.renderOrder = 9;
   arrows[k] = a;
   arrowLbls[k] = textSprite(arrowNames[k], '#'+arrowDefs[k].toString(16).padStart(6,'0'));
-  arrowLbls[k].scale.set(0.020, 0.0075, 1);
+  arrowLbls[k].scale.set(0.030, 0.0075, 1);
   robotGrp.add(a, arrowLbls[k]);
 }
 const F_SCALE = 0.35;
-function updateArrows(){
+function updateArrows(withText){
   const show = document.getElementById('arrows').checked;
   for (const k in arrows){ arrows[k].visible = false; arrowLbls[k].visible = false; }
   if (!show) return;
   for (const k in dbg.arrows){
     const e = dbg.arrows[k]; if (!e) continue;
     const a = arrows[k]; if (!a) continue;
-    let len = e[1].length()*F_SCALE;
+    const mag = e[1].length();
+    let len = mag*F_SCALE;
     if (len < 0.0006) continue;
-    len = Math.max(len, 0.009);          // floor: tiny forces (fin W/B) stay visible
+    len = Math.max(len, 0.006);          // floor: tiny forces (fin W/B) stay visible
     const dir = e[1].clone().normalize();
     a.position.copy(e[0]); a.setDirection(dir);
     a.setLength(len, Math.min(0.012, len*0.4), Math.min(0.007, len*0.25));
     a.visible = true;
-    arrowLbls[k].position.copy(e[0]).addScaledVector(dir, len + 0.010);   // name at the tip
+    // name + live magnitude [mN] at the tip
+    if (withText) arrowLbls[k].setText(arrowNames[k] + ' ' +
+      (mag*1e3 < 9.5 ? (mag*1e3).toFixed(1) : (mag*1e3).toFixed(0)) + 'mN');
+    arrowLbls[k].position.copy(e[0]).addScaledVector(dir, len + 0.010);
     arrowLbls[k].visible = true;
   }
   const Mx = dbg.M ? dbg.M.x : 0;             // net roll torque (prop reaction + hydro)
@@ -614,6 +621,7 @@ function updateArrows(){
     const dir = new THREE.Vector3(Math.sign(Mx),0,0);
     a.setDirection(dir);
     a.setLength(len, len*0.3, len*0.18); a.visible = true;
+    if (withText) arrowLbls.roll.setText('roll τ ' + (Mx*1e3).toFixed(2) + 'mN·m');
     arrowLbls.roll.position.set(0.07,0,0).addScaledVector(dir, len + 0.012);
     arrowLbls.roll.visible = true;
   }
@@ -813,7 +821,7 @@ function loop(now){
   cobDot.position.set(0,0,P.comDrop);
   comLbl.position.set(0,-0.020,-0.004);
   cobLbl.position.set(0, 0.020, P.comDrop+0.004);
-  updateArrows();
+  updateArrows(frame % 6 === 0);
 
   if (document.getElementById('trail').checked && !ctl.hold){
     if (!trailPts.length || trailPts[trailPts.length-1].distanceToSquared(state.p) > 1e-5){
@@ -859,7 +867,7 @@ function loop(now){
     drawMinis();
   }
 }
-window.P = P; window.CTL = ctl; window.SIMSTATE = state;   // console/debug access
+window.P = P; window.CTL = ctl; window.SIMSTATE = state; window.DBG = dbg;   // console/debug access
 requestAnimationFrame(loop);
 </script>
 </body>
