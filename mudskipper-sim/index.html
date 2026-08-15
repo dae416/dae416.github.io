@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14p</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14q</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -211,7 +211,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814p"></script>
+<script src="sim_data.js?v=20260814q"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -319,7 +319,7 @@ const respLog = [];    // accumulated step response times (on-screen log)       
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
 let COM = new THREE.Vector3();
-function updateCOM(){ COM.set(S.voxCen[0]*1e-3, S.voxCen[1]*1e-3, S.voxCen[2]*1e-3 - P.comDrop); }
+function updateCOM(){ COM.set(S.voxCen[0]*1e-3, 0, S.voxCen[2]*1e-3 - P.comDrop); }  // y=0: symmetric robot (voxel y-noise)
 updateCOM();
 
 // buoyancy voxels: closed-hull solid (mesh frame, metres) — submerged volume & centroid
@@ -328,9 +328,11 @@ const voxPts = (()=>{ const bin = atob(window.VOX_B64), buf = new Uint8Array(bin
   for (let i=0;i<bin.length;i++) buf[i] = bin.charCodeAt(i);
   const f = new Float32Array(buf.buffer);
   for (let i=0;i<f.length;i++) f[i] *= 1e-3;
+  const y0 = S.voxCen[1]*1e-3;                      // de-noise: symmetric robot → centroid y = 0
+  for (let i=1;i<f.length;i+=3) f[i] -= y0;
   return f; })();
 let buoyTick = 0, subFrac = 1;
-const subCen = new THREE.Vector3(S.voxCen[0]*1e-3, S.voxCen[1]*1e-3, S.voxCen[2]*1e-3);
+const subCen = new THREE.Vector3(S.voxCen[0]*1e-3, 0, S.voxCen[2]*1e-3);
 
 const tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), tmpQ = new THREE.Quaternion();
 let motTop = {n:0,T:0,Q:0,J:0}, motBot = {n:0,T:0,Q:0,J:0};
@@ -355,7 +357,14 @@ function physicsStep(dt){
     subFrac = n/voxN;
     if (n){ subCen.set(sx/n, sy/n, sz/n); }
   }
-  const wf = subFrac;                              // scales every hydro force
+  const wf = subFrac;                              // volume fraction (buoyancy, added mass)
+  const rBuoy = subCen.clone().sub(COM);           // submerged-volume centroid (body frame)
+  // per-element wetness: an element still under water keeps its FULL force,
+  // one above the surface loses it — no global cliff when the nose breaches
+  const wet = r => {
+    const zw = state.p.z + R20v*r.x + R21v*r.y + R22v*r.z;
+    return zw < -0.01 ? 1 : (zw > 0.01 ? 0 : (0.01 - zw)/0.02);
+  };
 
   const qi = tmpQ.copy(state.q).invert();
   const vb = tmpV.copy(state.v).applyQuaternion(qi);
@@ -455,7 +464,7 @@ function physicsStep(dt){
         0,
         (up > 0.02 ? 0.5*RHO*q2*Sh*CL : 0)
           - 0.5*RHO*Sh*P.finCn*Math.abs(wp)*wp);                               // lift + plate damping
-      Fp.multiplyScalar(wf);
+      Fp.multiplyScalar(wet(r));
       F.add(Fp);
       M.add(r.clone().cross(Fp));
       if (s > 0) A.pfinR = [r.clone(), Fp]; else A.pfinL = [r.clone(), Fp];
@@ -468,7 +477,7 @@ function physicsStep(dt){
     const uf = new THREE.Vector3(vb.x + w.y*r.z - w.z*r.y,
                                  vb.y + w.z*r.x - w.x*r.z,
                                  vb.z + w.x*r.y - w.y*r.x);
-    const k = 0.5*RHO*P.finS*scale*wf;
+    const k = 0.5*RHO*P.finS*scale*wet(r);
     // pure flat plate: normal force ⊥ face + in-plane friction only (no fictitious lift)
     const Ft = new THREE.Vector3(
       -k*P.finCn*Math.abs(uf.x)*uf.x,
@@ -505,7 +514,6 @@ function physicsStep(dt){
   }
   const gB = dn.clone().multiplyScalar(mBody*G);
   const bB = dn.clone().multiplyScalar(-bBody*wf);       // lost buoyancy = exposed volume
-  const rBuoy = subCen.clone().sub(COM);                 // acts at the SUBMERGED centroid
   F.add(gB); F.add(bB);
   M.add(rBuoy.clone().cross(bB));
   A.buoy = [rBuoy, bB]; A.grav = [new THREE.Vector3(0,0,0), gB];
