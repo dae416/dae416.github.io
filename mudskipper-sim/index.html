@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14o</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14p</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -124,7 +124,11 @@
       <button id="stepDn">Step −40°</button>
       <button id="step0">Step 0°</button>
       <button id="stepUp">Step +40°</button>
+      <button id="jumpBtn" class="primary">JUMP demo</button>
     </div>
+    <div class="row"><label>Jump burst duty</label><input type="range" id="jumpD" min="60" max="255" value="255" step="5"><span class="val" id="jumpDv">255</span></div>
+    <div class="note">JUMP: dive to 0.5 m, fins shut, PID pitches to +60°, then open-loop burst at
+    the set duty. Breach threshold ≈ duty 120 (T/W ≈ 1); real-hardware ceiling 60 falls 6 mm short.</div>
     <div class="note" id="agiNote">Needs PID on. Measured (build i, pure-theory fins): step −40° rise
     0.52 s OPEN vs 0.58 s SHUT; fast sine tracking is delay/saturation-limited either way.</div>
 
@@ -207,7 +211,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814o"></script>
+<script src="sim_data.js?v=20260814p"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -310,6 +314,7 @@ const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMas
              sineOn:false, sineA:20, sineT:2};
 const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller state + delay line
 let stepRef = null;
+let jumpPhase = 0, jumpT = 0, jumpApex = -9;   // JUMP demo sequencer
 const respLog = [];    // accumulated step response times (on-screen log)                                              // last step command, for rise-time metric
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
@@ -736,6 +741,16 @@ const bind = (id, fmt, cb) => { const el = $(id); const f = () => { $(id+'v').te
 bind('dutyT', v=>v, v=>ctl.dutyT=v);
 bind('dutyB', v=>v, v=>ctl.dutyB=v);
 const markStep = to => { stepRef = {t0: state.t, from: null, to, rise: null}; };  // from = pitch at t0, filled lazily
+bind('jumpD', v=>v, v=>ctl.jumpDuty=v);
+$('jumpBtn').addEventListener('click', ()=>{
+  $('reset').click();
+  state.p.z = -0.5;
+  if (ctl.finsOpen) finBtn.click();              // fins shut for the run-up
+  if (!ctl.pid) $('pidOn').click();
+  $('pidBase').value = 40; $('pidBase').dispatchEvent(new Event('input'));
+  $('pidT').value = 60; $('pidT').dispatchEvent(new Event('input'));
+  jumpPhase = 1; jumpApex = -9;
+});
 bind('pfincR', v=>v+'°', v=>P.pfinIncR=v*Math.PI/180);
 bind('pfincL', v=>v+'°', v=>P.pfinIncL=v*Math.PI/180);
 bind('pidT', v=>v+'°', v=>{ctl.target=v; markStep(v);});
@@ -953,6 +968,10 @@ function resize(){
 }
 addEventListener('resize', resize); resize();
 
+function att0(){
+  const q = state.q;
+  return Math.asin(Math.max(-1, Math.min(1, 2*(q.x*q.z - q.w*q.y))))*180/Math.PI;
+}
 function attitude(){
   const e = new THREE.Matrix4().makeRotationFromQuaternion(state.q).elements;
   const fwd = {x:e[0], y:e[1], z:e[2]};
@@ -1009,6 +1028,25 @@ function loop(now){
   requestAnimationFrame(loop);
   let dt = Math.min(0.05, (now-last)/1000); last = now; acc += dt;
   while (acc > DT){ physicsStep(DT); acc -= DT; }
+
+  if (jumpPhase === 1 && att0() > 55){           // pitched up -> full burst, open loop
+    if (ctl.pid) $('pidOn').click();
+    const d = ctl.jumpDuty || 255;
+    $('dutyT').value = d; $('dutyT').dispatchEvent(new Event('input'));
+    $('dutyB').value = d; $('dutyB').dispatchEvent(new Event('input'));
+    jumpPhase = 2; jumpT = state.t;
+  } else if (jumpPhase === 2){
+    jumpApex = Math.max(jumpApex, state.p.z);
+    if (state.t - jumpT > 4 || (state.p.z < -0.4 && state.t - jumpT > 1.5)){
+      $('dutyT').value = 0; $('dutyT').dispatchEvent(new Event('input'));
+      $('dutyB').value = 0; $('dutyB').dispatchEvent(new Event('input'));
+      respLog.push(`JUMP · apex ${(jumpApex*100).toFixed(1)} cm · duty ${ctl.jumpDuty||255}`);
+      while (respLog.length > 8) respLog.shift();
+      document.getElementById('resplog').innerHTML =
+        respLog.map((r,i)=> i===respLog.length-1 ? '<b>'+r+'</b>' : r).join('<br>');
+      jumpPhase = 0;
+    }
+  }
 
   const att = attitude();
   if (!hist.length || state.t - hist[hist.length-1].t > 0.03){
