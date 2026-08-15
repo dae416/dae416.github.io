@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14m</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14n</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -134,6 +134,7 @@
       <span class="note" style="align-self:center" id="finState">deploy 100%</span>
       <span class="note" style="align-self:center">· shortcut: <b>F</b></span>
     </div>
+    <div class="row"><label>Base AoA (incidence)</label><input type="range" id="pfinc" min="-30" max="30" value="20" step="1"><span class="val" id="pfincv">20°</span></div>
     <div class="note">z-hinge at fin-motor axis (x 17, y ±8 mm — from open/shut mesh diff); shut = blades stowed inside hull ·
     per-blade pure flat-plate theory: CL = CLα·α (3.9/rad, stall ±20°, zero offset — symmetric plate),
     drag Cd0 + CL²/πARe · force at the blade's current position, fwd of CoM</div>
@@ -205,7 +206,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814m"></script>
+<script src="sim_data.js?v=20260814n"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -249,6 +250,7 @@ const P = {                    // ponytail: every entry is a calibration knob
   pfinS: 7.7e-4,               // planform 2×(35×11 mm)
   pfinCLa: 3.9,                // 2π/(1+2/AR), AR≈3.2
   pfinCd0: 0.05, pfinE: 0.8,   // laminar Cf(Re~6e3)x2 + edges ~0.05; Oswald factor
+  pfinInc: 20*Math.PI/180,     // built-in blade incidence (base AoA), leading edge up
   // per-component mass [g] / displaced volume [cm³] — split out of the 34 g / 34 cm³ totals
   finMassT: 0.5, finVolT: 0.3, finMassB: 0.05, finVolB: 0.05, pfinMass: 0.6, pfinVol: 0.4,
   xDragCP: -12e-3,             // lateral/vertical body drag centre aft of CoM (restoring)
@@ -409,13 +411,16 @@ function physicsStep(dt){
       const r = new THREE.Vector3(cx, cy, -1.4e-3).sub(COM);
       const up = vb.x + w.y*r.z - w.z*r.y;
       const wp = vb.z + w.x*r.y - w.y*r.x;
-      // symmetric flat plate, pure theory: CL = CLα·α (stall-clamped), no α=0 offset
-      const wnL = up > 0.02 ? Math.max(-0.30*up, Math.min(0.30*up, wp)) : 0;  // stall ~17°, CLmax≈1.15
-      const CL = up > 0.02 ? P.pfinCLa*(-wnL/up) : 0;
+      // flat plate + built-in incidence: α_eff = flow angle + base AoA, stall-clamped ±17°
+      const aEff = up > 0.02
+        ? Math.max(-0.30, Math.min(0.30, Math.atan2(-wp, up) + P.pfinInc)) : 0;
+      const CL = P.pfinCLa*aEff;
+      const q2 = up*up + wp*wp;
       const Fp = new THREE.Vector3(
         -0.5*RHO*Sh*(P.pfinCd0 + CL*CL/(Math.PI*AR*P.pfinE))*Math.abs(up)*up,  // profile + induced
         0,
-        -0.5*RHO*Sh*(P.pfinCLa*Math.max(up,0)*wnL + P.finCn*Math.abs(wp)*wp)); // lift + post-stall plate drag
+        (up > 0.02 ? 0.5*RHO*q2*Sh*CL : 0)
+          - 0.5*RHO*Sh*P.finCn*Math.abs(wp)*wp);                               // lift + plate damping
       F.add(Fp);
       M.add(r.clone().cross(Fp));
       if (s > 0) A.pfinR = [r.clone(), Fp]; else A.pfinL = [r.clone(), Fp];
@@ -695,6 +700,7 @@ const bind = (id, fmt, cb) => { const el = $(id); const f = () => { $(id+'v').te
 bind('dutyT', v=>v, v=>ctl.dutyT=v);
 bind('dutyB', v=>v, v=>ctl.dutyB=v);
 const markStep = to => { stepRef = {t0: state.t, from: null, to, rise: null}; };  // from = pitch at t0, filled lazily
+bind('pfinc', v=>v+'°', v=>P.pfinInc=v*Math.PI/180);
 bind('pidT', v=>v+'°', v=>{ctl.target=v; markStep(v);});
 bind('sineA', v=>v+'°', v=>ctl.sineA=v);
 bind('sineT', v=>v+' s', v=>ctl.sineT=v);
@@ -986,9 +992,10 @@ function loop(now){
   propAngT += motTop.n*2*Math.PI*dt*0.12;
   propAngB += sB*motBot.n*2*Math.PI*dt*0.12;
   propTg.rotation.x = propAngT; propBg.rotation.x = propAngB;
-  // pectoral fins: fold back about the z hinge (0 = open, 90° = shut)
-  finRg.rotation.z =  (1-finFrac)*Math.PI/2;
-  finLg.rotation.z = -(1-finFrac)*Math.PI/2;
+  // pectoral fins: fold about z hinge, then blade incidence about the folded span axis
+  finRg.rotation.order = 'ZYX'; finLg.rotation.order = 'ZYX';
+  finRg.rotation.set(0, -P.pfinInc*finFrac,  (1-finFrac)*Math.PI/2);
+  finLg.rotation.set(0, -P.pfinInc*finFrac, -(1-finFrac)*Math.PI/2);
   cobDot.position.set(0,0,P.comDrop);
   comLbl.position.set(0,-0.020,-0.004);
   cobLbl.position.set(0, 0.020, P.comDrop+0.004);
