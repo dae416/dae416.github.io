@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14q</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-14r</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -113,6 +113,18 @@
     <div class="row"><label>Loop delay</label><input type="range" id="pidDly" min="0" max="150" value="60" step="10"><span class="val" id="pidDlyv">60 ms</span></div>
     <div class="note" id="pidNote">Campaign gains: Kp 10 · Ki 0 · Kd 0.5, ceiling 60/255, measured ~60 ms transport delay.
     u = Kp·e + Ki·∫e − Kd·dθ/dt → top = base − u, bottom = base + u.</div>
+
+    <h2>Roll reaction wheel (3rd motor · x-axis)</h2>
+    <div class="checks">
+      <label><input type="checkbox" id="rwOn"> Wheel roll control on</label>
+    </div>
+    <div class="row"><label>Target roll</label><input type="range" id="rwT" min="-45" max="45" value="0" step="1"><span class="val" id="rwTv">0°</span></div>
+    <div class="row"><label>Kp (µN·m/°)</label><input type="range" id="rwKp" min="0" max="300" value="100" step="10"><span class="val" id="rwKpv">100</span></div>
+    <div class="row"><label>Kd (µN·m/°/s)</label><input type="range" id="rwKd" min="0" max="100" value="30" step="5"><span class="val" id="rwKdv">30</span></div>
+    <div class="row"><label>Flywheel inertia</label><input type="range" id="rwI" min="1" max="10" value="3" step="0.5"><span class="val" id="rwIv">3 g·cm²</span></div>
+    <div class="note" id="rwNote">Reaction wheel: only wheel ACCELERATION torques the body —
+    a steady disturbance (same-direction props: 0.54 mN·m) saturates the wheel in
+    I·Ω_max/τ ≈ 3.5 s at 3 g·cm². Momentum must be dumped via hydro damping.</div>
 
     <h2>Maneuver · agility</h2>
     <div class="checks">
@@ -211,7 +223,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260814q"></script>
+<script src="sim_data.js?v=20260814r"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -263,6 +275,7 @@ const P = {                    // ponytail: every entry is a calibration knob
   netBuoyG: 0,
   rotDampL: [2e-5, 6e-5, 4e-5], rotDampQ: [3e-6, 1.2e-5, 8e-6],
   finStroke: 0.1,              // pectoral fin open/close time [s]
+  rwQs: 1.8e-3, rwNmax: 6283,  // roll reaction wheel: 8520-class motor, ~60 krpm cap
 };
 
 /* ============ B-series open-water table ============ */
@@ -307,6 +320,7 @@ function resetState(){
   state.p.set(0,0,-0.3); state.q.identity(); state.v.set(0,0,0); state.w.set(0,0,0); state.t=0;
   trailPts.length = 0; hist.length = 0; path.length = 0;
   pid.buf.length = 0; pid.i = 0; pid.prev = 0;   // stale delay-line entries poison the loop after t rewinds
+  rwOmega = 0;                                   // reaction wheel spun down on reset
 }
 
 const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true,
@@ -315,6 +329,8 @@ const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMas
 const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller state + delay line
 let stepRef = null;
 let jumpPhase = 0, jumpT = 0, jumpApex = -9;   // JUMP demo sequencer
+let rwOmega = 0;                               // reaction-wheel speed [rad/s]
+Object.assign(ctl, {rwOn:false, rwTarget:0, rwKp:100, rwKd:30, rwI:3e-7});
 const respLog = [];    // accumulated step response times (on-screen log)                                              // last step command, for rise-time metric
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
@@ -412,6 +428,23 @@ function physicsStep(dt){
   M.add(rT.clone().cross(new THREE.Vector3(motTop.T,0,0)));
   M.add(rB.clone().cross(new THREE.Vector3(motBot.T,0,0)));
   M.x += -(sT*motTop.Q + sB*motBot.Q);           // prop reaction torque → roll
+
+  // --- roll reaction wheel: internal 3rd motor + flywheel on the x-axis ---
+  // only wheel ACCELERATION torques the body (momentum exchange) → saturates at rwNmax
+  if (ctl.rwOn){
+    const rollDeg = Math.atan2(R21v, R22v)*180/Math.PI;
+    // desired BODY torque u; wheel torque is its negative (reaction drives the body)
+    let tau = -(ctl.rwKp*(ctl.rwTarget - rollDeg) - ctl.rwKd*(w.x*180/Math.PI))*1e-6;
+    const tmax = P.rwQs*Math.max(0, 1 - Math.abs(rwOmega)/P.rwNmax);   // motor curve
+    tau = Math.max(-tmax, Math.min(tmax, tau));
+    const fric = 1e-7*rwOmega;                     // bearing drag (internal torque pair)
+    rwOmega += dt*(tau - fric)/ctl.rwI;
+    M.x += -tau + fric;                             // reaction + friction return: momentum conserved
+    const h = ctl.rwI*rwOmega;                      // gyroscopic coupling of stored momentum
+    M.y += -w.z*h;
+    M.z +=  w.y*h;
+    pid.rwTau = tau;
+  } else { rwOmega *= 0.999; pid.rwTau = 0; }
   A.thrustT = [rT, new THREE.Vector3(motTop.T,0,0)];
   A.thrustB = [rB, new THREE.Vector3(motBot.T,0,0)];
 
@@ -750,6 +783,11 @@ bind('dutyT', v=>v, v=>ctl.dutyT=v);
 bind('dutyB', v=>v, v=>ctl.dutyB=v);
 const markStep = to => { stepRef = {t0: state.t, from: null, to, rise: null}; };  // from = pitch at t0, filled lazily
 bind('jumpD', v=>v, v=>ctl.jumpDuty=v);
+bind('rwT', v=>v+'°', v=>ctl.rwTarget=v);
+bind('rwKp', v=>v, v=>ctl.rwKp=v);
+bind('rwKd', v=>v, v=>ctl.rwKd=v);
+bind('rwI', v=>v+' g·cm²', v=>ctl.rwI=v*1e-7);
+$('rwOn').addEventListener('change', e=>{ctl.rwOn=e.target.checked; rwOmega=0;});
 $('jumpBtn').addEventListener('click', ()=>{
   $('reset').click();
   state.p.z = -0.5;
@@ -1130,6 +1168,9 @@ function loop(now){
       `e ${pid.e.toFixed(1)}° · u ${pid.u.toFixed(1)} → duty T ${pid.dT.toFixed(0)} / B ${pid.dB.toFixed(0)}` +
       ` · I ${(ctl.ki*pid.i).toFixed(1)}`;
     $('agiNote').textContent = agilityMetrics();
+    if (ctl.rwOn) $('rwNote').textContent =
+      `wheel ${(rwOmega*60/2/Math.PI).toFixed(0)} rpm (${(100*Math.abs(rwOmega)/P.rwNmax).toFixed(0)}% sat) · ` +
+      `τ ${((pid.rwTau||0)*1e6).toFixed(0)} µN·m · stored h ${(ctl.rwI*rwOmega*1e6).toFixed(0)} µN·m·s`;
     drawChart();
     drawMinis();
   }
