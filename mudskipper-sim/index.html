@@ -731,7 +731,7 @@ placeProps();
 
 // CoM / CoB markers — always visible through the hull, with labels
 // googly eyes: front-upper flanks; pupils are free marbles driven by specific force
-const EYE = {x:24e-3, z:30e-3, y:10.6e-3, R:6e-3, r:2.6e-3, travel:3.0e-3, gain:3.5};
+const EYE = {x:24e-3, z:30e-3, y:10.6e-3, R:6e-3, r:2.6e-3, travel:3.0e-3, gain:3.5, gGrav:0.35};
 const eyeGrp = new THREE.Group(); meshGrp.add(eyeGrp);
 const eyeWhiteMat = new THREE.MeshBasicMaterial({color:0xffffff, side:THREE.DoubleSide});
 const eyeBlackMat = new THREE.MeshBasicMaterial({color:0x111111, side:THREE.DoubleSide});
@@ -744,7 +744,7 @@ const eyes = [1, -1].map(sgn => {
   p.position.set(EYE.x, sgn*(EYE.y+0.4e-3), EYE.z - EYE.travel*0.8);
   eyeGrp.add(w, p);
   // per-eye marble state (slightly different damping so they wiggle independently)
-  return {sgn, p, px:0, pz:-EYE.travel*0.8, vx:0, vz:0, c: 3.5 + 1.5*Math.random()};
+  return {sgn, p, px:0, pz:-EYE.travel*0.8, vx:0, vz:0, c: 170 + 60*Math.random()};  // heavy, overdamped
 });
 function updateEyes(dt){
   if (dt <= 0) return;
@@ -754,8 +754,8 @@ function updateEyes(dt){
     // the pupils back on a surge) and gravity along the face (kept 1:1)
     const q = state.q;
     const upX = 2*(q.x*q.z - q.w*q.y), upZ = 1 - 2*(q.x*q.x + q.y*q.y);
-    const ax = -g0*(EYE.gain*(accB.x - upX) + upX);
-    const az = -g0*(EYE.gain*(accB.z - upZ) + upZ);
+    const ax = -g0*(EYE.gain*(accB.x - upX) + EYE.gGrav*upX);
+    const az = -g0*(EYE.gain*(accB.z - upZ) + EYE.gGrav*upZ);
     e.vx += (ax - e.c*e.vx)*dt;
     e.vz += (az - e.c*e.vz)*dt;
     e.px += e.vx*dt; e.pz += e.vz*dt;
@@ -764,7 +764,7 @@ function updateEyes(dt){
       const nx = e.px/r, nz = e.pz/r;
       e.px = nx*EYE.travel; e.pz = nz*EYE.travel;
       const vn = e.vx*nx + e.vz*nz;
-      if (vn > 0){ e.vx -= 1.55*vn*nx; e.vz -= 1.55*vn*nz; }
+      if (vn > 0){ e.vx -= 1.2*vn*nx; e.vz -= 1.2*vn*nz; }
     }
     e.p.position.set(EYE.x + e.px, e.sgn*(EYE.y+0.4e-3), EYE.z + e.pz);
   }
