@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-16b</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-16c</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -245,7 +245,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260816b"></script>
+<script src="sim_data.js?v=20260816c"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -353,7 +353,8 @@ let sfPhase = 0, sfT = 0, sfDir = 1, sfFin = false, sfStepT = 0;  // pitch-step+
 let sfAir = false, sfSplashT = null;           // airborne → splash-down detection
 let sweep = null;                                                 // fin-delay sweep controller
 const runWin = () => Math.max(2, ctl.sfDelay + ctl.sfPulse + 0.7);  // observation window after the step
-const prevV = new THREE.Vector3(); let accB = new THREE.Vector3(0,0,1);
+const prevV = new THREE.Vector3(); let accB = new THREE.Vector3(0,0,1), prevSimT = 0;
+const accS = new THREE.Vector3(0,0,1);   // low-passed copy for the googly eyes
 Object.assign(ctl, {sfStepUp:90, sfStepDn:90, sfStraight:1, sfDelay:0.1, sfPulse:0.3, slomo:1});
 const respLog = [];    // accumulated step response times (on-screen log)                                              // last step command, for rise-time metric
 let finFrac = 1;                       // 1 = deployed, 0 = folded
@@ -735,6 +736,7 @@ const EYE = {x:24e-3, z:30e-3, y:10.6e-3, R:6e-3, r:2.6e-3, travel:3.0e-3, gain:
 const eyeGrp = new THREE.Group(); meshGrp.add(eyeGrp);
 const eyeWhiteMat = new THREE.MeshBasicMaterial({color:0xffffff, side:THREE.DoubleSide});
 const eyeBlackMat = new THREE.MeshBasicMaterial({color:0x111111, side:THREE.DoubleSide});
+const eyeUp = {x:0, z:1};                         // slow-filtered up for the gravity term
 const eyes = [1, -1].map(sgn => {
   const w = new THREE.Mesh(new THREE.CircleGeometry(EYE.R, 24), eyeWhiteMat);
   w.rotation.x = -sgn*Math.PI/2;
@@ -754,10 +756,16 @@ function updateEyes(dt){
     // the pupils back on a surge) and gravity along the face (kept 1:1)
     const q = state.q;
     const upX = 2*(q.x*q.z - q.w*q.y), upZ = 1 - 2*(q.x*q.x + q.y*q.y);
-    const ax = -g0*(EYE.gain*(accB.x - upX) + EYE.gGrav*upX);
-    const az = -g0*(EYE.gain*(accB.z - upZ) + EYE.gGrav*upZ);
-    e.vx += (ax - e.c*e.vx)*dt;
-    e.vz += (az - e.c*e.vz)*dt;
+    const k = 1 - Math.exp(-dt/0.4);                 // slow up: filters residual pendulum wobble
+    eyeUp.x += (upX - eyeUp.x)*k; eyeUp.z += (upZ - eyeUp.z)*k;
+    let dynX = accS.x - upX, dynZ = accS.z - upZ;    // smoothed + deadband: no idle jitter
+    if (Math.abs(dynX) < 0.10) dynX = 0;
+    if (Math.abs(dynZ) < 0.10) dynZ = 0;
+    const ax = -g0*(EYE.gain*dynX + EYE.gGrav*eyeUp.x);
+    const az = -g0*(EYE.gain*dynZ + EYE.gGrav*eyeUp.z);
+    // implicit damping: unconditionally stable (explicit Euler oscillated at c·dt>2)
+    e.vx = (e.vx + ax*dt)/(1 + e.c*dt);
+    e.vz = (e.vz + az*dt)/(1 + e.c*dt);
     e.px += e.vx*dt; e.pz += e.vz*dt;
     const r = Math.hypot(e.px, e.pz);
     if (r > EYE.travel){                              // rim: clamp + bouncy slide
@@ -1335,11 +1343,13 @@ function loop(now){
   }
 
   // IMU-style specific force in body frame [g] (numerical accel minus gravity)
-  if (dts > 1e-4){
-    const aW = state.v.clone().sub(prevV).divideScalar(dts); aW.z += 9.81;
+  const dSim = state.t - prevSimT;                  // differentiate in PHYSICS time —
+  if (dSim > 1e-4){                                 // wall-frame division was noisy
+    const aW = state.v.clone().sub(prevV).divideScalar(dSim); aW.z += 9.81;
     accB = aW.applyQuaternion(tmpQ.copy(state.q).invert()).divideScalar(9.81);
+    accS.lerp(accB, 1 - Math.exp(-dSim/0.08));      // smooth for the eyes (τ ≈ 80 ms)
+    prevV.copy(state.v); prevSimT = state.t;
   }
-  prevV.copy(state.v);
   if (sweep && sweep.rec && sfPhase > 0){
     const R = sweep.rec;
     if (R.stepT == null && sfPhase >= 2) R.stepT = sfStepT;
