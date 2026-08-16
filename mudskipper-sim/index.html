@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15o</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15p</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -137,7 +137,7 @@
       <button id="sfDn">▼ DOWN</button>
     </div>
     <div class="btns">
-      <button id="sweepBtn" class="primary">FIN-DELAY SWEEP (0.1/0.2/0.4 vs no-fin)</button>
+      <button id="sweepBtn" class="primary">FIN-DELAY SWEEP (0/0.1/0.2/0.4 vs no-fin)</button>
     </div>
     <div class="row"><label>Step UP (deg)</label><input type="range" id="sfStepUp" min="10" max="180" value="90" step="5"><span class="val" id="sfStepUpv">90°</span></div>
     <div class="row"><label>Step DOWN (deg)</label><input type="range" id="sfStepDn" min="10" max="180" value="90" step="5"><span class="val" id="sfStepDnv">90°</span></div>
@@ -244,7 +244,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815o"></script>
+<script src="sim_data.js?v=20260815p"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -829,6 +829,7 @@ const startStepFin = (dir, fin) => {
   jumpPhase = 0;
 };
 const SWEEP_CASES = [
+  {label:'fin, 0 s delay',   d:0,   fin:true,  color:'#f7c98f'},
   {label:'fin, 0.1 s delay', d:0.1, fin:true,  color:'#f2a25c'},
   {label:'fin, 0.2 s delay', d:0.2, fin:true,  color:'#e2571f'},
   {label:'fin, 0.4 s delay', d:0.4, fin:true,  color:'#9c2b06'},
@@ -855,7 +856,7 @@ function sweepFinish(run){
   sweep.idx++;
   if (sweep.idx < SWEEP_CASES.length) sweepCase();
   else {
-    $('sweepBtn').textContent = 'FIN-DELAY SWEEP (0.1/0.2/0.4 vs no-fin)';
+    $('sweepBtn').textContent = 'FIN-DELAY SWEEP (0/0.1/0.2/0.4 vs no-fin)';
     drawSweep(sweep.runs); sweep = null;
   }
 }
