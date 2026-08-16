@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15q</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15r</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -244,7 +244,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815q"></script>
+<script src="sim_data.js?v=20260815r"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -349,6 +349,7 @@ const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller s
 let stepRef = null;
 let jumpPhase = 0, jumpT = 0, jumpApex = -9;   // JUMP demo sequencer
 let sfPhase = 0, sfT = 0, sfDir = 1, sfFin = false, sfStepT = 0;  // pitch-step+fin sequencer
+let sfAir = false, sfSplashT = null;           // airborne → splash-down detection
 let sweep = null;                                                 // fin-delay sweep controller
 const runWin = () => Math.max(2, ctl.sfDelay + ctl.sfPulse + 0.7);  // observation window after the step
 const prevV = new THREE.Vector3(); let accB = new THREE.Vector3(0,0,1);
@@ -827,6 +828,7 @@ const startStepFin = (dir, fin) => {
   $('sineOn').checked = false; ctl.sineOn = false;
   $('pidT').value = 0; $('pidT').dispatchEvent(new Event('input'));
   sfDir = dir; sfFin = fin; sfPhase = 1; sfT = state.t;
+  sfAir = false; sfSplashT = null;
   jumpPhase = 0;
 };
 const SWEEP_CASES = [
@@ -872,6 +874,9 @@ $('sweepPng').addEventListener('click', ()=>{
 });
 function drawSweep(runs, WIN){
   WIN = WIN || 2;
+  let tmax = 0;                                   // fit the axis to the recorded data
+  for (const r of runs) if (r.data.length) tmax = Math.max(tmax, r.data[r.data.length-1].tr);
+  WIN = Math.max(2, Math.min(WIN, Math.ceil(tmax*10)/10 + 0.1));
   const cv = document.getElementById('sweepCv'), c = cv.getContext('2d');
   const W = cv.width, PL = 90, PR = 200, pw = W-PL-PR;
   const panels = [
@@ -1247,7 +1252,14 @@ function loop(now){
   } else if (sfPhase === 3 && state.t - sfStepT >= ctl.sfDelay + ctl.sfPulse){  // pulse OFF
     if (ctl.finsOpen) finBtn.click();
     sfPhase = 4;
-  } else if (sfPhase === 4 && state.t - sfStepT >= (sweep ? sweep.win : runWin())){  // report at window end
+  } else if (sfPhase >= 2 && (()=>{
+      // stop 1 s after splash-down (was airborne, back in the water); else at window end
+      if (subFrac < 0.02) sfAir = true;
+      if (sfAir && sfSplashT === null && subFrac > 0.3) sfSplashT = state.t;
+      return sfPhase === 4 && (
+        (sfSplashT !== null && state.t - sfSplashT >= 1) ||
+        state.t - sfStepT >= (sweep ? sweep.win : runWin()));
+    })()){  // report
     const rise = stepRef && stepRef.rise != null ? stepRef.rise.toFixed(2)+' s' : '>2 s';
     respLog.push(`STEP ${sfDir>0?'▲':'▼'}${sfDir>0?ctl.sfStepUp:ctl.sfStepDn}° ${sfFin?('FIN@'+ctl.sfDelay+'s'):'no-fin'} · rise ${rise} · end pitch ${att0().toFixed(0)}°`);
     while (respLog.length > 8) respLog.shift();
