@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15g</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15i</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -129,6 +129,21 @@
       <button id="stepUp">Step +40°</button>
       <button id="jumpBtn" class="primary">JUMP demo</button>
     </div>
+    <h2>Pitch step + fin (20260814 experiment)</h2>
+    <div class="btns">
+      <button id="sfUpFin">▲ UP + FIN</button>
+      <button id="sfDnFin">▼ DOWN + FIN</button>
+      <button id="sfUp">▲ UP</button>
+      <button id="sfDn">▼ DOWN</button>
+    </div>
+    <div class="row"><label>Step (deg)</label><input type="range" id="sfStep" min="30" max="180" value="90" step="5"><span class="val" id="sfStepv">90°</span></div>
+    <div class="row"><label>Straight time</label><input type="range" id="sfStr" min="0.5" max="4" value="1" step="0.5"><span class="val" id="sfStrv">1 s</span></div>
+    <div class="row"><label>Fin delay after step</label><input type="range" id="sfDly" min="0" max="0.5" value="0.1" step="0.05"><span class="val" id="sfDlyv">0.1 s</span></div>
+    <div class="row"><label>Fin pulse length</label><input type="range" id="sfPul" min="0.1" max="1" value="0.3" step="0.05"><span class="val" id="sfPulv">0.3 s</span></div>
+    <div class="note">Bench protocol: straight at 0° (PID) → target steps ±Step; +FIN modes pulse the
+    fin open at the set delay, shut after the pulse (real robot: 220 PWM / 300 ms bottom-fin pulse).
+    Result logged bottom-right: rise time + pitch 2 s after the step.</div>
+
     <div class="row"><label>Jump burst duty</label><input type="range" id="jumpD" min="60" max="255" value="255" step="5"><span class="val" id="jumpDv">255</span></div>
     <div class="note">JUMP: dive to 0.5 m, fins shut, PID pitches to +60°, then open-loop burst at
     the set duty. Breach threshold ≈ duty 120 (T/W ≈ 1); real-hardware ceiling 60 falls 6 mm short.</div>
@@ -196,6 +211,7 @@
       <label><input type="checkbox" id="follow" checked> Follow cam</label>
       <label><input type="checkbox" id="lat" checked> 1 m markers</label>
     </div>
+    <div class="row"><label>Sim speed (slo-mo)</label><input type="range" id="slomo" min="0.05" max="1" value="1" step="0.05"><span class="val" id="slomov">1.00×</span></div>
     <div class="btns"><button id="shotBtn">Screenshot (S)</button></div>
     <div class="note">Arrows named at tips: <span style="color:#e66767">thrust</span> ·
       <span style="color:#d95926">body drag</span> · <span style="color:#199e70">body lift / fin F</span> ·
@@ -214,7 +230,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815g"></script>
+<script src="sim_data.js?v=20260815i"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -318,6 +334,8 @@ const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMas
 const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller state + delay line
 let stepRef = null;
 let jumpPhase = 0, jumpT = 0, jumpApex = -9;   // JUMP demo sequencer
+let sfPhase = 0, sfT = 0, sfDir = 1, sfFin = false, sfStepT = 0;  // pitch-step+fin sequencer
+Object.assign(ctl, {sfStep:90, sfStraight:1, sfDelay:0.1, sfPulse:0.3, slomo:1});
 const respLog = [];    // accumulated step response times (on-screen log)                                              // last step command, for rise-time metric
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
@@ -780,6 +798,25 @@ bind('dutyT', v=>v, v=>ctl.dutyT=v);
 bind('dutyB', v=>v, v=>ctl.dutyB=v);
 const markStep = to => { stepRef = {t0: state.t, from: null, to, rise: null}; };  // from = pitch at t0, filled lazily
 bind('jumpD', v=>v, v=>ctl.jumpDuty=v);
+bind('slomo', v=>(+v).toFixed(2)+'×', v=>ctl.slomo=v);
+bind('sfStep', v=>v+'°', v=>ctl.sfStep=v);
+bind('sfStr', v=>v+' s', v=>ctl.sfStraight=v);
+bind('sfDly', v=>v+' s', v=>ctl.sfDelay=v);
+bind('sfPul', v=>v+' s', v=>ctl.sfPulse=v);
+const startStepFin = (dir, fin) => {
+  $('reset').click();
+  state.p.z = -0.5;
+  if (ctl.finsOpen) finBtn.click();              // start with fins shut, like the bench runs
+  if (!ctl.pid) $('pidOn').click();
+  $('sineOn').checked = false; ctl.sineOn = false;
+  $('pidT').value = 0; $('pidT').dispatchEvent(new Event('input'));
+  sfDir = dir; sfFin = fin; sfPhase = 1; sfT = state.t;
+  jumpPhase = 0;
+};
+$('sfUpFin').addEventListener('click', ()=>startStepFin( 1, true));
+$('sfDnFin').addEventListener('click', ()=>startStepFin(-1, true));
+$('sfUp').addEventListener('click',    ()=>startStepFin( 1, false));
+$('sfDn').addEventListener('click',    ()=>startStepFin(-1, false));
 $('jumpBtn').addEventListener('click', ()=>{
   $('reset').click();
   state.p.z = -0.5;
@@ -1068,8 +1105,28 @@ let last = performance.now(), acc = 0, propAngT = 0, propAngB = 0, frame = 0;
 const DT = 1/240;
 function loop(now){
   requestAnimationFrame(loop);
-  let dt = Math.min(0.05, (now-last)/1000); last = now; acc += dt;
+  let dt = Math.min(0.05, (now-last)/1000); last = now;
+  acc += dt*ctl.slomo;                       // slow motion: physics time runs at slomo × wall
+  const dts = dt*ctl.slomo;                  // sim-time elapsed this frame (visual spin etc.)
   while (acc > DT){ physicsStep(DT); acc -= DT; }
+
+  if (sfPhase === 1 && state.t - sfT > ctl.sfStraight){       // straight done -> step
+    $('pidT').value = sfDir*ctl.sfStep; $('pidT').dispatchEvent(new Event('input'));
+    sfStepT = state.t; sfPhase = sfFin ? 2 : 4;
+  } else if (sfPhase === 2 && state.t - sfStepT >= ctl.sfDelay){   // fin pulse ON
+    if (!ctl.finsOpen) finBtn.click();
+    sfPhase = 3;
+  } else if (sfPhase === 3 && state.t - sfStepT >= ctl.sfDelay + ctl.sfPulse){  // pulse OFF
+    if (ctl.finsOpen) finBtn.click();
+    sfPhase = 4;
+  } else if (sfPhase === 4 && state.t - sfStepT >= 2){             // report at +2 s
+    const rise = stepRef && stepRef.rise != null ? stepRef.rise.toFixed(2)+' s' : '>2 s';
+    respLog.push(`STEP ${sfDir>0?'▲':'▼'}${ctl.sfStep}° ${sfFin?('FIN@'+ctl.sfDelay+'s'):'no-fin'} · rise ${rise} · 2s pitch ${att0().toFixed(0)}°`);
+    while (respLog.length > 8) respLog.shift();
+    document.getElementById('resplog').innerHTML =
+      respLog.map((r,i)=> i===respLog.length-1 ? '<b>'+r+'</b>' : r).join('<br>');
+    sfPhase = 0;
+  }
 
   if (jumpPhase === 1 && att0() > 55){           // pitched up -> full burst, open loop
     if (ctl.pid) $('pidOn').click();
@@ -1106,8 +1163,8 @@ function loop(now){
   robotGrp.position.copy(state.p);
   robotGrp.quaternion.copy(state.q);
   const sB = ctl.counter ? -1 : 1;
-  propAngT += motTop.n*2*Math.PI*dt*0.12;
-  propAngB += sB*motBot.n*2*Math.PI*dt*0.12;
+  propAngT += motTop.n*2*Math.PI*dts*0.12;
+  propAngB += sB*motBot.n*2*Math.PI*dts*0.12;
   propTg.rotation.x = propAngT; propBg.rotation.x = propAngB;
   // pectoral fins: fold about z hinge, then blade incidence about the folded span axis
   finRg.rotation.order = 'ZYX'; finLg.rotation.order = 'ZYX';
@@ -1145,6 +1202,7 @@ function loop(now){
       (ctl.hold ? ' · <span style="color:var(--warn)">HOLD</span>' : '') +
       ` · Fins <b>${(finFrac*100).toFixed(0)}%</b>` +
       (subFrac < 0.995 ? ` · <span style="color:var(--warn)">Sub ${(subFrac*100).toFixed(0)}%</span>` : '') +
+      (ctl.slomo < 0.99 ? ` · <span style="color:var(--warn)">${ctl.slomo.toFixed(2)}× SLO-MO</span>` : '') +
       (ctl.pid && stepRef && !ctl.sineOn
         ? ` · step→${stepRef.to}°: <b>${stepRef.rise==null?'…':stepRef.rise.toFixed(2)+' s'}</b>` : '');
     const set = (id, m) => {
