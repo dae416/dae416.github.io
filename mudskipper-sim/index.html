@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15s</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15t</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -214,6 +214,7 @@
       <label><input type="checkbox" id="trail" checked> Trail</label>
       <label><input type="checkbox" id="follow" checked> Follow cam</label>
       <label><input type="checkbox" id="lat" checked> 1 m markers</label>
+      <label><input type="checkbox" id="eyes" checked> Googly eyes</label>
     </div>
     <div class="row"><label>Sim speed (slo-mo)</label><input type="range" id="slomo" min="0.05" max="1" value="1" step="0.05"><span class="val" id="slomov">1.00×</span></div>
     <div class="btns"><button id="shotBtn">Screenshot (S)</button></div>
@@ -244,7 +245,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815s"></script>
+<script src="sim_data.js?v=20260815t"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -729,6 +730,41 @@ function placeProps(){
 placeProps();
 
 // CoM / CoB markers — always visible through the hull, with labels
+// googly eyes: front-upper flanks; pupils are free marbles driven by specific force
+const EYE = {x:24e-3, z:30e-3, y:10.6e-3, R:6e-3, r:2.6e-3, travel:3.0e-3};
+const eyeGrp = new THREE.Group(); meshGrp.add(eyeGrp);
+const eyeWhiteMat = new THREE.MeshBasicMaterial({color:0xffffff, side:THREE.DoubleSide});
+const eyeBlackMat = new THREE.MeshBasicMaterial({color:0x111111, side:THREE.DoubleSide});
+const eyes = [1, -1].map(sgn => {
+  const w = new THREE.Mesh(new THREE.CircleGeometry(EYE.R, 24), eyeWhiteMat);
+  w.rotation.x = -sgn*Math.PI/2;
+  w.position.set(EYE.x, sgn*EYE.y, EYE.z);
+  const p = new THREE.Mesh(new THREE.CircleGeometry(EYE.r, 20), eyeBlackMat);
+  p.rotation.x = -sgn*Math.PI/2;
+  p.position.set(EYE.x, sgn*(EYE.y+0.4e-3), EYE.z - EYE.travel*0.8);
+  eyeGrp.add(w, p);
+  // per-eye marble state (slightly different damping so they wiggle independently)
+  return {sgn, p, px:0, pz:-EYE.travel*0.8, vx:0, vz:0, c: 6 + 2*Math.random()};
+});
+function updateEyes(dt){
+  if (dt <= 0) return;
+  const g0 = 9.81;
+  for (const e of eyes){
+    const ax = -accB.x*g0, az = -accB.z*g0;          // marble lags the housing
+    e.vx += (ax - e.c*e.vx)*dt;
+    e.vz += (az - e.c*e.vz)*dt;
+    e.px += e.vx*dt; e.pz += e.vz*dt;
+    const r = Math.hypot(e.px, e.pz);
+    if (r > EYE.travel){                              // rim: clamp + bouncy slide
+      const nx = e.px/r, nz = e.pz/r;
+      e.px = nx*EYE.travel; e.pz = nz*EYE.travel;
+      const vn = e.vx*nx + e.vz*nz;
+      if (vn > 0){ e.vx -= 1.55*vn*nx; e.vz -= 1.55*vn*nz; }
+    }
+    e.p.position.set(EYE.x + e.px, e.sgn*(EYE.y+0.4e-3), EYE.z + e.pz);
+  }
+}
+
 const comDot = new THREE.Mesh(new THREE.SphereGeometry(0.0035),
   new THREE.MeshBasicMaterial({color:0xffffff, depthTest:false}));
 const cobDot = new THREE.Mesh(new THREE.SphereGeometry(0.0035),
@@ -1339,6 +1375,8 @@ function loop(now){
   if (dbg.rBuoy) cobDot.position.copy(dbg.rBuoy);
   comLbl.position.set(0,-0.020,-0.004);
   if (dbg.rBuoy) cobLbl.position.set(dbg.rBuoy.x, dbg.rBuoy.y+0.020, dbg.rBuoy.z+0.004);
+  eyeGrp.visible = document.getElementById('eyes').checked;
+  if (eyeGrp.visible) updateEyes(dts);
   lattice.visible = document.getElementById('lat').checked;
   if (lattice.visible) updateLattice();
   updateArrows(frame % 6 === 0);
