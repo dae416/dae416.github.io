@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15a</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15d</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -211,7 +211,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815a"></script>
+<script src="sim_data.js?v=20260815d"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -348,7 +348,7 @@ function physicsStep(dt){
   const q_ = state.q;
   const R20v = 2*(q_.x*q_.z - q_.w*q_.y), R21v = 2*(q_.y*q_.z + q_.w*q_.x),
         R22v = 1 - 2*(q_.x*q_.x + q_.y*q_.y);
-  if ((buoyTick++ & 1) === 0){                    // 120 Hz is plenty
+  if ((buoyTick++ & 1) === 0 || (subFrac > 0.003 && subFrac < 0.997)){  // every substep while crossing
     const pz = state.p.z; let n = 0, sx = 0, sy = 0, sz = 0;
     for (let i = 0; i < voxN*3; i += 3){
       const px = voxPts[i], py = voxPts[i+1], pzb = voxPts[i+2];
@@ -361,9 +361,12 @@ function physicsStep(dt){
   const rBuoy = subCen.clone().sub(COM);           // submerged-volume centroid (body frame)
   // per-element wetness: an element still under water keeps its FULL force,
   // one above the surface loses it — no global cliff when the nose breaches
+  // half-extent ~3 cm: a plate straddling the surface is PARTIALLY wetted (and
+  // ventilated) — a narrow band made fins switch on/off like a cliff, whipping the
+  // body when only one fin stayed planted in the water
   const wet = r => {
     const zw = state.p.z + R20v*r.x + R21v*r.y + R22v*r.z;
-    return zw < -0.01 ? 1 : (zw > 0.01 ? 0 : (0.01 - zw)/0.02);
+    return zw < -0.03 ? 1 : (zw > 0.03 ? 0 : (0.03 - zw)/0.06);
   };
 
   const qi = tmpQ.copy(state.q).invert();
@@ -405,8 +408,18 @@ function physicsStep(dt){
   const uB = vb.x + w.y*rB.z - w.z*rB.y;
   motTop = solveMotor(dutyT, uT);
   motBot = solveMotor(dutyB, uB);
-  if (state.p.z + R20v*rT.x + R21v*rT.y + R22v*rT.z >= 0){ motTop.T *= 0.001; motTop.Q *= 0.001; }
-  if (state.p.z + R20v*rB.x + R21v*rB.y + R22v*rB.z >= 0){ motBot.T *= 0.001; motBot.Q *= 0.001; }
+  // surface ventilation: thrust fades as the disc nears/breaches the surface —
+  // disc-coverage (±R) × air-suction penalty within ~1.5D depth. No binary cliff.
+  const vent = zw => {
+    const d = -zw;                                             // disc-centre submergence
+    const cov = Math.max(0, Math.min(1, d/P.D + 0.5));         // disc area fraction (±R)
+    const suc = Math.max(0, Math.min(1, d/(1.5*P.D)));         // near-surface ventilation
+    return cov*suc;
+  };
+  const kvT = vent(state.p.z + R20v*rT.x + R21v*rT.y + R22v*rT.z);
+  const kvB = vent(state.p.z + R20v*rB.x + R21v*rB.y + R22v*rB.z);
+  motTop.T *= kvT; motTop.Q *= kvT;
+  motBot.T *= kvB; motBot.Q *= kvB;
   const sT = 1, sB = ctl.counter ? -1 : 1;
   F.x += motTop.T + motBot.T;
   M.add(rT.clone().cross(new THREE.Vector3(motTop.T,0,0)));
@@ -520,9 +533,9 @@ function physicsStep(dt){
 
   // --- added-mass Munk moment: v×(M_A·v) from Kirchhoff — destabilizing at incidence ---
   if (ctl.addedMass){
-    M.x += wf*(P.ma[1]-P.ma[2])*vb.y*vb.z;
-    M.y += wf*(P.ma[2]-P.ma[0])*vb.x*vb.z;
-    M.z += wf*(P.ma[0]-P.ma[1])*vb.x*vb.y;
+    M.x += wf*wf*(P.ma[1]-P.ma[2])*vb.y*vb.z;
+    M.y += wf*wf*(P.ma[2]-P.ma[0])*vb.x*vb.z;
+    M.z += wf*wf*(P.ma[0]-P.ma[1])*vb.x*vb.y;
   }
 
   // --- rotational damping (pectoral roll damping now comes from the per-blade forces) ---
@@ -536,13 +549,20 @@ function physicsStep(dt){
   const mX = P.mass + (on ? P.ma[0]*wf : 0);
   const mY = P.mass + (on ? P.ma[1]*wf : 0);
   const mZ = P.mass + (on ? P.ma[2]*wf : 0);
+  // coupling masses gated by wf²: the Kirchhoff cross terms assume CONSTANT added
+  // mass — during surface transit the anisotropic coupling would otherwise inject
+  // non-conservative energy (the 'explosive' exit). Free-surface proximity also
+  // physically kills the added-mass flow.
+  const mXc = P.mass + (on ? P.ma[0]*wf*wf : 0);
+  const mYc = P.mass + (on ? P.ma[1]*wf*wf : 0);
+  const mZc = P.mass + (on ? P.ma[2]*wf*wf : 0);
   const Ix = P.Irb[0] + (on ? P.Ia[0]*wf : 0);
   const Iy = P.Irb[1] + (on ? P.Ia[1]*wf : 0);
   const Iz = P.Irb[2] + (on ? P.Ia[2]*wf : 0);
   // translational: (m+ma)v̇ = F − ω×((M_RB+M_A)v)  — momentum coupling per axis
-  const du = (F.x - w.y*mZ*vb.z + w.z*mY*vb.y)/mX;
-  const dv = (F.y - w.z*mX*vb.x + w.x*mZ*vb.z)/mY;
-  const dw = (F.z - w.x*mY*vb.y + w.y*mX*vb.x)/mZ;
+  const du = (F.x - w.y*mZc*vb.z + w.z*mYc*vb.y)/mX;
+  const dv = (F.y - w.z*mXc*vb.x + w.x*mZc*vb.z)/mY;
+  const dw = (F.z - w.x*mYc*vb.y + w.y*mXc*vb.x)/mZ;
   const Iw = new THREE.Vector3(Ix*w.x, Iy*w.y, Iz*w.z);
   const gyro = new THREE.Vector3().copy(w).cross(Iw);
   w.x += dt*(M.x - gyro.x)/Ix;
