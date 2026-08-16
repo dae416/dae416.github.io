@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15l</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15o</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -139,7 +139,8 @@
     <div class="btns">
       <button id="sweepBtn" class="primary">FIN-DELAY SWEEP (0.1/0.2/0.4 vs no-fin)</button>
     </div>
-    <div class="row"><label>Step (deg)</label><input type="range" id="sfStep" min="30" max="180" value="90" step="5"><span class="val" id="sfStepv">90°</span></div>
+    <div class="row"><label>Step UP (deg)</label><input type="range" id="sfStepUp" min="10" max="180" value="90" step="5"><span class="val" id="sfStepUpv">90°</span></div>
+    <div class="row"><label>Step DOWN (deg)</label><input type="range" id="sfStepDn" min="10" max="180" value="90" step="5"><span class="val" id="sfStepDnv">90°</span></div>
     <div class="row"><label>Straight time</label><input type="range" id="sfStr" min="0.5" max="4" value="1" step="0.5"><span class="val" id="sfStrv">1 s</span></div>
     <div class="row"><label>Fin delay after step</label><input type="range" id="sfDly" min="0" max="0.5" value="0.1" step="0.05"><span class="val" id="sfDlyv">0.1 s</span></div>
     <div class="row"><label>Fin pulse length</label><input type="range" id="sfPul" min="0.1" max="1" value="0.3" step="0.05"><span class="val" id="sfPulv">0.3 s</span></div>
@@ -243,7 +244,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815l"></script>
+<script src="sim_data.js?v=20260815o"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -350,7 +351,7 @@ let jumpPhase = 0, jumpT = 0, jumpApex = -9;   // JUMP demo sequencer
 let sfPhase = 0, sfT = 0, sfDir = 1, sfFin = false, sfStepT = 0;  // pitch-step+fin sequencer
 let sweep = null;                                                 // fin-delay sweep controller
 const prevV = new THREE.Vector3(); let accB = new THREE.Vector3(0,0,1);
-Object.assign(ctl, {sfStep:90, sfStraight:1, sfDelay:0.1, sfPulse:0.3, slomo:1});
+Object.assign(ctl, {sfStepUp:90, sfStepDn:90, sfStraight:1, sfDelay:0.1, sfPulse:0.3, slomo:1});
 const respLog = [];    // accumulated step response times (on-screen log)                                              // last step command, for rise-time metric
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
@@ -812,7 +813,8 @@ bind('dutyB', v=>v, v=>ctl.dutyB=v);
 const markStep = to => { stepRef = {t0: state.t, from: null, to, rise: null}; };  // from = pitch at t0, filled lazily
 bind('jumpD', v=>v, v=>ctl.jumpDuty=v);
 bind('slomo', v=>(+v).toFixed(2)+'×', v=>ctl.slomo=v);
-bind('sfStep', v=>v+'°', v=>ctl.sfStep=v);
+bind('sfStepUp', v=>v+'°', v=>ctl.sfStepUp=v);
+bind('sfStepDn', v=>v+'°', v=>ctl.sfStepDn=v);
 bind('sfStr', v=>v+' s', v=>ctl.sfStraight=v);
 bind('sfDly', v=>v+' s', v=>ctl.sfDelay=v);
 bind('sfPul', v=>v+' s', v=>ctl.sfPulse=v);
@@ -834,10 +836,8 @@ const SWEEP_CASES = [
   {label:'no fin B',         d:0,   fin:false, color:'#1f5aa8'},
 ];
 function sweepStart(){
-  // bench-like rails for the campaign runs (session used 70-80 duty rails)
-  const set=(id,v)=>{const e=$(id); e.value=v; e.dispatchEvent(new Event('input'));};
-  set('pidKp',10); set('pidKd',0.5); set('pidKi',0);
-  set('pidBase',40); set('pidMax',80); set('pidDpwm',80); set('pidDly',60);
+  // uses YOUR current GUI settings (PID gains/rails, fin incidence, step angle);
+  // only the fin delay is changed per case
   sweep = {idx:0, runs:[], rec:null};
   sweepCase();
 }
@@ -846,7 +846,7 @@ function sweepCase(){
   $('sweepBtn').textContent = `SWEEP ${sweep.idx+1}/${SWEEP_CASES.length}: ${c.label}…`;
   if (c.fin){ $('sfDly').value = c.d; $('sfDly').dispatchEvent(new Event('input')); }
   sweep.rec = {label:c.label, color:c.color, stepT:null, data:[]};
-  startStepFin(-1, c.fin);                       // DOWN steps, like the bench figure
+  startStepFin(1, c.fin);                        // UP steps
 }
 function sweepFinish(run){
   for (const d of run.data) d.tr = d.t - run.stepT;
@@ -887,13 +887,13 @@ function drawSweep(runs){
   const PH = Math.floor((cv.height-70)/panels.length), PT = 40;
   c.fillStyle = '#1a1a19'; c.fillRect(0,0,W,cv.height);
   c.fillStyle = '#ffffff'; c.font = 'bold 22px system-ui'; c.textAlign='left';
-  c.fillText('Sim fin-delay sweep — DOWN '+ctl.sfStep+'° step · straight '+ctl.sfStraight+' s · pulse '+ctl.sfPulse+' s', PL, 26);
+  c.fillText('Sim fin-delay sweep — UP '+ctl.sfStepUp+'° step · straight '+ctl.sfStraight+' s · pulse '+ctl.sfPulse+' s · PID/fins as set in GUI', PL, 26);
   const X = t => PL + (t+1)/3*pw;
   panels.forEach(([name, get, opt], pi) => {
     const y0 = PT + pi*PH, ph = PH-16;
     let lo=1e9, hi=-1e9;
     for (const r of runs) for (const d of r.data){ const v=get(d); if (isFinite(v)){ lo=Math.min(lo,v); hi=Math.max(hi,v);} }
-    if (opt && opt.target){ lo=Math.min(lo,-ctl.sfStep); hi=Math.max(hi,5); }
+    if (opt && opt.target){ hi=Math.max(hi,ctl.sfStepUp); lo=Math.min(lo,-5); }
     if (hi-lo < 1e-6){ hi=lo+1; }
     const pad=(hi-lo)*0.08; lo-=pad; hi+=pad;
     const Y = v => y0 + ph - (v-lo)/(hi-lo)*ph;
@@ -907,7 +907,7 @@ function drawSweep(runs){
     c.fillText(lo.toFixed(Math.abs(lo)<10?1:0), PL-6, y0+ph-2);
     if (opt && opt.target){
       c.strokeStyle='#888880'; c.setLineDash([6,5]); c.beginPath();
-      c.moveTo(X(-1), Y(0)); c.lineTo(X(0), Y(0)); c.lineTo(X(0), Y(-ctl.sfStep)); c.lineTo(X(2), Y(-ctl.sfStep));
+      c.moveTo(X(-1), Y(0)); c.lineTo(X(0), Y(0)); c.lineTo(X(0), Y(ctl.sfStepUp)); c.lineTo(X(2), Y(ctl.sfStepUp));
       c.stroke(); c.setLineDash([]);
     }
     for (const r of runs){
@@ -995,12 +995,8 @@ const keyHandler = e => {
   if (c === 'KeyF') finBtn.click();
   else if (c === 'KeyS') takeShot();
   else if (c === 'Space') $('pidOn').click();
-  else if (c === 'ArrowLeft' || c === 'ArrowRight'){   // orbit the view ±45° around the robot
-    const ang = (c === 'ArrowLeft' ? 1 : -1) * Math.PI/4;
-    const off = camera.position.clone().sub(controls.target);
-    off.applyAxisAngle(new THREE.Vector3(0,0,1), ang);
-    camera.position.copy(controls.target).add(off);
-    controls.update();
+  else if (c === 'ArrowLeft' || c === 'ArrowRight'){   // orbit the view ±45°, smoothed
+    orbitRemain += (c === 'ArrowLeft' ? 1 : -1) * Math.PI/4;
   } else {
     const t = $('pidT'), d = c === 'ArrowUp' ? 30 : -30;
     t.value = Math.max(-180, Math.min(180, parseFloat(t.value) + d));
@@ -1225,6 +1221,7 @@ function agilityMetrics(){
   return 'Set a step or enable sine target.';
 }
 
+let orbitRemain = 0;                             // pending smooth view-orbit angle
 let last = performance.now(), acc = 0, propAngT = 0, propAngB = 0, frame = 0;
 const DT = 1/240;
 function loop(now){
@@ -1235,7 +1232,8 @@ function loop(now){
   while (acc > DT){ physicsStep(DT); acc -= DT; }
 
   if (sfPhase === 1 && state.t - sfT > ctl.sfStraight){       // straight done -> step
-    $('pidT').value = sfDir*ctl.sfStep; $('pidT').dispatchEvent(new Event('input'));
+    const mag = sfDir > 0 ? ctl.sfStepUp : ctl.sfStepDn;
+    $('pidT').value = sfDir*mag; $('pidT').dispatchEvent(new Event('input'));
     sfStepT = state.t; sfPhase = sfFin ? 2 : 4;
   } else if (sfPhase === 2 && state.t - sfStepT >= ctl.sfDelay){   // fin pulse ON
     if (!ctl.finsOpen) finBtn.click();
@@ -1245,7 +1243,7 @@ function loop(now){
     sfPhase = 4;
   } else if (sfPhase === 4 && state.t - sfStepT >= 2){             // report at +2 s
     const rise = stepRef && stepRef.rise != null ? stepRef.rise.toFixed(2)+' s' : '>2 s';
-    respLog.push(`STEP ${sfDir>0?'▲':'▼'}${ctl.sfStep}° ${sfFin?('FIN@'+ctl.sfDelay+'s'):'no-fin'} · rise ${rise} · 2s pitch ${att0().toFixed(0)}°`);
+    respLog.push(`STEP ${sfDir>0?'▲':'▼'}${sfDir>0?ctl.sfStepUp:ctl.sfStepDn}° ${sfFin?('FIN@'+ctl.sfDelay+'s'):'no-fin'} · rise ${rise} · 2s pitch ${att0().toFixed(0)}°`);
     while (respLog.length > 8) respLog.shift();
     document.getElementById('resplog').innerHTML =
       respLog.map((r,i)=> i===respLog.length-1 ? '<b>'+r+'</b>' : r).join('<br>');
@@ -1334,6 +1332,13 @@ function loop(now){
     const off = camera.position.clone().sub(controls.target);
     controls.target.lerp(state.p, 0.1);
     camera.position.copy(controls.target).add(off);
+  }
+  if (Math.abs(orbitRemain) > 1e-4){               // smooth arrow-key orbit
+    const st = orbitRemain * Math.min(1, dt*10);
+    const off = camera.position.clone().sub(controls.target);
+    off.applyAxisAngle(new THREE.Vector3(0,0,1), st);
+    camera.position.copy(controls.target).add(off);
+    orbitRemain -= st;
   }
   controls.update();
   renderer.render(scene, camera);
