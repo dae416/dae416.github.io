@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15i</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15j</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -230,7 +230,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815i"></script>
+<script src="sim_data.js?v=20260815j"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -399,9 +399,7 @@ function physicsStep(dt){
   // --- PID pitch control (firmware-style: differential trim, 60 ms loop delay) ---
   let dutyT = ctl.dutyT, dutyB = ctl.dutyB;
   {
-    const q2 = state.q;
-    const pitchNow = Math.atan2(2*(q2.x*q2.z - q2.w*q2.y),
-                                1 - 2*(q2.y*q2.y + q2.z*q2.z))*180/Math.PI;
+    const pitchNow = att0();
     while (pid.buf.length && pid.buf[pid.buf.length-1].t > state.t) pid.buf.pop();  // time rewound
     pid.buf.push({t: state.t, p: pitchNow});
     while (pid.buf.length > 2 && pid.buf[0].t < state.t - 0.3) pid.buf.shift();
@@ -1045,16 +1043,20 @@ function resize(){
 }
 addEventListener('resize', resize); resize();
 
-function att0(){                                  // pitch in the sagittal plane, ±180°
+function att0(){       // yaw-invariant sagittal pitch, ±180° (sign from the up vector)
   const q = state.q;
   const fz = 2*(q.x*q.z - q.w*q.y);
   const fx = 1 - 2*(q.y*q.y + q.z*q.z);
-  return Math.atan2(fz, fx)*180/Math.PI;
+  const fy = 2*(q.x*q.y + q.w*q.z);
+  const upz = 1 - 2*(q.x*q.x + q.y*q.y);
+  const h = Math.max(1e-9, Math.hypot(fx, fy)) * (upz >= 0 ? 1 : -1);
+  return Math.atan2(fz, h)*180/Math.PI;
 }
 function attitude(){
   const e = new THREE.Matrix4().makeRotationFromQuaternion(state.q).elements;
   const fwd = {x:e[0], y:e[1], z:e[2]};
-  const pitch = Math.atan2(fwd.z, Math.hypot(fwd.x, fwd.y) * Math.sign(fwd.x) || 1e-9)*180/Math.PI;
+  const h = Math.max(1e-9, Math.hypot(fwd.x, fwd.y)) * (e[10] >= 0 ? 1 : -1);  // e[10]=up.z
+  const pitch = Math.atan2(fwd.z, h)*180/Math.PI;
   const yaw = Math.atan2(fwd.y, fwd.x)*180/Math.PI;
   const roll = Math.atan2(e[6], e[10])*180/Math.PI;
   return {pitch, roll, yaw};
