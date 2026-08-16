@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15f</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15g</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -105,7 +105,7 @@
     <div class="checks">
       <label><input type="checkbox" id="pidOn"> PID on (overrides duty sliders) · <b>Space</b>, target <b>↑/↓</b> ±30°</label>
     </div>
-    <div class="row"><label>Target pitch</label><input type="range" id="pidT" min="-60" max="60" value="0" step="1"><span class="val" id="pidTv">0°</span></div>
+    <div class="row"><label>Target pitch</label><input type="range" id="pidT" min="-180" max="180" value="0" step="1"><span class="val" id="pidTv">0°</span></div>
     <div class="row"><label>Kp</label><input type="range" id="pidKp" min="0" max="30" value="10" step="0.5"><span class="val" id="pidKpv">10</span></div>
     <div class="row"><label>Ki</label><input type="range" id="pidKi" min="0" max="5" value="0" step="0.1"><span class="val" id="pidKiv">0</span></div>
     <div class="row"><label>Kd</label><input type="range" id="pidKd" min="0" max="3" value="0.5" step="0.1"><span class="val" id="pidKdv">0.5</span></div>
@@ -214,7 +214,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815f"></script>
+<script src="sim_data.js?v=20260815g"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -381,8 +381,9 @@ function physicsStep(dt){
   // --- PID pitch control (firmware-style: differential trim, 60 ms loop delay) ---
   let dutyT = ctl.dutyT, dutyB = ctl.dutyB;
   {
-    const fz = Math.max(-1, Math.min(1, 2*(state.q.x*state.q.z - state.q.w*state.q.y)));
-    const pitchNow = Math.asin(fz)*180/Math.PI;
+    const q2 = state.q;
+    const pitchNow = Math.atan2(2*(q2.x*q2.z - q2.w*q2.y),
+                                1 - 2*(q2.y*q2.y + q2.z*q2.z))*180/Math.PI;
     while (pid.buf.length && pid.buf[pid.buf.length-1].t > state.t) pid.buf.pop();  // time rewound
     pid.buf.push({t: state.t, p: pitchNow});
     while (pid.buf.length > 2 && pid.buf[0].t < state.t - 0.3) pid.buf.shift();
@@ -392,7 +393,7 @@ function physicsStep(dt){
       for (const b of pid.buf){ if (b.t <= tD) m = b; else break; }
       const tgt = ctl.sineOn ? ctl.sineA*Math.sin(2*Math.PI*state.t/ctl.sineT) : ctl.target;
       pid.tgt = tgt;
-      const e = tgt - m.p;
+      const e = ((tgt - m.p + 540) % 360) - 180;   // shortest way around
       pid.i = Math.max(-60, Math.min(60, pid.i + (ctl.ki ? e*dt : 0)));
       const dm = (m.p - pid.prev)/dt; pid.prev = m.p;
       let u = ctl.kp*e + ctl.ki*pid.i - ctl.kd*dm;    // PWM counts; e in deg
@@ -603,9 +604,15 @@ scene.add(new THREE.HemisphereLight(0x88aacc, 0x223344, 1.1));
 const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(1,-1,2); scene.add(dl);
 
 const water = new THREE.Mesh(new THREE.PlaneGeometry(80, 80),
-  new THREE.MeshBasicMaterial({color:0x2a6a9a, transparent:true, opacity:0.28,
+  new THREE.MeshBasicMaterial({color:0x2a6a9a, transparent:true, opacity:0.34,
                                side:THREE.DoubleSide, depthWrite:false}));
 water.renderOrder = 2; scene.add(water);          // free surface at z = 0
+// surface grid: makes the waterline readable from any angle, above or below
+const waterGrid = new THREE.GridHelper(80, 160, 0x7fc4ee, 0x3f7fae);
+waterGrid.rotation.x = Math.PI/2; waterGrid.position.z = 0.001;
+waterGrid.material.transparent = true; waterGrid.material.opacity = 0.45;
+waterGrid.material.depthWrite = false; waterGrid.renderOrder = 3;
+scene.add(waterGrid);
 
 const grid = new THREE.GridHelper(4, 40, 0x2c3a4a, 0x1c2735);
 grid.rotation.x = Math.PI/2; grid.position.z = -0.35; scene.add(grid);
@@ -839,7 +846,7 @@ const keyHandler = e => {
   else if (c === 'Space') $('pidOn').click();
   else {
     const t = $('pidT'), d = c === 'ArrowUp' ? 30 : -30;
-    t.value = Math.max(-60, Math.min(60, parseFloat(t.value) + d));
+    t.value = Math.max(-180, Math.min(180, parseFloat(t.value) + d));
     t.dispatchEvent(new Event('input'));
   }
 };
@@ -1001,14 +1008,16 @@ function resize(){
 }
 addEventListener('resize', resize); resize();
 
-function att0(){
+function att0(){                                  // pitch in the sagittal plane, ±180°
   const q = state.q;
-  return Math.asin(Math.max(-1, Math.min(1, 2*(q.x*q.z - q.w*q.y))))*180/Math.PI;
+  const fz = 2*(q.x*q.z - q.w*q.y);
+  const fx = 1 - 2*(q.y*q.y + q.z*q.z);
+  return Math.atan2(fz, fx)*180/Math.PI;
 }
 function attitude(){
   const e = new THREE.Matrix4().makeRotationFromQuaternion(state.q).elements;
   const fwd = {x:e[0], y:e[1], z:e[2]};
-  const pitch = Math.asin(Math.max(-1,Math.min(1,fwd.z)))*180/Math.PI;
+  const pitch = Math.atan2(fwd.z, Math.hypot(fwd.x, fwd.y) * Math.sign(fwd.x) || 1e-9)*180/Math.PI;
   const yaw = Math.atan2(fwd.y, fwd.x)*180/Math.PI;
   const roll = Math.atan2(e[6], e[10])*180/Math.PI;
   return {pitch, roll, yaw};
