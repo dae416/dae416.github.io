@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15j</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15k</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -135,6 +135,9 @@
       <button id="sfDnFin">▼ DOWN + FIN</button>
       <button id="sfUp">▲ UP</button>
       <button id="sfDn">▼ DOWN</button>
+    </div>
+    <div class="btns">
+      <button id="sweepBtn" class="primary">FIN-DELAY SWEEP (0.1/0.2/0.4 vs no-fin)</button>
     </div>
     <div class="row"><label>Step (deg)</label><input type="range" id="sfStep" min="30" max="180" value="90" step="5"><span class="val" id="sfStepv">90°</span></div>
     <div class="row"><label>Straight time</label><input type="range" id="sfStr" min="0.5" max="4" value="1" step="0.5"><span class="val" id="sfStrv">1 s</span></div>
@@ -220,6 +223,16 @@
       (fin W/B) are drawn at a 9 mm minimum so they stay visible.</div>
   </div>
 
+  <div id="sweepModal" style="display:none; position:fixed; inset:3%; z-index:50; background:var(--surface-1);
+       border:1px solid var(--border); border-radius:10px; overflow:auto; padding:14px 18px">
+    <div class="btns" style="position:sticky; top:0; background:var(--surface-1); padding:4px 0">
+      <b style="align-self:center">Fin-delay sweep — sim reproduction (aligned at the step)</b>
+      <button id="sweepPng">Download PNG</button>
+      <button id="sweepClose">Close</button>
+    </div>
+    <canvas id="sweepCv" width="1500" height="3000" style="width:100%"></canvas>
+  </div>
+
   <div id="chartbox">
     <div id="legend">
       <span><i style="background:var(--s1)"></i>Pitch</span>
@@ -230,7 +243,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815j"></script>
+<script src="sim_data.js?v=20260815k"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -335,6 +348,8 @@ const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller s
 let stepRef = null;
 let jumpPhase = 0, jumpT = 0, jumpApex = -9;   // JUMP demo sequencer
 let sfPhase = 0, sfT = 0, sfDir = 1, sfFin = false, sfStepT = 0;  // pitch-step+fin sequencer
+let sweep = null;                                                 // fin-delay sweep controller
+const prevV = new THREE.Vector3(); let accB = new THREE.Vector3(0,0,1);
 Object.assign(ctl, {sfStep:90, sfStraight:1, sfDelay:0.1, sfPulse:0.3, slomo:1});
 const respLog = [];    // accumulated step response times (on-screen log)                                              // last step command, for rise-time metric
 let finFrac = 1;                       // 1 = deployed, 0 = folded
@@ -811,6 +826,107 @@ const startStepFin = (dir, fin) => {
   sfDir = dir; sfFin = fin; sfPhase = 1; sfT = state.t;
   jumpPhase = 0;
 };
+const SWEEP_CASES = [
+  {label:'fin, 0.1 s delay', d:0.1, fin:true,  color:'#f2a25c'},
+  {label:'fin, 0.2 s delay', d:0.2, fin:true,  color:'#e2571f'},
+  {label:'fin, 0.4 s delay', d:0.4, fin:true,  color:'#9c2b06'},
+  {label:'no fin A',         d:0,   fin:false, color:'#a9c9e8'},
+  {label:'no fin B',         d:0,   fin:false, color:'#1f5aa8'},
+];
+function sweepStart(){
+  // bench-like rails for the campaign runs (session used 70-80 duty rails)
+  const set=(id,v)=>{const e=$(id); e.value=v; e.dispatchEvent(new Event('input'));};
+  set('pidKp',10); set('pidKd',0.5); set('pidKi',0);
+  set('pidBase',40); set('pidMax',80); set('pidDpwm',80); set('pidDly',60);
+  sweep = {idx:0, runs:[], rec:null};
+  sweepCase();
+}
+function sweepCase(){
+  const c = SWEEP_CASES[sweep.idx];
+  $('sweepBtn').textContent = `SWEEP ${sweep.idx+1}/${SWEEP_CASES.length}: ${c.label}…`;
+  if (c.fin){ $('sfDly').value = c.d; $('sfDly').dispatchEvent(new Event('input')); }
+  sweep.rec = {label:c.label, color:c.color, stepT:null, data:[]};
+  startStepFin(-1, c.fin);                       // DOWN steps, like the bench figure
+}
+function sweepFinish(run){
+  for (const d of run.data) d.tr = d.t - run.stepT;
+  run.data = run.data.filter(d => d.tr > -1.05 && d.tr < 2.05);
+  sweep.runs.push(run);
+  sweep.idx++;
+  if (sweep.idx < SWEEP_CASES.length) sweepCase();
+  else {
+    $('sweepBtn').textContent = 'FIN-DELAY SWEEP (0.1/0.2/0.4 vs no-fin)';
+    drawSweep(sweep.runs); sweep = null;
+  }
+}
+$('sweepBtn').addEventListener('click', ()=>{ if (!sweep) sweepStart(); });
+$('sweepClose').addEventListener('click', ()=>{ $('sweepModal').style.display='none'; });
+$('sweepPng').addEventListener('click', ()=>{
+  document.getElementById('sweepCv').toBlob(bl=>{
+    const a=document.createElement('a'); a.href=URL.createObjectURL(bl);
+    a.download='sim_fin_delay_sweep.png'; a.click(); URL.revokeObjectURL(a.href);
+  });
+});
+function drawSweep(runs){
+  const cv = document.getElementById('sweepCv'), c = cv.getContext('2d');
+  const W = cv.width, PL = 90, PR = 200, pw = W-PL-PR;
+  const panels = [
+    ['Pitch (deg)',      d=>d.pitch, {target:true}],
+    ['pitch rate (dps)', d=>d.wy],
+    ['Roll (deg)',       d=>d.roll],
+    ['Yaw (deg)',        d=>d.yaw],
+    ['|a| (g)',          d=>d.am],
+    ['ax (g)',           d=>d.ax],
+    ['ay (g)',           d=>d.ay],
+    ['az (g)',           d=>d.az],
+    ['PID u',            d=>d.u],
+    ['Bottom PWM',       d=>d.dB],
+    ['Top PWM',          d=>d.dT],
+    ['Fin deploy (%)',   d=>d.fin*100],
+  ];
+  const PH = Math.floor((cv.height-70)/panels.length), PT = 40;
+  c.fillStyle = '#1a1a19'; c.fillRect(0,0,W,cv.height);
+  c.fillStyle = '#ffffff'; c.font = 'bold 22px system-ui'; c.textAlign='left';
+  c.fillText('Sim fin-delay sweep — DOWN '+ctl.sfStep+'° step · straight '+ctl.sfStraight+' s · pulse '+ctl.sfPulse+' s', PL, 26);
+  const X = t => PL + (t+1)/3*pw;
+  panels.forEach(([name, get, opt], pi) => {
+    const y0 = PT + pi*PH, ph = PH-16;
+    let lo=1e9, hi=-1e9;
+    for (const r of runs) for (const d of r.data){ const v=get(d); if (isFinite(v)){ lo=Math.min(lo,v); hi=Math.max(hi,v);} }
+    if (opt && opt.target){ lo=Math.min(lo,-ctl.sfStep); hi=Math.max(hi,5); }
+    if (hi-lo < 1e-6){ hi=lo+1; }
+    const pad=(hi-lo)*0.08; lo-=pad; hi+=pad;
+    const Y = v => y0 + ph - (v-lo)/(hi-lo)*ph;
+    c.strokeStyle = '#2c2c2a'; c.lineWidth=1; c.strokeRect(PL, y0, pw, ph);
+    c.beginPath(); c.setLineDash([3,4]); c.strokeStyle='#55554f';
+    c.moveTo(X(0), y0); c.lineTo(X(0), y0+ph); c.stroke(); c.setLineDash([]);
+    if (lo<0 && hi>0){ c.strokeStyle='#33332f'; c.beginPath(); c.moveTo(PL,Y(0)); c.lineTo(PL+pw,Y(0)); c.stroke(); }
+    c.fillStyle='#c3c2b7'; c.font='15px system-ui'; c.textAlign='right';
+    c.save(); c.translate(24, y0+ph/2); c.rotate(-Math.PI/2); c.textAlign='center'; c.fillText(name,0,0); c.restore();
+    c.fillText(hi.toFixed(Math.abs(hi)<10?1:0), PL-6, y0+12);
+    c.fillText(lo.toFixed(Math.abs(lo)<10?1:0), PL-6, y0+ph-2);
+    if (opt && opt.target){
+      c.strokeStyle='#888880'; c.setLineDash([6,5]); c.beginPath();
+      c.moveTo(X(-1), Y(0)); c.lineTo(X(0), Y(0)); c.lineTo(X(0), Y(-ctl.sfStep)); c.lineTo(X(2), Y(-ctl.sfStep));
+      c.stroke(); c.setLineDash([]);
+    }
+    for (const r of runs){
+      c.strokeStyle = r.color; c.lineWidth = 2.2; c.beginPath();
+      let st=false, pv=null;
+      for (const d of r.data){ const v=get(d); if (!isFinite(v)) continue;
+        if (st && pv!=null && Math.abs(v-pv) > 120){ st=false; }   // break at wrap artifacts
+        st ? c.lineTo(X(d.tr), Y(v)) : c.moveTo(X(d.tr), Y(v)); st=true; pv=v; }
+      c.stroke();
+    }
+    if (pi === panels.length-1){
+      c.fillStyle='#898781'; c.font='14px system-ui'; c.textAlign='center';
+      for (let t=-1;t<=2;t+=0.5) c.fillText(t+' s', X(t), y0+ph+14);
+    }
+  });
+  runs.forEach((r,i)=>{ c.fillStyle=r.color; c.fillRect(W-PR+10, PT+18*i, 22, 4);
+    c.fillStyle='#c3c2b7'; c.font='14px system-ui'; c.textAlign='left'; c.fillText(r.label, W-PR+38, PT+6+18*i); });
+  $('sweepModal').style.display='block';
+}
 $('sfUpFin').addEventListener('click', ()=>startStepFin( 1, true));
 $('sfDnFin').addEventListener('click', ()=>startStepFin(-1, true));
 $('sfUp').addEventListener('click',    ()=>startStepFin( 1, false));
@@ -1147,6 +1263,26 @@ function loop(now){
         respLog.map((r,i)=> i===respLog.length-1 ? '<b>'+r+'</b>' : r).join('<br>');
       jumpPhase = 0;
     }
+  }
+
+  // IMU-style specific force in body frame [g] (numerical accel minus gravity)
+  if (dts > 1e-4){
+    const aW = state.v.clone().sub(prevV).divideScalar(dts); aW.z += 9.81;
+    accB = aW.applyQuaternion(tmpQ.copy(state.q).invert()).divideScalar(9.81);
+  }
+  prevV.copy(state.v);
+  if (sweep && sweep.rec && sfPhase > 0){
+    const R = sweep.rec;
+    if (R.stepT == null && sfPhase >= 2) R.stepT = sfStepT;
+    if (!R.data.length || state.t - R.data[R.data.length-1].t > 0.02){
+      const a2 = attitude();
+      R.data.push({t:state.t, pitch:a2.pitch, roll:a2.roll, yaw:a2.yaw,
+        wy:state.w.y*180/Math.PI, am:accB.length(), ax:accB.x, ay:accB.y, az:accB.z,
+        u:pid.u, dT:pid.dT, dB:pid.dB, fin:finFrac});
+    }
+  }
+  if (sweep && sweep.rec && sfPhase === 0 && sweep.rec.stepT != null){
+    const done = sweep.rec; sweep.rec = null; sweepFinish(done);
   }
 
   const att = attitude();
