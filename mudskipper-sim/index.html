@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15k</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15l</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -103,7 +103,7 @@
 
     <h2>PID pitch control (firmware-style)</h2>
     <div class="checks">
-      <label><input type="checkbox" id="pidOn"> PID on (overrides duty sliders) · <b>Space</b>, target <b>↑/↓</b> ±30°</label>
+      <label><input type="checkbox" id="pidOn"> PID on (overrides duty sliders) · <b>Space</b>, target <b>↑/↓</b> ±30°, view <b>←/→</b> 45°</label>
     </div>
     <div class="row"><label>Target pitch</label><input type="range" id="pidT" min="-180" max="180" value="0" step="1"><span class="val" id="pidTv">0°</span></div>
     <div class="row"><label>Kp</label><input type="range" id="pidKp" min="0" max="30" value="10" step="0.5"><span class="val" id="pidKpv">10</span></div>
@@ -243,7 +243,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815k"></script>
+<script src="sim_data.js?v=20260815l"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -988,14 +988,20 @@ finBtn.addEventListener('click', () => {
 const keyHandler = e => {
   if (e.metaKey || e.ctrlKey || e.altKey) return;
   const c = e.code;
-  if (c !== 'KeyF' && c !== 'KeyS' && c !== 'Space' && c !== 'ArrowUp' && c !== 'ArrowDown') return;
+  if (c !== 'KeyF' && c !== 'KeyS' && c !== 'Space' && c !== 'ArrowUp' && c !== 'ArrowDown' && c !== 'ArrowLeft' && c !== 'ArrowRight') return;
   e.preventDefault();
   if (e.type !== 'keydown' || e.repeat) return;
   if (document.activeElement && document.activeElement !== document.body) document.activeElement.blur();
   if (c === 'KeyF') finBtn.click();
   else if (c === 'KeyS') takeShot();
   else if (c === 'Space') $('pidOn').click();
-  else {
+  else if (c === 'ArrowLeft' || c === 'ArrowRight'){   // orbit the view ±45° around the robot
+    const ang = (c === 'ArrowLeft' ? 1 : -1) * Math.PI/4;
+    const off = camera.position.clone().sub(controls.target);
+    off.applyAxisAngle(new THREE.Vector3(0,0,1), ang);
+    camera.position.copy(controls.target).add(off);
+    controls.update();
+  } else {
     const t = $('pidT'), d = c === 'ArrowUp' ? 30 : -30;
     t.value = Math.max(-180, Math.min(180, parseFloat(t.value) + d));
     t.dispatchEvent(new Event('input'));
@@ -1394,7 +1400,7 @@ function takeShot(){
 }
 $('shotBtn').addEventListener('click', takeShot);
 window.TAKESHOT = takeShot;
-window.P = P; window.CTL = ctl; window.SIMSTATE = state; window.DBG = dbg;   // console/debug access
+window.P = P; window.CTL = ctl; window.SIMSTATE = state; window.DBG = dbg; window.CAMERA = camera;   // console/debug access
 requestAnimationFrame(loop);
 </script>
 </body>
