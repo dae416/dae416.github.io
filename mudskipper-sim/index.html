@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15t</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15u</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -106,7 +106,7 @@
       <label><input type="checkbox" id="pidOn"> PID on (overrides duty sliders) · <b>Space</b>, target <b>↑/↓</b> ±30°, view <b>←/→</b> 45°</label>
     </div>
     <div class="row"><label>Target pitch</label><input type="range" id="pidT" min="-180" max="180" value="0" step="1"><span class="val" id="pidTv">0°</span></div>
-    <div class="row"><label>Kp</label><input type="range" id="pidKp" min="0" max="30" value="10" step="0.5"><span class="val" id="pidKpv">10</span></div>
+    <div class="row"><label>Kp</label><input type="range" id="pidKp" min="0" max="30" value="2" step="0.5"><span class="val" id="pidKpv">2</span></div>
     <div class="row"><label>Ki</label><input type="range" id="pidKi" min="0" max="5" value="0" step="0.1"><span class="val" id="pidKiv">0</span></div>
     <div class="row"><label>Kd</label><input type="range" id="pidKd" min="0" max="3" value="0.5" step="0.1"><span class="val" id="pidKdv">0.5</span></div>
     <div class="row"><label>Base duty</label><input type="range" id="pidBase" min="0" max="255" value="10" step="1"><span class="val" id="pidBasev">10</span></div>
@@ -214,7 +214,7 @@
       <label><input type="checkbox" id="trail" checked> Trail</label>
       <label><input type="checkbox" id="follow" checked> Follow cam</label>
       <label><input type="checkbox" id="lat" checked> 1 m markers</label>
-      <label><input type="checkbox" id="eyes" checked> Googly eyes</label>
+      <label><input type="checkbox" id="eyes"> Googly eyes</label>
     </div>
     <div class="row"><label>Sim speed (slo-mo)</label><input type="range" id="slomo" min="0.05" max="1" value="1" step="0.05"><span class="val" id="slomov">1.00×</span></div>
     <div class="btns"><button id="shotBtn">Screenshot (S)</button></div>
@@ -245,7 +245,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815t"></script>
+<script src="sim_data.js?v=20260815u"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -344,7 +344,7 @@ function resetState(){
 }
 
 const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true,
-             pid:false, target:0, kp:10, ki:0, kd:0.5, base:10, maxDuty:60, maxDPWM:60, delayMs:60,
+             pid:false, target:0, kp:2, ki:0, kd:0.5, base:10, maxDuty:60, maxDPWM:60, delayMs:60,
              sineOn:false, sineA:20, sineT:2};
 const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller state + delay line
 let stepRef = null;
