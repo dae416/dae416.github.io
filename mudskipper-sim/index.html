@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15u</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-16b</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -245,7 +245,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815u"></script>
+<script src="sim_data.js?v=20260816b"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -731,7 +731,7 @@ placeProps();
 
 // CoM / CoB markers — always visible through the hull, with labels
 // googly eyes: front-upper flanks; pupils are free marbles driven by specific force
-const EYE = {x:24e-3, z:30e-3, y:10.6e-3, R:6e-3, r:2.6e-3, travel:3.0e-3};
+const EYE = {x:24e-3, z:30e-3, y:10.6e-3, R:6e-3, r:2.6e-3, travel:3.0e-3, gain:3.5};
 const eyeGrp = new THREE.Group(); meshGrp.add(eyeGrp);
 const eyeWhiteMat = new THREE.MeshBasicMaterial({color:0xffffff, side:THREE.DoubleSide});
 const eyeBlackMat = new THREE.MeshBasicMaterial({color:0x111111, side:THREE.DoubleSide});
@@ -744,13 +744,18 @@ const eyes = [1, -1].map(sgn => {
   p.position.set(EYE.x, sgn*(EYE.y+0.4e-3), EYE.z - EYE.travel*0.8);
   eyeGrp.add(w, p);
   // per-eye marble state (slightly different damping so they wiggle independently)
-  return {sgn, p, px:0, pz:-EYE.travel*0.8, vx:0, vz:0, c: 6 + 2*Math.random()};
+  return {sgn, p, px:0, pz:-EYE.travel*0.8, vx:0, vz:0, c: 3.5 + 1.5*Math.random()};
 });
 function updateEyes(dt){
   if (dt <= 0) return;
   const g0 = 9.81;
   for (const e of eyes){
-    const ax = -accB.x*g0, az = -accB.z*g0;          // marble lags the housing
+    // split specific force into pure motion accel (amplified — this is what slams
+    // the pupils back on a surge) and gravity along the face (kept 1:1)
+    const q = state.q;
+    const upX = 2*(q.x*q.z - q.w*q.y), upZ = 1 - 2*(q.x*q.x + q.y*q.y);
+    const ax = -g0*(EYE.gain*(accB.x - upX) + upX);
+    const az = -g0*(EYE.gain*(accB.z - upZ) + upZ);
     e.vx += (ax - e.c*e.vx)*dt;
     e.vz += (az - e.c*e.vz)*dt;
     e.px += e.vx*dt; e.pz += e.vz*dt;
@@ -1467,7 +1472,7 @@ function takeShot(){
 }
 $('shotBtn').addEventListener('click', takeShot);
 window.TAKESHOT = takeShot;
-window.P = P; window.CTL = ctl; window.SIMSTATE = state; window.DBG = dbg; window.CAMERA = camera;   // console/debug access
+window.P = P; window.CTL = ctl; window.SIMSTATE = state; window.DBG = dbg; window.CAMERA = camera; window.EYES = eyes;   // console/debug access
 requestAnimationFrame(loop);
 </script>
 </body>
