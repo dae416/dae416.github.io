@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15d</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15e</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -109,7 +109,7 @@
     <div class="row"><label>Kp</label><input type="range" id="pidKp" min="0" max="30" value="10" step="0.5"><span class="val" id="pidKpv">10</span></div>
     <div class="row"><label>Ki</label><input type="range" id="pidKi" min="0" max="5" value="0" step="0.1"><span class="val" id="pidKiv">0</span></div>
     <div class="row"><label>Kd</label><input type="range" id="pidKd" min="0" max="3" value="0.5" step="0.1"><span class="val" id="pidKdv">0.5</span></div>
-    <div class="row"><label>Base duty</label><input type="range" id="pidBase" min="0" max="40" value="10" step="1"><span class="val" id="pidBasev">10</span></div>
+    <div class="row"><label>Base duty</label><input type="range" id="pidBase" min="0" max="255" value="10" step="1"><span class="val" id="pidBasev">10</span></div>
     <div class="row"><label>Loop delay</label><input type="range" id="pidDly" min="0" max="150" value="60" step="10"><span class="val" id="pidDlyv">60 ms</span></div>
     <div class="note" id="pidNote">Campaign gains: Kp 10 · Ki 0 · Kd 0.5, ceiling 60/255, measured ~60 ms transport delay.
     u = Kp·e + Ki·∫e − Kd·dθ/dt → top = base − u, bottom = base + u.</div>
@@ -211,7 +211,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815d"></script>
+<script src="sim_data.js?v=20260815e"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -393,8 +393,9 @@ function physicsStep(dt){
       pid.i = Math.max(-60, Math.min(60, pid.i + (ctl.ki ? e*dt : 0)));
       const dm = (m.p - pid.prev)/dt; pid.prev = m.p;
       const u = ctl.kp*e + ctl.ki*pid.i - ctl.kd*dm;  // PWM counts; e in deg
-      dutyT = Math.max(0, Math.min(60, ctl.base - u));
-      dutyB = Math.max(0, Math.min(60, ctl.base + u));
+      const lim = Math.max(60, ctl.base);        // ceiling follows base past the firmware 60
+      dutyT = Math.max(0, Math.min(lim, ctl.base - u));
+      dutyB = Math.max(0, Math.min(lim, ctl.base + u));
       pid.u = u; pid.e = e; pid.dT = dutyT; pid.dB = dutyB;
     } else { pid.i = 0; pid.prev = pitchNow; }
   }
