@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15e</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15f</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -110,9 +110,12 @@
     <div class="row"><label>Ki</label><input type="range" id="pidKi" min="0" max="5" value="0" step="0.1"><span class="val" id="pidKiv">0</span></div>
     <div class="row"><label>Kd</label><input type="range" id="pidKd" min="0" max="3" value="0.5" step="0.1"><span class="val" id="pidKdv">0.5</span></div>
     <div class="row"><label>Base duty</label><input type="range" id="pidBase" min="0" max="255" value="10" step="1"><span class="val" id="pidBasev">10</span></div>
+    <div class="row"><label>Max duty (per motor)</label><input type="range" id="pidMax" min="0" max="255" value="60" step="1"><span class="val" id="pidMaxv">60</span></div>
+    <div class="row"><label>Max ΔPWM</label><input type="range" id="pidDpwm" min="0" max="255" value="60" step="1"><span class="val" id="pidDpwmv">60</span></div>
     <div class="row"><label>Loop delay</label><input type="range" id="pidDly" min="0" max="150" value="60" step="10"><span class="val" id="pidDlyv">60 ms</span></div>
-    <div class="note" id="pidNote">Campaign gains: Kp 10 · Ki 0 · Kd 0.5, ceiling 60/255, measured ~60 ms transport delay.
-    u = Kp·e + Ki·∫e − Kd·dθ/dt → top = base − u, bottom = base + u.</div>
+    <div class="note" id="pidNote">Firmware-style: u = Kp·e + Ki·∫e − Kd·dθ/dt clamped to ±ΔPWM;
+    top = base − u, bottom = base + u, each clamped 0…maxDuty. Campaign: Kp 10 · Ki 0 · Kd 0.5 ·
+    base 10 · maxDuty 60 · ~60 ms delay.</div>
 
     <h2>Maneuver · agility</h2>
     <div class="checks">
@@ -211,7 +214,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815e"></script>
+<script src="sim_data.js?v=20260815f"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -310,7 +313,7 @@ function resetState(){
 }
 
 const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true,
-             pid:false, target:0, kp:10, ki:0, kd:0.5, base:10, delayMs:60,
+             pid:false, target:0, kp:10, ki:0, kd:0.5, base:10, maxDuty:60, maxDPWM:60, delayMs:60,
              sineOn:false, sineA:20, sineT:2};
 const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller state + delay line
 let stepRef = null;
@@ -392,10 +395,10 @@ function physicsStep(dt){
       const e = tgt - m.p;
       pid.i = Math.max(-60, Math.min(60, pid.i + (ctl.ki ? e*dt : 0)));
       const dm = (m.p - pid.prev)/dt; pid.prev = m.p;
-      const u = ctl.kp*e + ctl.ki*pid.i - ctl.kd*dm;  // PWM counts; e in deg
-      const lim = Math.max(60, ctl.base);        // ceiling follows base past the firmware 60
-      dutyT = Math.max(0, Math.min(lim, ctl.base - u));
-      dutyB = Math.max(0, Math.min(lim, ctl.base + u));
+      let u = ctl.kp*e + ctl.ki*pid.i - ctl.kd*dm;    // PWM counts; e in deg
+      u = Math.max(-ctl.maxDPWM, Math.min(ctl.maxDPWM, u));      // differential clamp
+      dutyT = Math.max(0, Math.min(ctl.maxDuty, ctl.base - u));  // per-motor ceiling
+      dutyB = Math.max(0, Math.min(ctl.maxDuty, ctl.base + u));
       pid.u = u; pid.e = e; pid.dT = dutyT; pid.dB = dutyB;
     } else { pid.i = 0; pid.prev = pitchNow; }
   }
@@ -792,6 +795,8 @@ bind('pidKp', v=>v, v=>ctl.kp=v);
 bind('pidKi', v=>v, v=>ctl.ki=v);
 bind('pidKd', v=>v, v=>ctl.kd=v);
 bind('pidBase', v=>v, v=>ctl.base=v);
+bind('pidMax', v=>v, v=>ctl.maxDuty=v);
+bind('pidDpwm', v=>v, v=>ctl.maxDPWM=v);
 bind('pidDly', v=>v+' ms', v=>ctl.delayMs=v);
 $('pidOn').addEventListener('change', e=>{ctl.pid=e.target.checked; pid.i=0; pid.buf.length=0;});
 bind('comDrop', v=>v+' mm', v=>{P.comDrop=v*1e-3; updateCOM(); placeProps();});
