@@ -79,7 +79,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15p</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-15q</b></div>
 
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
@@ -143,7 +143,7 @@
     <div class="row"><label>Step DOWN (deg)</label><input type="range" id="sfStepDn" min="10" max="180" value="90" step="5"><span class="val" id="sfStepDnv">90°</span></div>
     <div class="row"><label>Straight time</label><input type="range" id="sfStr" min="0.5" max="4" value="1" step="0.5"><span class="val" id="sfStrv">1 s</span></div>
     <div class="row"><label>Fin delay after step</label><input type="range" id="sfDly" min="0" max="0.5" value="0.1" step="0.05"><span class="val" id="sfDlyv">0.1 s</span></div>
-    <div class="row"><label>Fin pulse length</label><input type="range" id="sfPul" min="0.1" max="1" value="0.3" step="0.05"><span class="val" id="sfPulv">0.3 s</span></div>
+    <div class="row"><label>Fin pulse length</label><input type="range" id="sfPul" min="0.1" max="5" value="0.3" step="0.05"><span class="val" id="sfPulv">0.3 s</span></div>
     <div class="note">Bench protocol: straight at 0° (PID) → target steps ±Step; +FIN modes pulse the
     fin open at the set delay, shut after the pulse (real robot: 220 PWM / 300 ms bottom-fin pulse).
     Result logged bottom-right: rise time + pitch 2 s after the step.</div>
@@ -244,7 +244,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260815p"></script>
+<script src="sim_data.js?v=20260815q"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -350,6 +350,7 @@ let stepRef = null;
 let jumpPhase = 0, jumpT = 0, jumpApex = -9;   // JUMP demo sequencer
 let sfPhase = 0, sfT = 0, sfDir = 1, sfFin = false, sfStepT = 0;  // pitch-step+fin sequencer
 let sweep = null;                                                 // fin-delay sweep controller
+const runWin = () => Math.max(2, ctl.sfDelay + ctl.sfPulse + 0.7);  // observation window after the step
 const prevV = new THREE.Vector3(); let accB = new THREE.Vector3(0,0,1);
 Object.assign(ctl, {sfStepUp:90, sfStepDn:90, sfStraight:1, sfDelay:0.1, sfPulse:0.3, slomo:1});
 const respLog = [];    // accumulated step response times (on-screen log)                                              // last step command, for rise-time metric
@@ -839,7 +840,7 @@ const SWEEP_CASES = [
 function sweepStart(){
   // uses YOUR current GUI settings (PID gains/rails, fin incidence, step angle);
   // only the fin delay is changed per case
-  sweep = {idx:0, runs:[], rec:null};
+  sweep = {idx:0, runs:[], rec:null, win: Math.max(2, 0.4 + ctl.sfPulse + 0.7)};
   sweepCase();
 }
 function sweepCase(){
@@ -850,14 +851,15 @@ function sweepCase(){
   startStepFin(1, c.fin);                        // UP steps
 }
 function sweepFinish(run){
+  const W = sweep.win;
   for (const d of run.data) d.tr = d.t - run.stepT;
-  run.data = run.data.filter(d => d.tr > -1.05 && d.tr < 2.05);
+  run.data = run.data.filter(d => d.tr > -1.05 && d.tr < W + 0.05);
   sweep.runs.push(run);
   sweep.idx++;
   if (sweep.idx < SWEEP_CASES.length) sweepCase();
   else {
     $('sweepBtn').textContent = 'FIN-DELAY SWEEP (0/0.1/0.2/0.4 vs no-fin)';
-    drawSweep(sweep.runs); sweep = null;
+    drawSweep(sweep.runs, W); sweep = null;
   }
 }
 $('sweepBtn').addEventListener('click', ()=>{ if (!sweep) sweepStart(); });
@@ -868,7 +870,8 @@ $('sweepPng').addEventListener('click', ()=>{
     a.download='sim_fin_delay_sweep.png'; a.click(); URL.revokeObjectURL(a.href);
   });
 });
-function drawSweep(runs){
+function drawSweep(runs, WIN){
+  WIN = WIN || 2;
   const cv = document.getElementById('sweepCv'), c = cv.getContext('2d');
   const W = cv.width, PL = 90, PR = 200, pw = W-PL-PR;
   const panels = [
@@ -876,6 +879,7 @@ function drawSweep(runs){
     ['pitch rate (dps)', d=>d.wy],
     ['Roll (deg)',       d=>d.roll],
     ['Yaw (deg)',        d=>d.yaw],
+    ['Speed (m/s)',      d=>d.spd],
     ['|a| (g)',          d=>d.am],
     ['ax (g)',           d=>d.ax],
     ['ay (g)',           d=>d.ay],
@@ -889,7 +893,7 @@ function drawSweep(runs){
   c.fillStyle = '#1a1a19'; c.fillRect(0,0,W,cv.height);
   c.fillStyle = '#ffffff'; c.font = 'bold 22px system-ui'; c.textAlign='left';
   c.fillText('Sim fin-delay sweep — UP '+ctl.sfStepUp+'° step · straight '+ctl.sfStraight+' s · pulse '+ctl.sfPulse+' s · PID/fins as set in GUI', PL, 26);
-  const X = t => PL + (t+1)/3*pw;
+  const X = t => PL + (t+1)/(WIN+1)*pw;
   panels.forEach(([name, get, opt], pi) => {
     const y0 = PT + pi*PH, ph = PH-16;
     let lo=1e9, hi=-1e9;
@@ -908,7 +912,7 @@ function drawSweep(runs){
     c.fillText(lo.toFixed(Math.abs(lo)<10?1:0), PL-6, y0+ph-2);
     if (opt && opt.target){
       c.strokeStyle='#888880'; c.setLineDash([6,5]); c.beginPath();
-      c.moveTo(X(-1), Y(0)); c.lineTo(X(0), Y(0)); c.lineTo(X(0), Y(ctl.sfStepUp)); c.lineTo(X(2), Y(ctl.sfStepUp));
+      c.moveTo(X(-1), Y(0)); c.lineTo(X(0), Y(0)); c.lineTo(X(0), Y(ctl.sfStepUp)); c.lineTo(X(WIN), Y(ctl.sfStepUp));
       c.stroke(); c.setLineDash([]);
     }
     for (const r of runs){
@@ -921,7 +925,8 @@ function drawSweep(runs){
     }
     if (pi === panels.length-1){
       c.fillStyle='#898781'; c.font='14px system-ui'; c.textAlign='center';
-      for (let t=-1;t<=2;t+=0.5) c.fillText(t+' s', X(t), y0+ph+14);
+      const tk = WIN > 3.5 ? 1 : 0.5;
+      for (let t=-1;t<=WIN+1e-6;t+=tk) c.fillText((Math.round(t*10)/10)+' s', X(t), y0+ph+14);
     }
   });
   runs.forEach((r,i)=>{ c.fillStyle=r.color; c.fillRect(W-PR+10, PT+18*i, 22, 4);
@@ -1242,9 +1247,9 @@ function loop(now){
   } else if (sfPhase === 3 && state.t - sfStepT >= ctl.sfDelay + ctl.sfPulse){  // pulse OFF
     if (ctl.finsOpen) finBtn.click();
     sfPhase = 4;
-  } else if (sfPhase === 4 && state.t - sfStepT >= 2){             // report at +2 s
+  } else if (sfPhase === 4 && state.t - sfStepT >= (sweep ? sweep.win : runWin())){  // report at window end
     const rise = stepRef && stepRef.rise != null ? stepRef.rise.toFixed(2)+' s' : '>2 s';
-    respLog.push(`STEP ${sfDir>0?'▲':'▼'}${sfDir>0?ctl.sfStepUp:ctl.sfStepDn}° ${sfFin?('FIN@'+ctl.sfDelay+'s'):'no-fin'} · rise ${rise} · 2s pitch ${att0().toFixed(0)}°`);
+    respLog.push(`STEP ${sfDir>0?'▲':'▼'}${sfDir>0?ctl.sfStepUp:ctl.sfStepDn}° ${sfFin?('FIN@'+ctl.sfDelay+'s'):'no-fin'} · rise ${rise} · end pitch ${att0().toFixed(0)}°`);
     while (respLog.length > 8) respLog.shift();
     document.getElementById('resplog').innerHTML =
       respLog.map((r,i)=> i===respLog.length-1 ? '<b>'+r+'</b>' : r).join('<br>');
@@ -1283,7 +1288,7 @@ function loop(now){
       const a2 = attitude();
       R.data.push({t:state.t, pitch:a2.pitch, roll:a2.roll, yaw:a2.yaw,
         wy:state.w.y*180/Math.PI, am:accB.length(), ax:accB.x, ay:accB.y, az:accB.z,
-        u:pid.u, dT:pid.dT, dB:pid.dB, fin:finFrac});
+        spd:state.v.length(), u:pid.u, dT:pid.dT, dB:pid.dB, fin:finFrac});
     }
   }
   if (sweep && sweep.rec && sfPhase === 0 && sweep.rec.stepT != null){
