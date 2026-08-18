@@ -87,7 +87,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-17d</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-17e</b></div>
 
     <div id="tabbar">
       <button class="tabbtn on" data-tab="drive">Drive</button>
@@ -185,7 +185,8 @@
     <div class="row"><label>Release pitch</label><input type="range" id="dropPitch" min="-90" max="90" value="0" step="5"><span class="val" id="dropPitchv">0°</span></div>
     <div class="note">Motors 0, PID off; fins stay as set (open vs shut splash comparison).
     Logged bottom-right at splash +2 s: entry speed / path angle / pitch (exact ballistics —
-    no air drag in the model), peak |a| (frame-averaged ≈ IMU-rate), max depth. Tip: use slo-mo.</div>
+    no air drag in the model), peak |a| at physics rate (240 Hz, incl. entry slam),
+    max depth, peak post-splash pitch rate. Tip: use slo-mo + rewind.</div>
     </div>
 
     <div class="tab on" data-tab="drive">
@@ -290,7 +291,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260817d"></script>
+<script src="sim_data.js?v=20260817e"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -332,6 +333,7 @@ const P = {                    // ponytail: every entry is a calibration knob
   finR: [-47e-3, 0, 55e-3],
   // pectoral fins: symmetric flat plates → pure theory, NO α=0 offset
   pfinS: 7.7e-4,               // planform 2×(35×11 mm)
+  pfinMa: 2.6e-3,              // per-blade normal added mass ρ·π/4·c²·b·k(AR) [kg]
   pfinCLa: 3.9,                // 2π/(1+2/AR), AR≈3.2
   pfinCd0: 0.05, pfinE: 0.8,   // laminar Cf(Re~6e3)x2 + edges ~0.05; Oswald factor
   pfinIncR: 0, pfinIncL: 0,    // per-blade incidence (base AoA), LE up — default flat
@@ -387,6 +389,7 @@ function resetState(){
   trailPts.length = 0; hist.length = 0; path.length = 0;
   pid.buf.length = 0; pid.i = 0; pid.prev = 0;   // stale delay-line entries poison the loop after t rewinds
   prevV.set(0,0,0); prevSimT = 0; accB.set(0,0,1);  // accB differentiator: t rewind would freeze it (dSim<0)
+  prevWf = 1; pfinPrevWet[0] = 1; pfinPrevWet[1] = 1; _pv.set(0,0,0);  // slam-rate trackers (spawn submerged)
   dropPhase = 0;
   rew.n = 0; rew.head = 0;                          // rewind buffer: t restarts, old stamps unusable
   if (rewOff < 0){ const el = document.getElementById('rewind');
@@ -455,6 +458,10 @@ const subCen = new THREE.Vector3(S.voxCen[0]*1e-3, 0, S.voxCen[2]*1e-3);
 const tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), tmpQ = new THREE.Quaternion();
 let motTop = {n:0,T:0,Q:0,J:0}, motBot = {n:0,T:0,Q:0,J:0};
 const dbg = {arrows:{}};
+
+let prevWf = 1;                                  // submerged fraction, previous substep
+const pfinPrevWet = [0, 0];                      // per-blade wetness, previous substep
+const _pv = new THREE.Vector3();                 // velocity at previous substep (240 Hz accel)
 
 // tail-blade strip segments: per-band |nx|-weighted centroids (mesh frame, m) and
 // frontal-area shares, measured from robot_open.stl (blade z 33.7–77.7 mm)
@@ -629,7 +636,15 @@ function physicsStep(dt){
         0,
         (up > 0.02 ? 0.5*RHO*q2*Sh*CL : 0)
           - 0.5*RHO*Sh*P.finCn*Math.abs(wp)*wp);                               // lift + plate damping
-      Fp.multiplyScalar(wet(rM));
+      const kw = wet(rM);
+      Fp.multiplyScalar(kw);
+      // water-entry slam: v·dm_a/dt as the blade's wetness grows (von Kármán) —
+      // the quadratic term alone let open-vs-shut belly flops look identical
+      const idx = s > 0 ? 0 : 1;
+      const dwet = Math.max(0, (kw - pfinPrevWet[idx])/dt);
+      pfinPrevWet[idx] = kw;
+      if (dwet > 0){ Fp.z -= P.pfinMa*ff*dwet*wp;
+        dbg.pslamPk = Math.max(dbg.pslamPk || 0, Math.abs(P.pfinMa*ff*dwet*wp)); }
       F.add(Fp);
       M.add(r.clone().cross(Fp));
       if (s > 0) A.pfinR = [r.clone(), Fp]; else A.pfinL = [r.clone(), Fp];
@@ -714,6 +729,21 @@ function physicsStep(dt){
   }
   tyTick('munk');
 
+  // --- water-entry slam: second term of d(M_A·v)/dt — momentum fed to the added
+  // mass as the hull submerges (von Kármán). Shed, not recovered, on exit → entry
+  // only (dwf/dt > 0). Applied at the submerged centroid.
+  if (ctl.addedMass){
+    const dwfdt = Math.max(0, (wf - prevWf)/dt);
+    if (dwfdt > 0){
+      const Fs = new THREE.Vector3(-P.ma[0]*dwfdt*vb.x, -P.ma[1]*dwfdt*vb.y, -P.ma[2]*dwfdt*vb.z);
+      F.add(Fs);
+      M.add(rBuoy.clone().cross(Fs));
+      dbg.slamPk = Math.max(dbg.slamPk || 0, Fs.length());
+    }
+  }
+  prevWf = wf;
+  tyTick('slam');
+
   // --- rotational damping (pectoral roll damping now comes from the per-blade forces) ---
   M.x += wf*(-P.rotDampL[0]*w.x - P.rotDampQ[0]*Math.abs(w.x)*w.x*40);
   M.y += wf*(-P.rotDampL[1]*w.y - P.rotDampQ[1]*Math.abs(w.y)*w.y*40);
@@ -756,6 +786,16 @@ function physicsStep(dt){
   state.q.multiply(dq).normalize();
   state.t += dt;
   dbg.M = M;
+  // DROP observation at physics rate: frame-averaged accB smeared the ~30 ms slam.
+  // Gate on subFrac (per-substep), NOT touchT — the frame-granular touch flag could
+  // land after the 1–2-substep slam spike and randomly miss it
+  if (dropPhase === 1 && dropData && subFrac > 0.001){
+    const gx = (state.v.x - _pv.x)/dt, gy = (state.v.y - _pv.y)/dt,
+          gz = (state.v.z - _pv.z)/dt + 9.81;
+    dropData.peakG = Math.max(dropData.peakG, Math.hypot(gx, gy, gz)/9.81);
+    dropData.maxWy = Math.max(dropData.maxWy || 0, Math.abs(w.y)*57.3);
+  }
+  _pv.copy(state.v);
 }
 
 /* ============ scene ============ */
@@ -1510,13 +1550,13 @@ function loop(now){
     if (dropData.touchT === null && subFrac > 0.02){          // first water contact
       dropData.touchT = state.t;
     } else if (dropData.touchT !== null){
-      dropData.peakG = Math.max(dropData.peakG, accB.length());
       dropData.maxDepth = Math.min(dropData.maxDepth, state.p.z);
       if (state.t - dropData.touchT > 2){                     // observe splash +2 s, then report
         respLog.push(`DROP h${(ctl.dropH*100).toFixed(0)} vx${(+ctl.dropVx).toFixed(2)} ` +
           `${ctl.finsOpen?'open':'shut'} · entry ${dropData.vEntry.toFixed(2)} m/s ` +
           `@−${dropData.angEntry.toFixed(0)}° pitch ${dropData.pitchEntry.toFixed(0)}° · ` +
-          `peak ${dropData.peakG.toFixed(1)} g · depth ${(-dropData.maxDepth*100).toFixed(0)} cm`);
+          `peak ${dropData.peakG.toFixed(1)} g · depth ${(-dropData.maxDepth*100).toFixed(0)} cm · ` +
+          `rot ${(dropData.maxWy || 0).toFixed(0)}°/s`);
         while (respLog.length > 8) respLog.shift();
         document.getElementById('resplog').innerHTML =
           respLog.map((r,i)=> i===respLog.length-1 ? '<b>'+r+'</b>' : r).join('<br>');
