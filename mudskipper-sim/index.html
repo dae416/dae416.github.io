@@ -87,7 +87,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-17c</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-17d</b></div>
 
     <div id="tabbar">
       <button class="tabbtn on" data-tab="drive">Drive</button>
@@ -290,7 +290,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260817c"></script>
+<script src="sim_data.js?v=20260817d"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -455,6 +455,16 @@ const subCen = new THREE.Vector3(S.voxCen[0]*1e-3, 0, S.voxCen[2]*1e-3);
 const tmpV = new THREE.Vector3(), tmpV2 = new THREE.Vector3(), tmpQ = new THREE.Quaternion();
 let motTop = {n:0,T:0,Q:0,J:0}, motBot = {n:0,T:0,Q:0,J:0};
 const dbg = {arrows:{}};
+
+// tail-blade strip segments: per-band |nx|-weighted centroids (mesh frame, m) and
+// frontal-area shares, measured from robot_open.stl (blade z 33.7–77.7 mm)
+const FIN_SEG = [
+  {x:-0.0486, z:0.0394, w:0.122},
+  {x:-0.0390, z:0.0464, w:0.352},
+  {x:-0.0472, z:0.0562, w:0.254},
+  {x:-0.0446, z:0.0632, w:0.218},
+  {x:-0.0504, z:0.0722, w:0.054},
+];
 
 function physicsStep(dt){
   // pectoral fin actuator: full stroke in P.finStroke seconds
@@ -627,27 +637,45 @@ function physicsStep(dt){
   }
   tyTick('pfin');
 
-  // --- topfin / bottomfin: x-normal plates (drag + normal force) ---
-  const finOne = (rMesh, scale) => {
-    const r = tmpV2.copy(rMesh).sub(COM);
-    const uf = new THREE.Vector3(vb.x + w.y*r.z - w.z*r.y,
-                                 vb.y + w.z*r.x - w.x*r.z,
-                                 vb.z + w.x*r.y - w.y*r.x);
-    const k = 0.5*RHO*P.finS*scale*wet(rMesh);
-    // pure flat plate: normal force ⊥ face + in-plane friction only (no fictitious lift)
-    const Ft = new THREE.Vector3(
-      -k*P.finCn*Math.abs(uf.x)*uf.x,
-      -k*0.1*Math.abs(uf.y)*uf.y,
-      -k*0.1*Math.abs(uf.z)*uf.z);
-    F.add(Ft);
-    M.add(r.clone().cross(Ft));
-    return [r.clone(), Ft];
+  // --- topfin / bottomfin: swept tail blade as a 5-segment wetted strip ---
+  // Per-band |nx|-weighted centroids + frontal-area shares measured from the CFD
+  // mesh (blade z 34–78 mm, silhouette 2.5 cm²). A single centroid point made the
+  // whole 4.4 cm blade switch with one wet() sample during entry/exit — now each
+  // band wets independently, so the force ramps with the truly-immersed area and
+  // the pressure centre migrates to the wetted part at any attitude. Per-segment
+  // ω×r also distributes rate damping along the span (tip sees more speed).
+  // Forces per segment: pure flat plate — Cn normal (x) + in-plane skin/edge
+  // friction 0.05 (coefficient review 2026-08-14; code had stale 0.1). No lift.
+  const finStrip = (zMir, scale) => {
+    let Fx = 0, Fy = 0, Fz = 0, rx = 0, ry = 0, rz = 0, msum = 0;
+    for (const g of FIN_SEG){
+      const zm = zMir === null ? g.z : 2*zMir - g.z;
+      const kw = wet(tmpV2.set(g.x, 0, zm));
+      if (kw < 1e-4) continue;
+      const r = tmpV2.set(g.x, 0, zm).sub(COM);
+      const uf = new THREE.Vector3(vb.x + w.y*r.z - w.z*r.y,
+                                   vb.y + w.z*r.x - w.x*r.z,
+                                   vb.z + w.x*r.y - w.y*r.x);
+      const k = 0.5*RHO*P.finS*g.w*scale*kw;
+      const Ft = new THREE.Vector3(
+        -k*P.finCn*Math.abs(uf.x)*uf.x,
+        -k*0.05*Math.abs(uf.y)*uf.y,
+        -k*0.05*Math.abs(uf.z)*uf.z);
+      F.add(Ft);
+      M.add(r.clone().cross(Ft));
+      const m = Ft.length();
+      Fx += Ft.x; Fy += Ft.y; Fz += Ft.z;
+      rx += r.x*m; ry += r.y*m; rz += r.z*m; msum += m;
+    }
+    return msum > 1e-9
+      ? [new THREE.Vector3(rx/msum, ry/msum, rz/msum), new THREE.Vector3(Fx, Fy, Fz)]
+      : null;                                  // fully dry → no arrow
   };
-  A.finT = finOne(new THREE.Vector3(...P.finR), 1.0);
+  A.finT = finStrip(null, 1.0);
   tyTick('finT');
   // bottomfin mirrored about the CoM height → equal moment arms, drag couple cancels
   A.finB = (ctl.bfOn && P.bfDrag > 0.001)
-    ? finOne(new THREE.Vector3(P.finR[0], 0, 2*(P.cob[2]-P.comDrop) - P.finR[2]), P.bfDrag) : null;
+    ? finStrip(P.cob[2] - P.comDrop, P.bfDrag) : null;
   tyTick('finB');
 
   // --- gravity · buoyancy — split per component (body + each fin) so all are drawn ---
