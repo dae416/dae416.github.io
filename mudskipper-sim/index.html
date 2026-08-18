@@ -87,7 +87,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-17e</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-18a</b></div>
 
     <div id="tabbar">
       <button class="tabbtn on" data-tab="drive">Drive</button>
@@ -234,8 +234,11 @@
       <b>Body</b>: 3-axis quadratic drag (CFD-shut Cd_x 0.622 · flat-plate y/z, CP 12 mm aft) ·
         vertical lift CL₀ −0.112 + CLα·α @ CoP −8 mm · side lift CY_β 1.8/rad (yaw weathervane) ·
         Kirchhoff added mass + Munk.<br>
-      <b>Topfin / Bottomfin</b>: pure x-normal plate — Cn·|u|u normal force + in-plane friction;
-        bottomfin × drag-ratio, mirrored about CoM height.<br>
+      <b>Topfin / Bottomfin</b>: cambered vane, 5 wetted strip segments — frontal drag
+        Cn_eff 0.35 (curved face ≪ flat plate) · deflector lift CLv·|uₓ|uₓ (top −z, bottom +z
+        × 0.45 open-back effectiveness → net tail downforce = trim) · stabilizer slope
+        2.5/rad to ~11° then post-stall collapse · in-plane friction; bottomfin × drag-ratio,
+        mirrored about CoM height. Body Cd/CL0 keep only the non-fin CFD remainder.<br>
       <b>Pectoral fins</b>: symmetric flat plates, pure theory — CL = CLα·α (2π/(1+2/AR)=3.9/rad,
         stall ±20°, <b>no α=0 offset</b>), drag Cd0 0.03 + CL²/πARe, per blade at its fold position.<br>
       <b>Props</b>: B-series KT/KQ(J) ⇌ motor-curve equilibrium; thrust @ CAD disc centre,
@@ -291,7 +294,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260817e"></script>
+<script src="sim_data.js?v=20260818a"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -329,7 +332,15 @@ const P = {                    // ponytail: every entry is a calibration knob
   CYb: 1.8,                    // body side-force slope [/rad], low-AR side profile — yaw stiffness vs Munk
   dragY: [1.1, 4.5e-3],
   dragZ: [1.2, 2.9e-3],
-  finS: 2.5e-4, finCn: 1.17,   // topfin: thin tail plate, normal ≈ x — pure plate model
+  finS: 2.5e-4, finCn: 0.35,   // topfin: CURVED vane — effective frontal Cd (flat-plate 1.17
+                               // overestimated: flow follows the cambered face) — calibrate
+  finCLv: 0.45,                // vane camber lift on finS: topfin −z / bottomfin +z deflector
+                               // reaction; default = ~80% of the CFD CL0 share (unidentified split)
+  bfCLvEff: 0.45,               // open-back bottomfin spills flow → weaker camber lift than the
+                               // topfin; the residual net tail downforce sets the nose-up trim
+  finCLs: 2.5,                 // vane lift SLOPE per rad (tail-stabilizer restoring @ −45 mm arm)
+                               // — the flat-plate model's inflated drag was covertly providing
+                               // this pitch stiffness/damping; without it Munk porpoises the hull
   finR: [-47e-3, 0, 55e-3],
   // pectoral fins: symmetric flat plates → pure theory, NO α=0 offset
   pfinS: 7.7e-4,               // planform 2×(35×11 mm)
@@ -579,7 +590,7 @@ function physicsStep(dt){
 
   // --- body drag (3 axes, CFD-shut axial) + linear circulation side force ---
   // CFD Cd already includes the topfin (present in both CFD configs) — subtract its
-  // plate-drag share here since finOne() adds it explicitly at the fin position
+  // (curved-vane) drag share here since finStrip() adds it explicitly at the fin position
   const CdAbody = Math.max(P.CdxShut*P.Aref - P.finCn*P.finS, 2e-4);
   const dragF = new THREE.Vector3(
     -0.5*RHO*CdAbody*Math.abs(vb.x)*vb.x,
@@ -594,7 +605,10 @@ function physicsStep(dt){
   if (vb.x > 0.02){
     const alpha = Math.atan2(-vb.z, vb.x);
     const qdyn = 0.5*RHO*(vb.x*vb.x + vb.z*vb.z)*P.Aref;
-    const Lz = wf*qdyn*(P.CL0Shut + P.CLa*Math.max(-0.35, Math.min(0.35, alpha)));
+    // CFD CL0 was measured WITH the topfin: its camber-downforce share now lives in
+    // finStrip's vane lift, so the body keeps only the remainder (no double count)
+    const CL0body = P.CL0Shut + P.finCLv*P.finS/P.Aref;
+    const Lz = wf*qdyn*(CL0body + P.CLa*Math.max(-0.35, Math.min(0.35, alpha)));
     F.z += Lz;
     M.add(new THREE.Vector3(P.xCoP,0,0).cross(new THREE.Vector3(0,0,Lz)));
     A.lift = [new THREE.Vector3(P.xCoP,0,0), new THREE.Vector3(0,0,Lz)];
@@ -659,9 +673,14 @@ function physicsStep(dt){
   // band wets independently, so the force ramps with the truly-immersed area and
   // the pressure centre migrates to the wetted part at any attitude. Per-segment
   // ω×r also distributes rate damping along the span (tip sees more speed).
-  // Forces per segment: pure flat plate — Cn normal (x) + in-plane skin/edge
-  // friction 0.05 (coefficient review 2026-08-14; code had stale 0.1). No lift.
-  const finStrip = (zMir, scale) => {
+  // Forces per segment: CURVED vane (user geometry review 2026-08-18) — the blade
+  // face is cambered, so axial flow follows it instead of stalling off a flat
+  // plate: frontal drag Cn_eff ≈ 0.35 (≪ plate 1.17) + deflector reaction lift
+  // CLv·|uₓ|uₓ (topfin −z, bottomfin +z; sign flips with flow direction) +
+  // in-plane skin/edge friction 0.05. Cruise totals stay CFD-anchored: the body
+  // subtracts the same fin drag share, and the body CL0 keeps only the non-fin
+  // remainder of the CFD downforce.
+  const finStrip = (zMir, scale, liftSgn, clv) => {
     let Fx = 0, Fy = 0, Fz = 0, rx = 0, ry = 0, rz = 0, msum = 0;
     for (const g of FIN_SEG){
       const zm = zMir === null ? g.z : 2*zMir - g.z;
@@ -672,10 +691,18 @@ function physicsStep(dt){
                                    vb.y + w.z*r.x - w.x*r.z,
                                    vb.z + w.x*r.y - w.y*r.x);
       const k = 0.5*RHO*P.finS*g.w*scale*kw;
+      // local incidence → stabilizer lift (both fins push the tail against the
+      // cross-flow; sign-symmetric, so no trim bias — pure stiffness + rate damping)
+      // thin vane: linear to ~11°, then the separated lift COLLAPSES (same post-stall
+      // physics as the pectorals) — holding CLmax braked commanded maneuvers
+      const aRaw = Math.abs(uf.x) > 0.02 ? Math.atan2(-uf.z, Math.abs(uf.x)) : 0;
+      const aLoc = Math.max(-0.2, Math.min(0.2, aRaw))
+                 * Math.max(0, 1 - Math.max(0, Math.abs(aRaw) - 0.2)/0.15);
       const Ft = new THREE.Vector3(
         -k*P.finCn*Math.abs(uf.x)*uf.x,
         -k*0.05*Math.abs(uf.y)*uf.y,
-        -k*0.05*Math.abs(uf.z)*uf.z);
+        liftSgn*k*clv*Math.abs(uf.x)*uf.x + k*P.finCLs*aLoc*uf.x*uf.x
+          - k*0.05*Math.abs(uf.z)*uf.z);
       F.add(Ft);
       M.add(r.clone().cross(Ft));
       const m = Ft.length();
@@ -686,11 +713,11 @@ function physicsStep(dt){
       ? [new THREE.Vector3(rx/msum, ry/msum, rz/msum), new THREE.Vector3(Fx, Fy, Fz)]
       : null;                                  // fully dry → no arrow
   };
-  A.finT = finStrip(null, 1.0);
+  A.finT = finStrip(null, 1.0, -1, P.finCLv);
   tyTick('finT');
   // bottomfin mirrored about the CoM height → equal moment arms, drag couple cancels
   A.finB = (ctl.bfOn && P.bfDrag > 0.001)
-    ? finStrip(P.cob[2] - P.comDrop, P.bfDrag) : null;
+    ? finStrip(P.cob[2] - P.comDrop, P.bfDrag, +1, P.finCLv*P.bfCLvEff) : null;
   tyTick('finB');
 
   // --- gravity · buoyancy — split per component (body + each fin) so all are drawn ---
