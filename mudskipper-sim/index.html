@@ -87,7 +87,7 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-17a</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-17b</b></div>
 
     <div id="tabbar">
       <button class="tabbtn on" data-tab="drive">Drive</button>
@@ -256,6 +256,11 @@
       <label><input type="checkbox" id="eyes"> Googly eyes</label>
     </div>
     <div class="row"><label>Sim speed (slo-mo)</label><input type="range" id="slomo" min="0.05" max="1" value="1" step="0.05"><span class="val" id="slomov">1.00×</span></div>
+    <div class="row"><label>Rewind</label><input type="range" id="rewind" min="-30" max="0" value="0" step="0.1"><span class="val" id="rewindv">LIVE</span></div>
+    <div class="btns"><button id="rewLive">▶ LIVE</button></div>
+    <div class="note">Drag left to replay up to 30 s back — physics pauses while scrubbing
+    (chart/log keep the live history; force arrows hide). Slider at 0 or ▶ LIVE resumes
+    from the live state. Buffer clears on Reset.</div>
     <div class="btns"><button id="shotBtn">Screenshot (S)</button></div>
     <div class="note">Arrows named at tips: <span style="color:#d84c4c">thrust</span> ·
       <span style="color:#c94e1f">body drag</span> · <span style="color:#128a60">body lift / fin F</span> ·
@@ -285,7 +290,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260817a"></script>
+<script src="sim_data.js?v=20260817b"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -383,6 +388,9 @@ function resetState(){
   pid.buf.length = 0; pid.i = 0; pid.prev = 0;   // stale delay-line entries poison the loop after t rewinds
   prevV.set(0,0,0); prevSimT = 0; accB.set(0,0,1);  // accB differentiator: t rewind would freeze it (dSim<0)
   dropPhase = 0;
+  rew.n = 0; rew.head = 0;                          // rewind buffer: t restarts, old stamps unusable
+  if (rewOff < 0){ const el = document.getElementById('rewind');
+    if (el){ el.value = 0; el.dispatchEvent(new Event('input')); } }
 }
 
 const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true,
@@ -393,6 +401,31 @@ let stepRef = null;
 let jumpPhase = 0, jumpT = 0, jumpApex = -9;   // JUMP demo sequencer
 let sfPhase = 0, sfT = 0, sfDir = 1, sfFin = false, sfStepT = 0;  // pitch-step+fin sequencer
 let dropPhase = 0, dropData = null;            // air-drop splash sequencer
+
+// rewind: ring buffer of rendered poses (~30 s at 60 fps), scrubbed from the View tab
+const REW_N = 1800;
+const rew = {t:new Float32Array(REW_N), px:new Float32Array(REW_N), py:new Float32Array(REW_N),
+             pz:new Float32Array(REW_N), qx:new Float32Array(REW_N), qy:new Float32Array(REW_N),
+             qz:new Float32Array(REW_N), qw:new Float32Array(REW_N), ff:new Float32Array(REW_N),
+             n:0, head:0};
+let rewOff = 0;                                // scrub offset in seconds (0 = live)
+const rewP = new THREE.Vector3(), rewQ = new THREE.Quaternion();
+function rewPush(){
+  const i = rew.head;
+  rew.t[i] = state.t; rew.px[i] = state.p.x; rew.py[i] = state.p.y; rew.pz[i] = state.p.z;
+  rew.qx[i] = state.q.x; rew.qy[i] = state.q.y; rew.qz[i] = state.q.z; rew.qw[i] = state.q.w;
+  rew.ff[i] = finFrac;
+  rew.head = (i+1) % REW_N; if (rew.n < REW_N) rew.n++;
+}
+function rewSample(tq){                        // newest buffered frame with t ≤ tq
+  let last = (rew.head - 1 + REW_N) % REW_N;
+  for (let k = 0; k < rew.n; k++){
+    const j = (rew.head - 1 - k + 2*REW_N) % REW_N;
+    if (rew.t[j] <= tq) return j;
+    last = j;
+  }
+  return last;                                 // oldest available
+}
 let sfAir = false, sfSplashT = null;           // airborne → splash-down detection
 let sweep = null;                                                 // fin-delay sweep controller
 const runWin = () => Math.max(2, ctl.sfDelay + ctl.sfPulse + 0.7);  // observation window after the step
@@ -445,13 +478,24 @@ function physicsStep(dt){
   const wf = subFrac;                              // volume fraction (buoyancy, added mass)
   const rBuoy = subCen.clone().sub(COM);           // submerged-volume centroid (body frame)
   // per-element wetness: an element still under water keeps its FULL force,
-  // one above the surface loses it — no global cliff when the nose breaches
-  // half-extent ~3 cm: a plate straddling the surface is PARTIALLY wetted (and
-  // ventilated) — a narrow band made fins switch on/off like a cliff, whipping the
-  // body when only one fin stayed planted in the water
-  const wet = r => {
+  // one above the surface loses it — no global cliff when the nose breaches.
+  // Band is ASYMMETRIC: air side ends at +2 mm (a fin in the air carries spray only —
+  // the old +3 cm tail kept braking elements after full exit → fake somersault);
+  // water side ramps over 3.2 cm (partial wetting/ventilation of a shallow plate).
+  // Breaching upward adds an entrained-crown relief: the top ~2.5 cm of water rises
+  // WITH the body, so still-water |u|u overstates the drag on the last-exiting fin
+  // (measured: uncompensated bottomfin anchor injected +710°/s during the transit).
+  const vzW = state.v.z;
+  // entrained-crown depth: a body exiting at v drags a spout ~v²/2g tall — trailing
+  // appendages (bottomfin skeg hangs 2.7 cm under the hull) ride inside it with the
+  // water, so still-water |u|u overstates their drag until they clear that column
+  const reliefD = vzW > 0.2 ? Math.max(0.025, vzW*vzW/(2*9.81)) : 0;
+  const wet = r => {                               // r in MESH frame (state.p = mesh origin)
     const zw = state.p.z + R20v*r.x + R21v*r.y + R22v*r.z;
-    return zw < -0.03 ? 1 : (zw > 0.03 ? 0 : (0.03 - zw)/0.06);
+    if (zw > 0.002) return 0;
+    let k = zw < -0.03 ? 1 : (0.002 - zw)/0.032;
+    if (reliefD) k *= Math.min(1, -zw/reliefD);    // exit relief (entry slam untouched)
+    return k;
   };
 
   const qi = tmpQ.copy(state.q).invert();
@@ -459,6 +503,8 @@ function physicsStep(dt){
   const w = state.w;
   const F = new THREE.Vector3(), M = new THREE.Vector3();
   const A = dbg.arrows;
+  const TY = dbg.tauY = {};                        // per-source pitch torque (debug)
+  let _my = 0; const tyTick = k => { TY[k] = M.y - _my; _my = M.y; };
 
   // --- PID pitch control (firmware-style: differential trim, 60 ms loop delay) ---
   let dutyT = ctl.dutyT, dutyB = ctl.dutyB;
@@ -501,16 +547,18 @@ function physicsStep(dt){
     const suc = Math.max(0, Math.min(1, d/(1.5*P.D)));         // near-surface ventilation
     return cov*suc;
   };
-  const kvT = vent(state.p.z + R20v*rT.x + R21v*rT.y + R22v*rT.z);
-  const kvB = vent(state.p.z + R20v*rB.x + R21v*rB.y + R22v*rB.z);
+  const kvT = vent(state.p.z + R20v*P.pT[0] + R21v*P.pT[1] + R22v*P.pT[2]);
+  const kvB = vent(state.p.z + R20v*P.pB[0] + R21v*P.pB[1] + R22v*P.pB[2]);
   motTop.T *= kvT; motTop.Q *= kvT;
   motBot.T *= kvB; motBot.Q *= kvB;
   const sT = 1, sB = ctl.counter ? -1 : 1;
   F.x += motTop.T + motBot.T;
   M.add(rT.clone().cross(new THREE.Vector3(motTop.T,0,0)));
   M.add(rB.clone().cross(new THREE.Vector3(motBot.T,0,0)));
-  M.x += -(sT*motTop.Q + sB*motBot.Q);           // prop reaction torque → roll  A.thrustT = [rT, new THREE.Vector3(motTop.T,0,0)];
+  M.x += -(sT*motTop.Q + sB*motBot.Q);           // prop reaction torque → roll
+  A.thrustT = [rT, new THREE.Vector3(motTop.T,0,0)];
   A.thrustB = [rB, new THREE.Vector3(motBot.T,0,0)];
+  tyTick('props');
 
   // --- body drag (3 axes, CFD-shut axial) + linear circulation side force ---
   // CFD Cd already includes the topfin (present in both CFD configs) — subtract its
@@ -534,6 +582,7 @@ function physicsStep(dt){
     M.add(new THREE.Vector3(P.xCoP,0,0).cross(new THREE.Vector3(0,0,Lz)));
     A.lift = [new THREE.Vector3(P.xCoP,0,0), new THREE.Vector3(0,0,Lz)];
   } else A.lift = null;
+  tyTick('body');
 
   // --- pectoral fins: PER-BLADE forces at each blade's CURRENT position ---
   //     centroid follows the fold kinematics (same hinge/angle as the visual);
@@ -548,7 +597,8 @@ function physicsStep(dt){
       const d0x = -4e-3, d0y = s*19e-3;            // deployed blade centroid rel hinge
       const cx = 17e-3 + d0x*Math.cos(th) - d0y*Math.sin(th);
       const cy = s*8e-3 + d0x*Math.sin(th) + d0y*Math.cos(th);
-      const r = new THREE.Vector3(cx, cy, -1.4e-3).sub(COM);
+      const rM = new THREE.Vector3(cx, cy, -1.4e-3);   // mesh frame (wet() needs this)
+      const r = rM.clone().sub(COM);
       const up = vb.x + w.y*r.z - w.z*r.y;
       const wp = vb.z + w.x*r.y - w.y*r.x;
       // flat plate + built-in incidence (up to ±90°): lift stall-clamps at ±17°,
@@ -565,12 +615,13 @@ function physicsStep(dt){
         0,
         (up > 0.02 ? 0.5*RHO*q2*Sh*CL : 0)
           - 0.5*RHO*Sh*P.finCn*Math.abs(wp)*wp);                               // lift + plate damping
-      Fp.multiplyScalar(wet(r));
+      Fp.multiplyScalar(wet(rM));
       F.add(Fp);
       M.add(r.clone().cross(Fp));
       if (s > 0) A.pfinR = [r.clone(), Fp]; else A.pfinL = [r.clone(), Fp];
     }
   }
+  tyTick('pfin');
 
   // --- topfin / bottomfin: x-normal plates (drag + normal force) ---
   const finOne = (rMesh, scale) => {
@@ -578,7 +629,7 @@ function physicsStep(dt){
     const uf = new THREE.Vector3(vb.x + w.y*r.z - w.z*r.y,
                                  vb.y + w.z*r.x - w.x*r.z,
                                  vb.z + w.x*r.y - w.y*r.x);
-    const k = 0.5*RHO*P.finS*scale*wet(r);
+    const k = 0.5*RHO*P.finS*scale*wet(rMesh);
     // pure flat plate: normal force ⊥ face + in-plane friction only (no fictitious lift)
     const Ft = new THREE.Vector3(
       -k*P.finCn*Math.abs(uf.x)*uf.x,
@@ -589,9 +640,11 @@ function physicsStep(dt){
     return [r.clone(), Ft];
   };
   A.finT = finOne(new THREE.Vector3(...P.finR), 1.0);
+  tyTick('finT');
   // bottomfin mirrored about the CoM height → equal moment arms, drag couple cancels
   A.finB = (ctl.bfOn && P.bfDrag > 0.001)
     ? finOne(new THREE.Vector3(P.finR[0], 0, 2*(P.cob[2]-P.comDrop) - P.finR[2]), P.bfDrag) : null;
+  tyTick('finB');
 
   // --- gravity · buoyancy — split per component (body + each fin) so all are drawn ---
   const Wtot = P.mass*G, Btot = Wtot + P.netBuoyG*1e-3*G;
@@ -619,6 +672,7 @@ function physicsStep(dt){
   M.add(rBuoy.clone().cross(bB));
   A.buoy = [rBuoy, bB]; A.grav = [new THREE.Vector3(0,0,0), gB];
   dbg.rBuoy = rBuoy;
+  tyTick('wb');
 
   // --- added-mass Munk moment: v×(M_A·v) from Kirchhoff — destabilizing at incidence ---
   if (ctl.addedMass){
@@ -626,11 +680,13 @@ function physicsStep(dt){
     M.y += wf*wf*(P.ma[2]-P.ma[0])*vb.x*vb.z;
     M.z += wf*wf*(P.ma[0]-P.ma[1])*vb.x*vb.y;
   }
+  tyTick('munk');
 
   // --- rotational damping (pectoral roll damping now comes from the per-blade forces) ---
   M.x += wf*(-P.rotDampL[0]*w.x - P.rotDampQ[0]*Math.abs(w.x)*w.x*40);
   M.y += wf*(-P.rotDampL[1]*w.y - P.rotDampQ[1]*Math.abs(w.y)*w.y*40);
   M.z += wf*(-P.rotDampL[2]*w.z - P.rotDampQ[2]*Math.abs(w.z)*w.z*40);
+  tyTick('damp');
 
   // --- integrate (semi-implicit Euler, body frame) ---
   // Kirchhoff equations with diagonal added mass (toggle). AM off → plain rigid body.
@@ -912,6 +968,8 @@ bind('dutyB', v=>v, v=>ctl.dutyB=v);
 const markStep = to => { stepRef = {t0: state.t, from: null, to, rise: null}; };  // from = pitch at t0, filled lazily
 bind('jumpD', v=>v, v=>ctl.jumpDuty=v);
 bind('slomo', v=>(+v).toFixed(2)+'×', v=>ctl.slomo=v);
+bind('rewind', v=> v >= -0.05 ? 'LIVE' : (+v).toFixed(1)+' s', v=>rewOff=v);
+$('rewLive').addEventListener('click', ()=>{ $('rewind').value = 0; $('rewind').dispatchEvent(new Event('input')); });
 bind('sfStepUp', v=>v+'°', v=>ctl.sfStepUp=v);
 bind('sfStepDn', v=>v+'°', v=>ctl.sfStepDn=v);
 bind('sfStr', v=>v+' s', v=>ctl.sfStraight=v);
@@ -1046,6 +1104,7 @@ $('jumpBtn').addEventListener('click', ()=>{
   state.p.z = -0.5;
   if (ctl.finsOpen) finBtn.click();              // fins shut for the run-up
   if (!ctl.pid) $('pidOn').click();
+  $('pidKp').value = 10; $('pidKp').dispatchEvent(new Event('input'));  // Kp 2 stalls below the 55° arming gate
   $('pidBase').value = 40; $('pidBase').dispatchEvent(new Event('input'));
   $('pidT').value = 60; $('pidT').dispatchEvent(new Event('input'));
   jumpPhase = 1; jumpApex = -9;
@@ -1363,9 +1422,12 @@ const DT = 1/240;
 function loop(now){
   requestAnimationFrame(loop);
   let dt = Math.min(0.05, (now-last)/1000); last = now;
-  acc += dt*ctl.slomo;                       // slow motion: physics time runs at slomo × wall
-  const dts = dt*ctl.slomo;                  // sim-time elapsed this frame (visual spin etc.)
+  const scrub = rewOff < -0.05 && rew.n > 1; // rewind scrub: physics paused, pose from buffer
+  if (!scrub) acc += dt*ctl.slomo;           // slow motion: physics time runs at slomo × wall
+  else acc = 0;
+  const dts = scrub ? 0 : dt*ctl.slomo;      // sim-time elapsed this frame (visual spin etc.)
   while (acc > DT){ physicsStep(DT); acc -= DT; }
+  if (!scrub) rewPush();
 
   if (sfPhase === 1 && state.t - sfT > ctl.sfStraight){       // straight done -> step
     const mag = sfDir > 0 ? ctl.sfStepUp : ctl.sfStepDn;
@@ -1439,7 +1501,7 @@ function loop(now){
     accS.lerp(accB, 1 - Math.exp(-dSim/0.08));      // smooth for the eyes (τ ≈ 80 ms)
     prevV.copy(state.v); prevSimT = state.t;
   }
-  if (sweep && sweep.rec && sfPhase > 0){
+  if (sweep && sweep.rec && sfPhase > 0 && !scrub){
     const R = sweep.rec;
     if (R.stepT == null && sfPhase >= 2) R.stepT = sfStepT;
     if (!R.data.length || state.t - R.data[R.data.length-1].t > 0.02){
@@ -1466,24 +1528,33 @@ function loop(now){
     }
   }
 
-  robotGrp.position.copy(state.p);
-  robotGrp.quaternion.copy(state.q);
+  let sP = state.p, sQ = state.q, sFF = finFrac;
+  if (scrub){
+    const tNew = rew.t[(rew.head - 1 + REW_N) % REW_N];
+    const j = rewSample(tNew + rewOff);
+    sP = rewP.set(rew.px[j], rew.py[j], rew.pz[j]);
+    sQ = rewQ.set(rew.qx[j], rew.qy[j], rew.qz[j], rew.qw[j]);
+    sFF = rew.ff[j];
+  }
+  robotGrp.position.copy(sP);
+  robotGrp.quaternion.copy(sQ);
   const sB = ctl.counter ? -1 : 1;
   propAngT += motTop.n*2*Math.PI*dts*0.12;
   propAngB += sB*motBot.n*2*Math.PI*dts*0.12;
   propTg.rotation.x = propAngT; propBg.rotation.x = propAngB;
   // pectoral fins: fold about z hinge, then blade incidence about the folded span axis
   finRg.rotation.order = 'ZYX'; finLg.rotation.order = 'ZYX';
-  finRg.rotation.set(0, -P.pfinIncR*finFrac,  (1-finFrac)*Math.PI/2);
-  finLg.rotation.set(0, -P.pfinIncL*finFrac, -(1-finFrac)*Math.PI/2);
+  finRg.rotation.set(0, -P.pfinIncR*sFF,  (1-sFF)*Math.PI/2);
+  finLg.rotation.set(0, -P.pfinIncL*sFF, -(1-sFF)*Math.PI/2);
   if (dbg.rBuoy) cobDot.position.copy(dbg.rBuoy);
   comLbl.position.set(0,-0.020,-0.004);
   if (dbg.rBuoy) cobLbl.position.set(dbg.rBuoy.x, dbg.rBuoy.y+0.020, dbg.rBuoy.z+0.004);
   eyeGrp.visible = document.getElementById('eyes').checked;
-  if (eyeGrp.visible) updateEyes(dts);
+  if (eyeGrp.visible && !scrub) updateEyes(dts);
   lattice.visible = document.getElementById('lat').checked;
   if (lattice.visible) updateLattice();
-  updateArrows(frame % 6 === 0);
+  if (scrub){ for (const k in arrows){ arrows[k].visible = false; arrowLbls[k].visible = false; } }
+  else updateArrows(frame % 6 === 0);
 
   if (document.getElementById('trail').checked && !ctl.hold){
     if (!trailPts.length || trailPts[trailPts.length-1].distanceToSquared(state.p) > 1e-5){
@@ -1496,7 +1567,7 @@ function loop(now){
 
   if (document.getElementById('follow').checked){
     const off = camera.position.clone().sub(controls.target);
-    controls.target.lerp(state.p, 0.1);
+    controls.target.lerp(sP, 0.1);
     camera.position.copy(controls.target).add(off);
   }
   if (Math.abs(orbitRemain) > 1e-4){               // smooth arrow-key orbit
@@ -1518,6 +1589,7 @@ function loop(now){
       ` · Fins <b>${(finFrac*100).toFixed(0)}%</b>` +
       (subFrac < 0.995 ? ` · <span style="color:var(--warn)">Sub ${(subFrac*100).toFixed(0)}%</span>` : '') +
       (ctl.slomo < 0.99 ? ` · <span style="color:var(--warn)">${ctl.slomo.toFixed(2)}× SLO-MO</span>` : '') +
+      (rewOff < -0.05 ? ` · <span style="color:var(--crit)">◀ REPLAY ${rewOff.toFixed(1)} s</span>` : '') +
       (ctl.pid && stepRef && !ctl.sineOn
         ? ` · step→${stepRef.to}°: <b>${stepRef.rise==null?'…':stepRef.rise.toFixed(2)+' s'}</b>` : '');
     const set = (id, m) => {
@@ -1572,7 +1644,7 @@ function takeShot(){
 $('shotBtn').addEventListener('click', takeShot);
 window.TAKESHOT = takeShot;
 window.P = P; window.CTL = ctl; window.SIMSTATE = state; window.DBG = dbg; window.CAMERA = camera; window.EYES = eyes;   // console/debug access
-window.att0 = att0; window.attitude = attitude;
+window.att0 = att0; window.attitude = attitude; window.ROBOTGRP = robotGrp;
 requestAnimationFrame(loop);
 </script>
 </body>
