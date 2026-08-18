@@ -7,12 +7,12 @@
 <link rel="icon" href="data:,">
 <style>
   :root{
-    color-scheme: dark;
-    --surface-1:#1a1a19; --page:#0d0d0d;
-    --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
-    --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
-    --s1:#3987e5; --s2:#d95926; --s3:#199e70;   /* pitch / roll / yaw */
-    --warn:#fab219; --crit:#d03b3b;
+    color-scheme: light;
+    --surface-1:#ffffff; --page:#ffffff;
+    --ink:#1a1a19; --ink-2:#44423c; --muted:#77756c;
+    --grid:#e8e8e4; --axis:#d2d2cc; --border:rgba(0,0,0,.13);
+    --s1:#2f6fc0; --s2:#c94e1f; --s3:#128a60;   /* pitch / roll / yaw */
+    --warn:#b07600; --crit:#c23434;
   }
   *{box-sizing:border-box; margin:0}
   html,body{height:100%}
@@ -23,10 +23,10 @@
   #view{grid-row:1; grid-column:1; position:relative; min-width:0; min-height:0}
   #view canvas{display:block}
   #hud{position:absolute; bottom:10px; left:12px; color:var(--ink-2); pointer-events:none;
-       font-variant-numeric:tabular-nums; text-shadow:0 1px 2px #000}
+       font-variant-numeric:tabular-nums; text-shadow:0 1px 2px rgba(255,255,255,.85)}
   #hud b{color:var(--ink)}
   #minis{position:absolute; top:10px; left:12px; right:12px; display:flex; flex-direction:row; flex-wrap:wrap; gap:8px; justify-content:center}
-  .mini{background:rgba(13,13,13,.72); border:1px solid var(--border); border-radius:6px; position:relative}
+  .mini{background:rgba(255,255,255,.82); border:1px solid var(--border); border-radius:6px; position:relative}
   .mini span{position:absolute; top:3px; left:7px; font-size:12px; color:var(--muted); letter-spacing:.05em}
   #panel{grid-row:1/3; grid-column:2; background:var(--surface-1); border-left:1px solid var(--border);
          overflow-y:auto; padding:18px 20px}
@@ -43,13 +43,21 @@
   .checks label{display:inline-flex; align-items:center; gap:6px; margin:3px 14px 3px 0; color:var(--ink-2); font-size:12px}
   .checks input{width:15px; height:15px; accent-color:var(--s1)}
   .btns{display:flex; flex-wrap:wrap; gap:7px; margin:8px 0}
-  button{background:#262624; color:var(--ink-2); border:1px solid var(--border); border-radius:7px;
+  button{background:#f2f2ee; color:var(--ink-2); border:1px solid var(--border); border-radius:7px;
          padding:5px 11px; font:inherit; cursor:pointer}
-  button:hover{background:#31312e; color:var(--ink)}
+  button:hover{background:#e6e6e1; color:var(--ink)}
   button.primary{background:var(--s1); border-color:var(--s1); color:#fff}
   button.fins{min-width:130px; font-weight:600}
-  button.fins.open{background:#123a26; border-color:var(--s3); color:#7fe0b8}
-  button.fins.shut{background:#3a2412; border-color:var(--s2); color:#f0a879}
+  button.fins.open{background:#e2f5eb; border-color:var(--s3); color:#0e6b4a}
+  button.fins.shut{background:#fceee3; border-color:var(--s2); color:#a04617}
+  #tabbar{display:flex; gap:6px; align-items:center; position:sticky; top:-18px; z-index:5;
+          background:var(--surface-1); padding:8px 0 8px; margin:0 0 6px;
+          border-bottom:1px solid var(--border)}
+  .tabbtn{text-transform:uppercase; font-size:12px; letter-spacing:.05em; padding:5px 12px}
+  .tabbtn.on{background:var(--s1); border-color:var(--s1); color:#fff}
+  #tabbar #reset{margin-left:auto}
+  .tab{display:none}
+  .tab.on{display:block}
   table.mot{width:100%; border-collapse:collapse; margin-top:4px; font-variant-numeric:tabular-nums}
   table.mot th{font-size:12px}
   table.mot td,table.mot th{padding:4px 6px; text-align:right; border-bottom:1px solid var(--grid)}
@@ -59,7 +67,7 @@
   #legend i{display:inline-block; width:11px; height:11px; border-radius:2px; margin-right:5px}
   .note{color:var(--muted); font-size:12px; margin-top:5px; line-height:1.45}
   #resplog{position:absolute; right:12px; bottom:10px; text-align:right; color:var(--muted);
-           font-size:12px; line-height:1.5; pointer-events:none; text-shadow:0 1px 2px #000;
+           font-size:12px; line-height:1.5; pointer-events:none; text-shadow:0 1px 2px rgba(255,255,255,.85);
            font-variant-numeric:tabular-nums}
   #resplog b{color:var(--ink-2)}
 </style>
@@ -79,8 +87,18 @@
 
   <div id="panel">
     <h1>Mudskipper 6-DOF Simulator</h1>
-    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-16c</b></div>
+    <div class="sub">robot_open.stl · B3-40 P/D0.6 D15 (3-blade) · Wageningen KT/KQ · <b id="build">build 2026-08-17a</b></div>
 
+    <div id="tabbar">
+      <button class="tabbtn on" data-tab="drive">Drive</button>
+      <button class="tabbtn" data-tab="pid">PID</button>
+      <button class="tabbtn" data-tab="tests">Tests</button>
+      <button class="tabbtn" data-tab="model">Model</button>
+      <button class="tabbtn" data-tab="view">View</button>
+      <button id="reset" class="primary">Reset</button>
+    </div>
+
+    <div class="tab on" data-tab="drive">
     <h2>Motor duty (0–255 · limit 60)</h2>
     <div class="row duty"><label>Top</label><input type="range" id="dutyT" min="0" max="255" value="0"><span class="val" id="dutyTv">0</span></div>
     <div class="row duty"><label>Bottom</label><input type="range" id="dutyB" min="0" max="255" value="0"><span class="val" id="dutyBv">0</span></div>
@@ -98,9 +116,10 @@
       <button data-p="60,0">Top 60</button>
       <button data-p="0,60">Bottom 60</button>
       <button data-p="60,60">Max</button>
-      <button id="reset" class="primary">Reset</button>
+    </div>
     </div>
 
+    <div class="tab" data-tab="pid">
     <h2>PID pitch control (firmware-style)</h2>
     <div class="checks">
       <label><input type="checkbox" id="pidOn"> PID on (overrides duty sliders) · <b>Space</b>, target <b>↑/↓</b> ±30°, view <b>←/→</b> 45°</label>
@@ -116,7 +135,9 @@
     <div class="note" id="pidNote">Firmware-style: u = Kp·e + Ki·∫e − Kd·dθ/dt clamped to ±ΔPWM;
     top = base − u, bottom = base + u, each clamped 0…maxDuty. Campaign: Kp 10 · Ki 0 · Kd 0.5 ·
     base 10 · maxDuty 60 · ~60 ms delay.</div>
+    </div>
 
+    <div class="tab" data-tab="tests">
     <h2>Maneuver · agility</h2>
     <div class="checks">
       <label><input type="checkbox" id="sineOn"> Sine target (tracks A·sin 2πt/T)</label>
@@ -129,6 +150,12 @@
       <button id="stepUp">Step +40°</button>
       <button id="jumpBtn" class="primary">JUMP demo</button>
     </div>
+    <div class="row"><label>Jump burst duty</label><input type="range" id="jumpD" min="60" max="255" value="255" step="5"><span class="val" id="jumpDv">255</span></div>
+    <div class="note">JUMP: dive to 0.5 m, fins shut, PID pitches to +60°, then open-loop burst at
+    the set duty. Breach threshold ≈ duty 120 (T/W ≈ 1); real-hardware ceiling 60 falls 6 mm short.</div>
+    <div class="note" id="agiNote">Needs PID on. Measured (build i, pure-theory fins): step −40° rise
+    0.52 s OPEN vs 0.58 s SHUT; fast sine tracking is delay/saturation-limited either way.</div>
+
     <h2>Pitch step + fin (20260814 experiment)</h2>
     <div class="btns">
       <button id="sfUpFin">▲ UP + FIN</button>
@@ -148,12 +175,20 @@
     fin open at the set delay, shut after the pulse (real robot: 220 PWM / 300 ms bottom-fin pulse).
     Result logged bottom-right: rise time + pitch 2 s after the step.</div>
 
-    <div class="row"><label>Jump burst duty</label><input type="range" id="jumpD" min="60" max="255" value="255" step="5"><span class="val" id="jumpDv">255</span></div>
-    <div class="note">JUMP: dive to 0.5 m, fins shut, PID pitches to +60°, then open-loop burst at
-    the set duty. Breach threshold ≈ duty 120 (T/W ≈ 1); real-hardware ceiling 60 falls 6 mm short.</div>
-    <div class="note" id="agiNote">Needs PID on. Measured (build i, pure-theory fins): step −40° rise
-    0.52 s OPEN vs 0.58 s SHUT; fast sine tracking is delay/saturation-limited either way.</div>
+    <h2>Air drop (splash study)</h2>
+    <div class="btns">
+      <button id="dropBtn" class="primary">DROP</button>
+      <span class="note" style="align-self:center">ballistic release → splash-down</span>
+    </div>
+    <div class="row"><label>Drop height</label><input type="range" id="dropH" min="0.05" max="1" value="0.3" step="0.05"><span class="val" id="dropHv">0.30 m</span></div>
+    <div class="row"><label>Horizontal speed</label><input type="range" id="dropVx" min="0" max="2" value="0.5" step="0.05"><span class="val" id="dropVxv">0.50 m/s</span></div>
+    <div class="row"><label>Release pitch</label><input type="range" id="dropPitch" min="-90" max="90" value="0" step="5"><span class="val" id="dropPitchv">0°</span></div>
+    <div class="note">Motors 0, PID off; fins stay as set (open vs shut splash comparison).
+    Logged bottom-right at splash +2 s: entry speed / path angle / pitch (exact ballistics —
+    no air drag in the model), peak |a| (frame-averaged ≈ IMU-rate), max depth. Tip: use slo-mo.</div>
+    </div>
 
+    <div class="tab on" data-tab="drive">
     <h2>Pectoral fins · 0.1 s stroke</h2>
     <div class="btns">
       <button id="finBtn" class="fins open">FINS OPEN</button>
@@ -173,7 +208,9 @@
       <tr><td>Bottom</td><td id="mB0">0</td><td id="mB1">0</td><td id="mB2">0</td><td id="mB3">0</td></tr>
     </table>
     <div class="note" id="momNote"></div>
+    </div>
 
+    <div class="tab" data-tab="model">
     <h2>Geometry · mass</h2>
     <div class="note">Props at CAD disc centres (−56.5, 0, 25.8 / 5.0 mm) · pectoral force points follow the fold kinematics per blade.</div>
     <div class="row"><label>CoM below CoB</label><input type="range" id="comDrop" min="0" max="10" value="3" step="0.5"><span class="val" id="comDropv">3 mm</span></div>
@@ -207,7 +244,9 @@
     </div>
     <div class="note">Bottomfin = mirrored topfin, open back → mass ≈ 0, balances top/bottom drag.
     1.0 = balanced · 0 = removed (topfin drag alone → pitch moment).</div>
+    </div>
 
+    <div class="tab" data-tab="view">
     <h2>Display</h2>
     <div class="checks">
       <label><input type="checkbox" id="arrows" checked> Force arrows</label>
@@ -218,11 +257,12 @@
     </div>
     <div class="row"><label>Sim speed (slo-mo)</label><input type="range" id="slomo" min="0.05" max="1" value="1" step="0.05"><span class="val" id="slomov">1.00×</span></div>
     <div class="btns"><button id="shotBtn">Screenshot (S)</button></div>
-    <div class="note">Arrows named at tips: <span style="color:#e66767">thrust</span> ·
-      <span style="color:#d95926">body drag</span> · <span style="color:#199e70">body lift / fin F</span> ·
-      <span style="color:#3987e5">buoyancy</span> · <span style="color:#c3c2b7">weight</span> ·
-      <span style="color:#d55181">roll τ</span>. Length ∝ force (0.35 m/N); tiny forces
+    <div class="note">Arrows named at tips: <span style="color:#d84c4c">thrust</span> ·
+      <span style="color:#c94e1f">body drag</span> · <span style="color:#128a60">body lift / fin F</span> ·
+      <span style="color:#2f6fc0">buoyancy</span> · <span style="color:#77756c">weight</span> ·
+      <span style="color:#c23f74">roll τ</span>. Length ∝ force (0.35 m/N); tiny forces
       (fin W/B) are drawn at a 9 mm minimum so they stay visible.</div>
+    </div>
   </div>
 
   <div id="sweepModal" style="display:none; position:fixed; inset:3%; z-index:50; background:var(--surface-1);
@@ -245,7 +285,7 @@
   </div>
 </div>
 
-<script src="sim_data.js?v=20260816c"></script>
+<script src="sim_data.js?v=20260817a"></script>
 <script type="importmap">
 {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.module.js",
             "three/addons/":"https://cdn.jsdelivr.net/npm/three@0.164.1/examples/jsm/"}}
@@ -341,6 +381,8 @@ function resetState(){
   state.p.set(0,0,-0.3); state.q.identity(); state.v.set(0,0,0); state.w.set(0,0,0); state.t=0;
   trailPts.length = 0; hist.length = 0; path.length = 0;
   pid.buf.length = 0; pid.i = 0; pid.prev = 0;   // stale delay-line entries poison the loop after t rewinds
+  prevV.set(0,0,0); prevSimT = 0; accB.set(0,0,1);  // accB differentiator: t rewind would freeze it (dSim<0)
+  dropPhase = 0;
 }
 
 const ctl = {dutyT:0, dutyB:0, counter:true, hold:false, finsOpen:true, addedMass:true, bfOn:true,
@@ -350,12 +392,14 @@ const pid = {i:0, prev:0, buf:[], u:0, e:0, dT:0, dB:0, tgt:0};  // controller s
 let stepRef = null;
 let jumpPhase = 0, jumpT = 0, jumpApex = -9;   // JUMP demo sequencer
 let sfPhase = 0, sfT = 0, sfDir = 1, sfFin = false, sfStepT = 0;  // pitch-step+fin sequencer
+let dropPhase = 0, dropData = null;            // air-drop splash sequencer
 let sfAir = false, sfSplashT = null;           // airborne → splash-down detection
 let sweep = null;                                                 // fin-delay sweep controller
 const runWin = () => Math.max(2, ctl.sfDelay + ctl.sfPulse + 0.7);  // observation window after the step
 const prevV = new THREE.Vector3(); let accB = new THREE.Vector3(0,0,1), prevSimT = 0;
 const accS = new THREE.Vector3(0,0,1);   // low-passed copy for the googly eyes
-Object.assign(ctl, {sfStepUp:90, sfStepDn:90, sfStraight:1, sfDelay:0.1, sfPulse:0.3, slomo:1});
+Object.assign(ctl, {sfStepUp:90, sfStepDn:90, sfStraight:1, sfDelay:0.1, sfPulse:0.3, slomo:1,
+                    dropH:0.3, dropVx:0.5, dropPitch:0});
 const respLog = [];    // accumulated step response times (on-screen log)                                              // last step command, for rise-time metric
 let finFrac = 1;                       // 1 = deployed, 0 = folded
 
@@ -632,29 +676,29 @@ const renderer = new THREE.WebGLRenderer({antialias:true});
 renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 view.appendChild(renderer.domElement);
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d1420);
-scene.fog = new THREE.Fog(0x0d1420, 1.5, 8);
+scene.background = new THREE.Color(0xffffff);
+scene.fog = new THREE.Fog(0xffffff, 1.5, 8);
 const camera = new THREE.PerspectiveCamera(45, 1, 0.005, 50);
 camera.up.set(0,0,1);
 camera.position.set(-0.14, -0.20, 0.10);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 
-scene.add(new THREE.HemisphereLight(0x88aacc, 0x223344, 1.1));
+scene.add(new THREE.HemisphereLight(0xf2f6fa, 0x9aa4ad, 1.1));
 const dl = new THREE.DirectionalLight(0xffffff, 1.6); dl.position.set(1,-1,2); scene.add(dl);
 
 const water = new THREE.Mesh(new THREE.PlaneGeometry(80, 80),
-  new THREE.MeshBasicMaterial({color:0x2a6a9a, transparent:true, opacity:0.34,
+  new THREE.MeshBasicMaterial({color:0xa8d2ec, transparent:true, opacity:0.38,
                                side:THREE.DoubleSide, depthWrite:false}));
 water.renderOrder = 2; scene.add(water);          // free surface at z = 0
 // surface grid: makes the waterline readable from any angle, above or below
-const waterGrid = new THREE.GridHelper(80, 160, 0x7fc4ee, 0x3f7fae);
+const waterGrid = new THREE.GridHelper(80, 160, 0x2e78ae, 0x7db4d8);
 waterGrid.rotation.x = Math.PI/2; waterGrid.position.z = 0.001;
-waterGrid.material.transparent = true; waterGrid.material.opacity = 0.45;
+waterGrid.material.transparent = true; waterGrid.material.opacity = 0.5;
 waterGrid.material.depthWrite = false; waterGrid.renderOrder = 3;
 scene.add(waterGrid);
 
-const grid = new THREE.GridHelper(4, 40, 0x2c3a4a, 0x1c2735);
+const grid = new THREE.GridHelper(4, 40, 0xb8c6d2, 0xd8e2ea);
 grid.rotation.x = Math.PI/2; grid.position.z = -0.35; scene.add(grid);
 
 // spatial reference: 1 m lattice of small markers, re-centred on the robot
@@ -662,7 +706,7 @@ const LAT_N = 4, LAT_ZLO = -4, LAT_ZHI = 2;
 const latCount = (2*LAT_N+1)*(2*LAT_N+1)*(LAT_ZHI-LAT_ZLO+1);
 const lattice = new THREE.InstancedMesh(
   new THREE.OctahedronGeometry(0.016),
-  new THREE.MeshBasicMaterial({color:0x3a5570, transparent:true, opacity:0.75}),
+  new THREE.MeshBasicMaterial({color:0x8fa6b8, transparent:true, opacity:0.8}),
   latCount);
 scene.add(lattice);
 let latCenter = null;
@@ -779,9 +823,9 @@ function updateEyes(dt){
 }
 
 const comDot = new THREE.Mesh(new THREE.SphereGeometry(0.0035),
-  new THREE.MeshBasicMaterial({color:0xffffff, depthTest:false}));
+  new THREE.MeshBasicMaterial({color:0x33322e, depthTest:false}));
 const cobDot = new THREE.Mesh(new THREE.SphereGeometry(0.0035),
-  new THREE.MeshBasicMaterial({color:0x3987e5, depthTest:false}));
+  new THREE.MeshBasicMaterial({color:0x2f6fc0, depthTest:false}));
 comDot.renderOrder = 10; cobDot.renderOrder = 10;
 function textSprite(txt, color){
   const cv = document.createElement('canvas'); cv.width = 192; cv.height = 48;
@@ -794,14 +838,14 @@ function textSprite(txt, color){
   sp.setText(txt);
   return sp;
 }
-const comLbl = textSprite('CoM', '#ffffff'), cobLbl = textSprite('CoB', '#3987e5');
+const comLbl = textSprite('CoM', '#33322e'), cobLbl = textSprite('CoB', '#2f6fc0');
 robotGrp.add(comDot, cobDot, comLbl, cobLbl);
 
-const arrowDefs = {thrustT:0xe66767, thrustB:0xe66767, drag:0xd95926, lift:0x199e70,
-                   finT:0x199e70, finB:0x35c4b0, pfinR:0x86b6ef, pfinL:0x86b6ef,
-                   buoy:0x3987e5, grav:0xc3c2b7, roll:0xd55181,
-                   wFinT:0x8a8a85, bFinT:0x6da7ec, wFinB:0x8a8a85, bFinB:0x6da7ec,
-                   wPfin:0x8a8a85, bPfin:0x6da7ec};
+const arrowDefs = {thrustT:0xd84c4c, thrustB:0xd84c4c, drag:0xc94e1f, lift:0x128a60,
+                   finT:0x128a60, finB:0x1d9e8c, pfinR:0x4a86d8, pfinL:0x4a86d8,
+                   buoy:0x2f6fc0, grav:0x77756c, roll:0xc23f74,
+                   wFinT:0x8a8a85, bFinT:0x4a86d8, wFinB:0x8a8a85, bFinB:0x4a86d8,
+                   wPfin:0x8a8a85, bPfin:0x4a86d8};
 const arrowNames = {thrustT:'T·top', thrustB:'T·bot', drag:'body drag', lift:'body lift',
                     finT:'topfin F', finB:'botfin F', pfinR:'pect·R', pfinL:'pect·L',
                     buoy:'B·body', grav:'W·body', roll:'roll τ',
@@ -857,7 +901,7 @@ function updateArrows(withText){
 const trailPts = [];
 const trailGeo = new THREE.BufferGeometry();
 const trailLine = new THREE.Line(trailGeo,
-  new THREE.LineBasicMaterial({color:0x86b6ef, transparent:true, opacity:.6}));
+  new THREE.LineBasicMaterial({color:0x3f7fd0, transparent:true, opacity:.55}));
 scene.add(trailLine);
 
 /* ============ UI ============ */
@@ -885,11 +929,11 @@ const startStepFin = (dir, fin) => {
   jumpPhase = 0;
 };
 const SWEEP_CASES = [
-  {label:'fin, 0 s delay',   d:0,   fin:true,  color:'#f7c98f'},
-  {label:'fin, 0.1 s delay', d:0.1, fin:true,  color:'#f2a25c'},
+  {label:'fin, 0 s delay',   d:0,   fin:true,  color:'#e0a04a'},
+  {label:'fin, 0.1 s delay', d:0.1, fin:true,  color:'#d9822f'},
   {label:'fin, 0.2 s delay', d:0.2, fin:true,  color:'#e2571f'},
   {label:'fin, 0.4 s delay', d:0.4, fin:true,  color:'#9c2b06'},
-  {label:'no fin A',         d:0,   fin:false, color:'#a9c9e8'},
+  {label:'no fin A',         d:0,   fin:false, color:'#7aa8d4'},
   {label:'no fin B',         d:0,   fin:false, color:'#1f5aa8'},
 ];
 function sweepStart(){
@@ -948,8 +992,8 @@ function drawSweep(runs, WIN){
     ['Fin deploy (%)',   d=>d.fin*100],
   ];
   const PH = Math.floor((cv.height-70)/panels.length), PT = 40;
-  c.fillStyle = '#1a1a19'; c.fillRect(0,0,W,cv.height);
-  c.fillStyle = '#ffffff'; c.font = 'bold 22px system-ui'; c.textAlign='left';
+  c.fillStyle = '#ffffff'; c.fillRect(0,0,W,cv.height);
+  c.fillStyle = '#1a1a19'; c.font = 'bold 22px system-ui'; c.textAlign='left';
   c.fillText('Sim fin-delay sweep — UP '+ctl.sfStepUp+'° step · straight '+ctl.sfStraight+' s · pulse '+ctl.sfPulse
     +' s · fin AoA R '+(P.pfinIncR*180/Math.PI).toFixed(0)+'° / L '+(P.pfinIncL*180/Math.PI).toFixed(0)
     +'° · PID base '+ctl.base+' max '+ctl.maxDuty+' ΔPWM '+ctl.maxDPWM+' Kp '+ctl.kp, PL, 26);
@@ -962,16 +1006,16 @@ function drawSweep(runs, WIN){
     if (hi-lo < 1e-6){ hi=lo+1; }
     const pad=(hi-lo)*0.08; lo-=pad; hi+=pad;
     const Y = v => y0 + ph - (v-lo)/(hi-lo)*ph;
-    c.strokeStyle = '#2c2c2a'; c.lineWidth=1; c.strokeRect(PL, y0, pw, ph);
-    c.beginPath(); c.setLineDash([3,4]); c.strokeStyle='#55554f';
+    c.strokeStyle = '#dcdcd6'; c.lineWidth=1; c.strokeRect(PL, y0, pw, ph);
+    c.beginPath(); c.setLineDash([3,4]); c.strokeStyle='#b8b8b0';
     c.moveTo(X(0), y0); c.lineTo(X(0), y0+ph); c.stroke(); c.setLineDash([]);
-    if (lo<0 && hi>0){ c.strokeStyle='#33332f'; c.beginPath(); c.moveTo(PL,Y(0)); c.lineTo(PL+pw,Y(0)); c.stroke(); }
-    c.fillStyle='#c3c2b7'; c.font='15px system-ui'; c.textAlign='right';
+    if (lo<0 && hi>0){ c.strokeStyle='#e4e4de'; c.beginPath(); c.moveTo(PL,Y(0)); c.lineTo(PL+pw,Y(0)); c.stroke(); }
+    c.fillStyle='#55534c'; c.font='15px system-ui'; c.textAlign='right';
     c.save(); c.translate(24, y0+ph/2); c.rotate(-Math.PI/2); c.textAlign='center'; c.fillText(name,0,0); c.restore();
     c.fillText(hi.toFixed(Math.abs(hi)<10?1:0), PL-6, y0+12);
     c.fillText(lo.toFixed(Math.abs(lo)<10?1:0), PL-6, y0+ph-2);
     if (opt && opt.target){
-      c.strokeStyle='#888880'; c.setLineDash([6,5]); c.beginPath();
+      c.strokeStyle='#9a988f'; c.setLineDash([6,5]); c.beginPath();
       c.moveTo(X(-1), Y(0)); c.lineTo(X(0), Y(0)); c.lineTo(X(0), Y(ctl.sfStepUp)); c.lineTo(X(WIN), Y(ctl.sfStepUp));
       c.stroke(); c.setLineDash([]);
     }
@@ -984,13 +1028,13 @@ function drawSweep(runs, WIN){
       c.stroke();
     }
     if (pi === panels.length-1){
-      c.fillStyle='#898781'; c.font='14px system-ui'; c.textAlign='center';
+      c.fillStyle='#77756c'; c.font='14px system-ui'; c.textAlign='center';
       const tk = WIN > 3.5 ? 1 : 0.5;
       for (let t=-1;t<=WIN+1e-6;t+=tk) c.fillText((Math.round(t*10)/10)+' s', X(t), y0+ph+14);
     }
   });
   runs.forEach((r,i)=>{ c.fillStyle=r.color; c.fillRect(W-PR+10, PT+18*i, 22, 4);
-    c.fillStyle='#c3c2b7'; c.font='14px system-ui'; c.textAlign='left'; c.fillText(r.label, W-PR+38, PT+6+18*i); });
+    c.fillStyle='#44423c'; c.font='14px system-ui'; c.textAlign='left'; c.fillText(r.label, W-PR+38, PT+6+18*i); });
   $('sweepModal').style.display='block';
 }
 $('sfUpFin').addEventListener('click', ()=>startStepFin( 1, true));
@@ -1005,6 +1049,28 @@ $('jumpBtn').addEventListener('click', ()=>{
   $('pidBase').value = 40; $('pidBase').dispatchEvent(new Event('input'));
   $('pidT').value = 60; $('pidT').dispatchEvent(new Event('input'));
   jumpPhase = 1; jumpApex = -9;
+});
+bind('dropH', v=>(+v).toFixed(2)+' m', v=>ctl.dropH=v);
+bind('dropVx', v=>(+v).toFixed(2)+' m/s', v=>ctl.dropVx=v);
+bind('dropPitch', v=>v+'°', v=>ctl.dropPitch=v);
+$('dropBtn').addEventListener('click', ()=>{
+  $('reset').click();
+  if (ctl.pid) $('pidOn').click();               // ballistic: no control, motors off
+  $('sineOn').checked = false; ctl.sineOn = false;
+  $('dutyT').value = 0; $('dutyT').dispatchEvent(new Event('input'));
+  $('dutyB').value = 0; $('dutyB').dispatchEvent(new Event('input'));
+  state.p.set(0, 0, +ctl.dropH);
+  state.q.setFromAxisAngle(tmpV.set(0,1,0), -ctl.dropPitch*Math.PI/180);  // +pitch = nose up
+  state.v.set(+ctl.dropVx, 0, 0);
+  prevV.copy(state.v);                           // no fake accel spike at release
+  jumpPhase = 0; sfPhase = 0;
+  // entry condition is exact ballistics (no air drag in the model) — measuring it at
+  // frame rate clips the value: element wetting brakes the hull before detection
+  const vzE = Math.sqrt(2*9.81*ctl.dropH);
+  dropPhase = 1; dropData = {touchT:null, peakG:0, maxDepth:0,
+    vEntry: Math.hypot(+ctl.dropVx, vzE),
+    angEntry: Math.atan2(vzE, +ctl.dropVx)*180/Math.PI,
+    pitchEntry: +ctl.dropPitch};
 });
 bind('pfincR', v=>v+'°', v=>P.pfinIncR=v*Math.PI/180);
 bind('pfincL', v=>v+'°', v=>P.pfinIncL=v*Math.PI/180);
@@ -1037,6 +1103,10 @@ $('bfOn').addEventListener('change', e=>{
 });
 $('hold').addEventListener('change', e=>ctl.hold=e.target.checked);
 $('reset').addEventListener('click', resetState);
+document.querySelectorAll('.tabbtn').forEach(b => b.addEventListener('click', ()=>{
+  document.querySelectorAll('.tabbtn').forEach(x => x.classList.toggle('on', x===b));
+  document.querySelectorAll('.tab').forEach(d => d.classList.toggle('on', d.dataset.tab===b.dataset.tab));
+}));
 document.querySelectorAll('button[data-p]').forEach(b => b.addEventListener('click', ()=>{
   const [t,bo] = b.dataset.p.split(',');
   $('dutyT').value=t; $('dutyB').value=bo;
@@ -1127,7 +1197,7 @@ function drawChart(){
     c.textAlign='left'; c.font='11px system-ui';
     const lines = [['Pitch',d.pitch,'--s1'],['Roll',d.roll,'--s2'],['Yaw',d.yaw,'--s3']];
     const bx = Math.min(hoverX+8, w-100);
-    c.fillStyle = 'rgba(13,13,13,.85)'; c.fillRect(bx-4, padT, 96, 50);
+    c.fillStyle = 'rgba(255,255,255,.9)'; c.fillRect(bx-4, padT, 96, 50);
     lines.forEach(([nm,v,col],i)=>{ c.fillStyle=css(col);
       c.fillText(`${nm} ${v.toFixed(1)}°`, bx, padT+14+i*15); });
   }
@@ -1183,7 +1253,7 @@ function drawMinis(){
         let q = P2([path[0][0],path[0][1],zB]); c.moveTo(q[0],q[1]);
         for (const p of path){ q = P2([p[0],p[1],zB]); c.lineTo(q[0],q[1]); }
         c.stroke();
-        c.strokeStyle = 'rgba(134,182,239,.22)'; c.beginPath();
+        c.strokeStyle = 'rgba(63,127,208,.28)'; c.beginPath();
         for (let i=0;i<path.length;i+=Math.max(1,Math.floor(path.length/14))){
           const p = path[i], a = P2(p), b2 = P2([p[0],p[1],zB]);
           c.moveTo(a[0],a[1]); c.lineTo(b2[0],b2[1]);
@@ -1193,7 +1263,7 @@ function drawMinis(){
       // axis triad at origin: X fwd, Y left, Z up
       const L = span*0.18, o3 = P2([0,0,zB]);
       c.font = '9px system-ui'; c.textAlign = 'left';
-      for (const [ax,col] of [[[L,0,zB],'#d95926'],[[0,L,zB],'#199e70'],[[0,0,zB+L],'#3987e5']]){
+      for (const [ax,col] of [[[L,0,zB],'#c94e1f'],[[0,L,zB],'#128a60'],[[0,0,zB+L],'#2f6fc0']]){
         const t = P2(ax);
         c.strokeStyle = col; c.beginPath(); c.moveTo(o3[0],o3[1]); c.lineTo(t[0],t[1]); c.stroke();
         c.fillStyle = col;
@@ -1205,7 +1275,7 @@ function drawMinis(){
       c.moveTo(px(o[0]), 0); c.lineTo(px(o[0]), H); c.moveTo(0, py(o[1])); c.lineTo(W, py(o[1])); c.stroke();
     }
     if (path.length > 1){
-      c.strokeStyle = '#86b6ef'; c.lineWidth = 1.5; c.beginPath();
+      c.strokeStyle = '#3f7fd0'; c.lineWidth = 1.5; c.beginPath();
       const p0 = m.proj(path[0]); c.moveTo(px(p0[0]), py(p0[1]));
       for (const p of path){ const q = m.proj(p); c.lineTo(px(q[0]), py(q[1])); }
       c.stroke();
@@ -1213,7 +1283,7 @@ function drawMinis(){
     const st = m.proj(pts[0]);
     c.fillStyle = css('--s3'); c.fillRect(px(st[0])-2, py(st[1])-2, 4, 4);
     const cu = m.proj(cur);
-    c.fillStyle = '#fff'; c.beginPath(); c.arc(px(cu[0]), py(cu[1]), 3, 0, 7); c.fill();
+    c.fillStyle = '#33322e'; c.beginPath(); c.arc(px(cu[0]), py(cu[1]), 3, 0, 7); c.fill();
     c.fillStyle = css('--muted'); c.font = '10px system-ui'; c.textAlign = 'right';
     c.fillText((span<0.5 ? (span*100).toFixed(0)+' cm' : span.toFixed(1)+' m'), W-6, H-6);
   }
@@ -1342,6 +1412,25 @@ function loop(now){
     }
   }
 
+  if (dropPhase === 1 && dropData){
+    if (dropData.touchT === null && subFrac > 0.02){          // first water contact
+      dropData.touchT = state.t;
+    } else if (dropData.touchT !== null){
+      dropData.peakG = Math.max(dropData.peakG, accB.length());
+      dropData.maxDepth = Math.min(dropData.maxDepth, state.p.z);
+      if (state.t - dropData.touchT > 2){                     // observe splash +2 s, then report
+        respLog.push(`DROP h${(ctl.dropH*100).toFixed(0)} vx${(+ctl.dropVx).toFixed(2)} ` +
+          `${ctl.finsOpen?'open':'shut'} · entry ${dropData.vEntry.toFixed(2)} m/s ` +
+          `@−${dropData.angEntry.toFixed(0)}° pitch ${dropData.pitchEntry.toFixed(0)}° · ` +
+          `peak ${dropData.peakG.toFixed(1)} g · depth ${(-dropData.maxDepth*100).toFixed(0)} cm`);
+        while (respLog.length > 8) respLog.shift();
+        document.getElementById('resplog').innerHTML =
+          respLog.map((r,i)=> i===respLog.length-1 ? '<b>'+r+'</b>' : r).join('<br>');
+        dropPhase = 0;
+      }
+    }
+  }
+
   // IMU-style specific force in body frame [g] (numerical accel minus gravity)
   const dSim = state.t - prevSimT;                  // differentiate in PHYSICS time —
   if (dSim > 1e-4){                                 // wall-frame division was noisy
@@ -1460,15 +1549,15 @@ function takeShot(){
   const cv = document.createElement('canvas');
   cv.width = W; cv.height = src.height + chartH + 8*dpr;
   const c = cv.getContext('2d');
-  c.fillStyle = '#1a1a19'; c.fillRect(0, 0, cv.width, cv.height);
+  c.fillStyle = '#ffffff'; c.fillRect(0, 0, cv.width, cv.height);
   c.drawImage(src, 0, 0);
   for (const m of MINI){                             // mini views at their on-screen spots
     const r = m.cv.getBoundingClientRect();
-    c.fillStyle = 'rgba(13,13,13,.72)';
+    c.fillStyle = 'rgba(255,255,255,.82)';
     c.fillRect((r.x-viewR.x)*dpr, (r.y-viewR.y)*dpr, r.width*dpr, r.height*dpr);
     c.drawImage(m.cv, (r.x-viewR.x)*dpr, (r.y-viewR.y)*dpr, r.width*dpr, r.height*dpr);
   }
-  c.fillStyle = '#c3c2b7'; c.font = (14*dpr)+'px system-ui';   // HUD text
+  c.fillStyle = '#44423c'; c.font = (14*dpr)+'px system-ui';   // HUD text
   const lines = hud.innerText.split('\n');
   lines.forEach((ln,i)=>c.fillText(ln, 12*dpr, src.height - (lines.length-i)*18*dpr + 4*dpr));
   c.drawImage(chart, 0, src.height + 8*dpr);
@@ -1483,6 +1572,7 @@ function takeShot(){
 $('shotBtn').addEventListener('click', takeShot);
 window.TAKESHOT = takeShot;
 window.P = P; window.CTL = ctl; window.SIMSTATE = state; window.DBG = dbg; window.CAMERA = camera; window.EYES = eyes;   // console/debug access
+window.att0 = att0; window.attitude = attitude;
 requestAnimationFrame(loop);
 </script>
 </body>
