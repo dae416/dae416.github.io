@@ -151,7 +151,7 @@
       <h2 class="dc-full-proj-title">Squid-Inspired Soft Propulsion</h2>
       <p class="dc-full-proj-meta">
         <strong>Support:</strong> DARPA (Young Faculty Award) · NRF Korea (Domestic Postdoctoral Fellowship)<br>
-        <strong>Collaborators:</strong> Prof. M. Saad Bhamla (CU Boulder) · Prof. Daeshik Kang (Ajou University) · Prof. Chandan Bose (University of Birmingham) · Prof. Hyungmin Park (SNU)
+        <strong>Collaborators:</strong> Prof. M. Saad Bhamla (CU Boulder) · Prof. Daeshik Kang (POSTECH) · Prof. Chandan Bose (University of Birmingham) · Prof. Hyungmin Park (SNU)
       <br>
         <strong>Publications:</strong> <a href="https://arxiv.org/abs/2605.03239" target="_blank" rel="noopener">arXiv:2605.03239</a> · <a href="https://doi.org/10.1017/jfm.2022.781" target="_blank" rel="noopener">JFM 2022</a>
       </p>
@@ -172,8 +172,8 @@
         <p>
           Soft robotic propulsors are constrained by onboard power and the cost of active sensing and
           flow control. In this work, we demonstrate a purely passive mechanism — requiring no added
-          control hardware — that amplifies pulsed jet impulse by more than 300% relative to a rigid
-          nozzle, confirmed independently by PIV vorticity fields, load-cell force measurements, and
+          control hardware — that amplifies pulsed-jet impulse about fourfold (a ~300% increase)
+          relative to a rigid nozzle, confirmed independently by PIV vorticity fields, load-cell force measurements, and
           two-way 3D fluid–structure interaction simulations. We term this within-pulse elastic
           store-release mechanism <em>superpropulsion</em>.
         </p>
@@ -269,9 +269,10 @@
       <div class="dc-full-proj-text">
         <p>
           Tuned nozzles increase peak aerial jet height by 110%, enhance inking-inspired plume
-          dispersion by 40%, and boost jet-propelled boat speed by 41% while reducing cost of
-          transport by 28%, at similar electrical power draw. These gains persist after 40×
-          miniaturization and across more than 135 nozzle and application trials — possible only
+          dispersion by 41%, and boost jet-propelled boat speed by 43% while reducing cost of
+          transport by 31% at the same pump setting. The boat advantage persists after 40×
+          miniaturization, and the timing prediction holds across more than 300 nozzle and application
+          trials — possible only
           through the convergence of comparative biomechanics, histology, fluid mechanics,
           mathematical theory, soft materials, and robotics.
         </p>
@@ -294,7 +295,7 @@
                 <video muted loop playsinline>
                   <source data-src="videos/squid/2_3_boat_web.mp4" type="video/mp4">
                 </video>
-                <div class="dc-slide-caption">Flexible nozzle boat (+41%)</div>
+                <div class="dc-slide-caption">Flexible nozzle boat (+43%)</div>
                 <div class="dc-slide-progress"><div class="dc-slide-bar"></div></div>
               </div>
             </div>
@@ -316,7 +317,7 @@
         </div>
       </div>
       <div class="dc-full-proj-img-single">
-        <img src="images/P_squid_performance.png" alt="Performance summary: Aerial Jet, Squid Boat, Mixing" style="border-radius:5px;">
+        <img src="images/P_squid_performance_v2.png" alt="Performance summary: Aerial Jet, Squid Boat, Mixing" style="border-radius:5px;">
         <p class="dc-slide-caption" style="padding:0.3em 0 0.8em;">Rigid vs. flexible: 3 applications</p>
       </div>
 
@@ -345,12 +346,13 @@
           Gaussian Process surrogate models (BoTorch, Matérn-5/2 kernel) and q-batch log expected
           hypervolume improvement (qLogEHVI) acquisition searches for Pareto-optimal geometries
           that maximize the hydrodynamic impulse \(I\) and minimize the jet energy input \(E\),
-          with each candidate evaluated by 3D two-way FSI simulation (OpenFOAM–CalculiX–preCICE).
+          with each candidate evaluated by 3D simulation (CFD for rigid nozzles, two-way FSI with
+          OpenFOAM–CalculiX–preCICE for flexible nozzles).
           Starting from 20 Latin Hypercube samples and adding batches of 5 designs, the hypervolume
           levels off after about 6 iterations for rigid and 9 for flexible nozzles (100 rigid and
-          80 flexible designs evaluated). Rigid optima raise the impulse up to 5 times that of a
-          cylindrical nozzle through an internal secondary vortex and contraction-driven jet
-          acceleration, at a much higher energy cost. Flexible optima reach about 2.5 times the
+          80 flexible designs evaluated). Rigid nozzles reach up to 5 times the impulse of a
+          cylindrical nozzle, at a much higher energy cost; the optimized rigid shapes form an
+          internal secondary vortex and accelerate the jet through contraction. Flexible optima reach about 2.5 times the
           impulse, but their maximum impulse-to-energy ratio is about 1.8 times that of the rigid
           designs: traveling expansion–contraction waves entrain extra fluid, improve pressure
           recovery, and suppress the negative pressure impulse late in the pulse.
@@ -666,8 +668,9 @@
           A reduced-order model condenses the coupled response into a lumped store-and-release
           oscillator, closed by an inertial end correction and a vortex-radiation damping term.
           It predicts the simulated resonance frequency within 6% and the momentum impulse within
-          4%, and, together with the simulations and PIV experiments, places the peak jet-velocity
-          gain near \(\hat{c} \approx 3\), the superpropulsion optimum.
+          4%. Its peak jet-velocity gain falls near \(\hat{c} \approx 3\), the superpropulsion
+          optimum, close to the simulated optimum (\(\hat{c} \approx 2.8\)) and within the band
+          \(\hat{c} \approx 2\)–4 found in soft-nozzle PIV experiments.
         </p>
       </div>
 
@@ -929,16 +932,16 @@
       <h3 class="dc-proj-sub">Palm-Scale Swim-and-Breach Robot</h3>
       <div class="dc-full-proj-text">
         <p>
-          Guided by these biological principles, we built a palm-scale (65 mm, 34 g) robot platform
-          that swims and breaches the water surface like a leaping fish. Two vertically stacked
-          propellers provide both propulsion and differential-thrust pitch control under a PID loop,
-          and a tail rudder adds yaw control. The hull, evaluated by flow simulation, has one-fifth
-          the drag of an equivalent cuboid, and the propellers are optimized with B-series modeling
-          validated by dynamometer measurements. The robot swims at 13.9 body lengths per second
-          (BL/s) and turns at 209°/s. In a tank it performs a seamless cruise–leap–cruise sequence,
-          leaping 1.6 BL high and 3.7 BL long, and with rudder control it exits a natural stream
-          (Boulder Creek, Colorado) to 2.8 BL above the surface. This platform is the base for adding
-          mudskipper-inspired fins for repeated surface hops.
+          Inspired by leaping fish, we built a palm-scale (65 mm, 34 g) robot platform that swims
+          and breaches the water surface. Two vertically stacked propellers provide both propulsion
+          and differential-thrust pitch control under a PID loop, and a tail rudder adds yaw control.
+          The hull, evaluated by flow simulation, has about one-fifth the drag of an equivalent
+          cuboid, and the propellers are optimized with B-series modeling validated by dynamometer
+          measurements. The robot swims at up to 13.9 body lengths per second (BL/s) and turns at up
+          to 209°/s. In a tank it performs a seamless cruise–leap–cruise sequence, leaping 1.6 BL
+          high and 3.7 BL long, and with rudder control it exits a natural stream (Boulder Creek,
+          Colorado) to 2.8 BL above the surface. Next, mudskipper-inspired fins will be added to this
+          platform for repeated surface hops.
         </p>
       </div>
 
